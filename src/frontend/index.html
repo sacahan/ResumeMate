@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="zh-TW" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ResumeMate - AI 履歷助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      body {
+        font-family: "Inter", "Noto Sans TC", sans-serif;
+        color: #d1d5db;
+        background: linear-gradient(-45deg, #282a50, #4c408e, #282a50, #1f2937);
+        background-size: 400% 400%;
+        animation: gradient 25s ease infinite;
+      }
+
+      @keyframes gradient {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+
+      .text-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #1f2937;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #4b5563;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass-effect">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between h-16">
+          <div class="text-xl font-bold text-gradient">ResumeMate</div>
+          <div class="hidden md:flex space-x-8">
+            <a href="#about" class="hover:text-blue-400 transition-colors"
+              >關於我</a
+            >
+            <a href="#experience" class="hover:text-blue-400 transition-colors"
+              >經歷</a
+            >
+            <a href="#skills" class="hover:text-blue-400 transition-colors"
+              >技能</a
+            >
+            <a href="#chat" class="hover:text-blue-400 transition-colors"
+              >AI 問答</a
+            >
+          </div>
+          <button
+            id="lang-toggle"
+            class="px-3 py-1 glass-effect rounded-md text-sm hover:bg-white hover:bg-opacity-20 transition-colors"
+          >
+            EN
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="min-h-screen flex items-center justify-center pt-16">
+      <div class="text-center max-w-4xl mx-auto px-4">
+        <div class="animate-fade-in-up">
+          <h1 class="text-5xl md:text-7xl font-bold mb-6">
+            <span
+              class="text-gradient"
+              data-zh="AI 履歷助手"
+              data-en="AI Resume Assistant"
+              >AI 履歷助手</span
+            >
+          </h1>
+          <p
+            class="text-xl md:text-2xl text-gray-300 mb-8 max-w-3xl mx-auto"
+            data-zh="我是您的智慧履歷代理人，結合 RAG 技術提供個人化問答服務"
+            data-en="Your intelligent resume agent powered by RAG technology for personalized Q&A"
+          >
+            我是您的智慧履歷代理人，結合 RAG 技術提供個人化問答服務
+          </p>
+          <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a
+              href="#chat"
+              class="px-8 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all duration-300 transform hover:scale-105"
+            >
+              <span data-zh="開始對話" data-en="Start Chat">開始對話</span>
+            </a>
+            <a
+              href="#about"
+              class="px-8 py-3 glass-effect text-white rounded-lg font-medium hover:bg-white hover:bg-opacity-20 transition-all duration-300"
+            >
+              <span data-zh="了解更多" data-en="Learn More">了解更多</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-20">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2
+            class="text-4xl font-bold text-gradient mb-4"
+            data-zh="關於我"
+            data-en="About Me"
+          >
+            關於我
+          </h2>
+          <p
+            class="text-xl text-gray-300 max-w-3xl mx-auto"
+            data-zh="軟體工程師，專精於 AI 應用開發和系統架構設計"
+            data-en="Software Engineer specializing in AI application development and system architecture"
+          >
+            軟體工程師，專精於 AI 應用開發和系統架構設計
+          </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-12 items-center">
+          <div class="glass-effect p-8 rounded-2xl">
+            <h3
+              class="text-2xl font-bold mb-6 text-blue-400"
+              data-zh="專業簡介"
+              data-en="Professional Summary"
+            >
+              專業簡介
+            </h3>
+            <p
+              class="text-gray-300 leading-relaxed mb-6"
+              data-zh="我是一位軟體工程師，專精於 Python、JavaScript 和雲端服務開發。擁有 5 年以上的全端開發經驗，熟悉 React、Django、Flask 等框架。目前專注於 AI 應用開發和系統架構設計。"
+              data-en="I am a software engineer specializing in Python, JavaScript, and cloud service development. With over 5 years of full-stack development experience, I'm proficient in React, Django, Flask and other frameworks. Currently focused on AI application development and system architecture design."
+            >
+              我是一位軟體工程師，專精於 Python、JavaScript 和雲端服務開發。擁有
+              5 年以上的全端開發經驗，熟悉 React、Django、Flask
+              等框架。目前專注於 AI 應用開發和系統架構設計。
+            </p>
+          </div>
+
+          <div class="space-y-6">
+            <div class="glass-effect p-6 rounded-xl">
+              <h4
+                class="text-lg font-semibold text-blue-400 mb-2"
+                data-zh="主要技能"
+                data-en="Core Skills"
+              >
+                主要技能
+              </h4>
+              <div class="flex flex-wrap gap-2">
+                <span
+                  class="px-3 py-1 bg-blue-600 bg-opacity-30 text-blue-300 rounded-full text-sm"
+                  >Python</span
+                >
+                <span
+                  class="px-3 py-1 bg-blue-600 bg-opacity-30 text-blue-300 rounded-full text-sm"
+                  >JavaScript</span
+                >
+                <span
+                  class="px-3 py-1 bg-blue-600 bg-opacity-30 text-blue-300 rounded-full text-sm"
+                  >React</span
+                >
+                <span
+                  class="px-3 py-1 bg-blue-600 bg-opacity-30 text-blue-300 rounded-full text-sm"
+                  >Django</span
+                >
+                <span
+                  class="px-3 py-1 bg-blue-600 bg-opacity-30 text-blue-300 rounded-full text-sm"
+                  >AI/ML</span
+                >
+              </div>
+            </div>
+
+            <div class="glass-effect p-6 rounded-xl">
+              <h4
+                class="text-lg font-semibold text-blue-400 mb-2"
+                data-zh="聯絡資訊"
+                data-en="Contact Info"
+              >
+                聯絡資訊
+              </h4>
+              <p
+                class="text-gray-300 text-sm"
+                data-zh="歡迎透過 LinkedIn 或專業平台與我聯繫"
+                data-en="Welcome to contact me via LinkedIn or professional platforms"
+              >
+                歡迎透過 LinkedIn 或專業平台與我聯繫
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Experience Section -->
+    <section id="experience" class="py-20">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2
+            class="text-4xl font-bold text-gradient mb-4"
+            data-zh="工作經歷"
+            data-en="Experience"
+          >
+            工作經歷
+          </h2>
+        </div>
+
+        <div class="space-y-8">
+          <div class="glass-effect p-8 rounded-2xl">
+            <div
+              class="flex flex-col md:flex-row md:items-center md:justify-between mb-4"
+            >
+              <h3
+                class="text-2xl font-bold text-blue-400"
+                data-zh="資深軟體工程師"
+                data-en="Senior Software Engineer"
+              >
+                資深軟體工程師
+              </h3>
+              <span class="text-gray-400">2022 - 至今</span>
+            </div>
+            <p
+              class="text-gray-300 mb-4"
+              data-zh="負責 AI 應用系統開發和架構設計。主要工作包括：設計和實作 RAG 系統、開發 AI 聊天機器人、建置微服務架構、優化系統效能。"
+              data-en="Responsible for AI application system development and architecture design. Main work includes: designing and implementing RAG systems, developing AI chatbots, building microservice architecture, and optimizing system performance."
+            >
+              負責 AI 應用系統開發和架構設計。主要工作包括：設計和實作 RAG
+              系統、開發 AI 聊天機器人、建置微服務架構、優化系統效能。
+            </p>
+          </div>
+
+          <div class="glass-effect p-8 rounded-2xl">
+            <div
+              class="flex flex-col md:flex-row md:items-center md:justify-between mb-4"
+            >
+              <h3
+                class="text-2xl font-bold text-blue-400"
+                data-zh="全端工程師"
+                data-en="Full-Stack Engineer"
+              >
+                全端工程師
+              </h3>
+              <span class="text-gray-400">2019 - 2022</span>
+            </div>
+            <p
+              class="text-gray-300"
+              data-zh="參與多個 Web 應用專案開發。主要負責前後端整合、API 設計、資料庫優化、用戶介面設計。成功交付多個企業級應用系統。"
+              data-en="Participated in multiple Web application project development. Mainly responsible for front-end and back-end integration, API design, database optimization, and user interface design. Successfully delivered multiple enterprise-level application systems."
+            >
+              參與多個 Web 應用專案開發。主要負責前後端整合、API
+              設計、資料庫優化、用戶介面設計。成功交付多個企業級應用系統。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Skills Section -->
+    <section id="skills" class="py-20">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2
+            class="text-4xl font-bold text-gradient mb-4"
+            data-zh="技能專長"
+            data-en="Skills"
+          >
+            技能專長
+          </h2>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+          <div class="glass-effect p-8 rounded-2xl text-center">
+            <h3
+              class="text-xl font-bold text-blue-400 mb-4"
+              data-zh="程式語言"
+              data-en="Programming Languages"
+            >
+              程式語言
+            </h3>
+            <div class="space-y-2">
+              <div class="flex justify-between">
+                <span>Python</span
+                ><span class="text-blue-400" data-zh="精通" data-en="Expert"
+                  >精通</span
+                >
+              </div>
+              <div class="flex justify-between">
+                <span>JavaScript</span
+                ><span class="text-blue-400" data-zh="精通" data-en="Expert"
+                  >精通</span
+                >
+              </div>
+              <div class="flex justify-between">
+                <span>TypeScript</span
+                ><span
+                  class="text-green-400"
+                  data-zh="熟練"
+                  data-en="Proficient"
+                  >熟練</span
+                >
+              </div>
+              <div class="flex justify-between">
+                <span>Java</span
+                ><span
+                  class="text-green-400"
+                  data-zh="熟練"
+                  data-en="Proficient"
+                  >熟練</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-effect p-8 rounded-2xl text-center">
+            <h3
+              class="text-xl font-bold text-blue-400 mb-4"
+              data-zh="框架技術"
+              data-en="Frameworks"
+            >
+              框架技術
+            </h3>
+            <div class="space-y-2">
+              <div class="flex justify-between">
+                <span>React</span
+                ><span class="text-blue-400" data-zh="精通" data-en="Expert"
+                  >精通</span
+                >
+              </div>
+              <div class="flex justify-between">
+                <span>Django</span
+                ><span class="text-blue-400" data-zh="精通" data-en="Expert"
+                  >精通</span
+                >
+              </div>
+              <div class="flex justify-between">
+                <span>FastAPI</span
+                ><span
+                  class="text-green-400"
+                  data-zh="熟練"
+                  data-en="Proficient"
+                  >熟練</span
+                >
+              </div>
+              <div class="flex justify-between">
+                <span>Node.js</span
+                ><span
+                  class="text-green-400"
+                  data-zh="熟練"
+                  data-en="Proficient"
+                  >熟練</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-effect p-8 rounded-2xl text-center">
+            <h3
+              class="text-xl font-bold text-blue-400 mb-4"
+              data-zh="AI/雲端"
+              data-en="AI/Cloud"
+            >
+              AI/雲端
+            </h3>
+            <div class="space-y-2">
+              <div class="flex justify-between">
+                <span>LangChain</span
+                ><span class="text-blue-400" data-zh="精通" data-en="Expert"
+                  >精通</span
+                >
+              </div>
+              <div class="flex justify-between">
+                <span>OpenAI API</span
+                ><span class="text-blue-400" data-zh="精通" data-en="Expert"
+                  >精通</span
+                >
+              </div>
+              <div class="flex justify-between">
+                <span>AWS</span
+                ><span
+                  class="text-green-400"
+                  data-zh="熟練"
+                  data-en="Proficient"
+                  >熟練</span
+                >
+              </div>
+              <div class="flex justify-between">
+                <span>Docker</span
+                ><span
+                  class="text-green-400"
+                  data-zh="熟練"
+                  data-en="Proficient"
+                  >熟練</span
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI Chat Section -->
+    <section id="chat" class="py-20">
+      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-16">
+          <h2
+            class="text-4xl font-bold text-gradient mb-4"
+            data-zh="AI 智慧問答"
+            data-en="AI Smart Q&A"
+          >
+            AI 智慧問答
+          </h2>
+          <p
+            class="text-xl text-gray-300"
+            data-zh="與我的 AI 代理人對話，了解更多關於我的專業經驗和技能"
+            data-en="Chat with my AI agent to learn more about my professional experience and skills"
+          >
+            與我的 AI 代理人對話，了解更多關於我的專業經驗和技能
+          </p>
+        </div>
+
+        <div class="glass-effect p-8 rounded-2xl">
+          <div class="mb-6">
+            <p
+              class="text-gray-300 mb-4"
+              data-zh="這是一個由 RAG 技術驅動的 AI 代理人展示。您可以詢問關於我的專業技能、專案經驗等問題。"
+              data-en="This is an AI agent demo powered by RAG technology. You can ask questions about my professional skills, project experience, etc."
+            >
+              這是一個由 RAG 技術驅動的 AI
+              代理人展示。您可以詢問關於我的專業技能、專案經驗等問題。
+            </p>
+            <p
+              class="text-yellow-400 text-sm"
+              data-zh="注意：這是一個展示版本，回答基於預設的履歷資料"
+              data-en="Note: This is a demo version, answers are based on predefined resume data"
+            >
+              注意：這是一個展示版本，回答基於預設的履歷資料
+            </p>
+          </div>
+
+          <div
+            class="w-full h-96 md:h-[500px] rounded-lg overflow-hidden border border-gray-700"
+          >
+            <iframe
+              src="http://localhost:7860"
+              width="100%"
+              height="100%"
+              frameborder="0"
+              class="bg-gray-900"
+            >
+            </iframe>
+          </div>
+
+          <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <button
+              class="chat-example glass-effect p-3 rounded-lg text-sm hover:bg-white hover:bg-opacity-20 transition-colors"
+              data-zh="你有什麼技能？"
+              data-en="What skills do you have?"
+            >
+              你有什麼技能？
+            </button>
+            <button
+              class="chat-example glass-effect p-3 rounded-lg text-sm hover:bg-white hover:bg-opacity-20 transition-colors"
+              data-zh="你的工作經驗？"
+              data-en="Your work experience?"
+            >
+              你的工作經驗？
+            </button>
+            <button
+              class="chat-example glass-effect p-3 rounded-lg text-sm hover:bg-white hover:bg-opacity-20 transition-colors"
+              data-zh="專案經驗如何？"
+              data-en="How about projects?"
+            >
+              專案經驗如何？
+            </button>
+            <button
+              class="chat-example glass-effect p-3 rounded-lg text-sm hover:bg-white hover:bg-opacity-20 transition-colors"
+              data-zh="如何聯絡你？"
+              data-en="How to contact you?"
+            >
+              如何聯絡你？
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-gray-700">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <div class="text-2xl font-bold text-gradient mb-4">ResumeMate</div>
+        <p
+          class="text-gray-400 mb-4"
+          data-zh="AI 驅動的智慧履歷代理人平台"
+          data-en="AI-powered intelligent resume agent platform"
+        >
+          AI 驅動的智慧履歷代理人平台
+        </p>
+        <p class="text-sm text-gray-500">
+          © 2025 ResumeMate.
+          <span data-zh="保留所有權利。" data-en="All rights reserved."
+            >保留所有權利。</span
+          >
+        </p>
+      </div>
+    </footer>
+
+    <script src="static/js/main.js"></script>
+  </body>
+</html>
