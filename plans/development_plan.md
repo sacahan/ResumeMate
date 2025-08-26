@@ -48,23 +48,23 @@ graph TB
   - [x] 使用案例定義
   - [x] 技術架構確認
   - [x] 開發時程安排
-- [ ] 環境建置
+- [x] 環境建置
   - [x] 向量資料庫初始化
-  - [ ] 開發環境設定
-  - [ ] CI/CD 基礎配置
+  - [x] 開發環境設定
+  - [x] 部署腳本配置
 
 **檢視重點**：
 
 - 向量資料庫可用性測試
 - 開發環境完整性確認
-- CI/CD 流程驗證
+- 部署腳本測試
 - 專案結構評估
 
 **交付項目**：
 
 - 環境建置文件
 - 初始化資料集報告
-- CI/CD 配置文件
+- 部署腳本文件
 - 開發規範文件
 
 ### 第二階段：核心功能開發 (3週)
@@ -187,8 +187,8 @@ graph TB
 #### 📍 檢視點 5：上線準備度確認 (上線前)
 
 - [ ] 正式部署
-  - [ ] 前端部署 (GitHub Pages)
-  - [ ] 後端部署 (HuggingFace)
+  - [ ] 前端部署 (GitHub Pages，使用本地部署腳本)
+  - [ ] 後端部署 (HuggingFace，使用本地部署腳本)
   - [ ] 資料庫遷移
 - [ ] 營運準備
   - [ ] 監控系統建置
@@ -269,7 +269,7 @@ graph TB
 |----------|------|------|
 | GitHub Pages | 靜態網站託管 | - |
 | Hugging Face Spaces | AI 應用託管 | - |
-| GitHub Actions | CI/CD | - |
+| 本地部署腳本 | 自動化部署 | - |
 | Custom Domain | 自定義域名 | brianhan.cc |
 
 ---
@@ -799,31 +799,39 @@ class ConversationState(BaseModel):
    - 將 chroma_db 資料夾上傳至 Hugging Face Space
    - 配置 Space 環境變數
 
-### 8.3 CI/CD 設置
+### 8.3 部署腳本設置
 
-使用 GitHub Actions 自動化部署流程：
+使用本地腳本自動化部署流程：
 
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy
+```bash
+# 前端部署腳本
+scripts/deploy_frontend.sh
 
-on:
-  push:
-    branches: [ main ]
+# 後端部署腳本
+scripts/deploy_backend.sh
 
-jobs:
-  deploy-frontend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      # 部署前端至 GitHub Pages 的步驟
-
-  deploy-backend:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      # 部署後端至 Hugging Face Space 的步驟
+# 整合部署腳本（同時部署前端和後端）
+scripts/deploy.sh
 ```
+
+部署腳本功能：
+
+1. **前端部署腳本**：
+   - 檢查當前分支是否為 main
+   - 創建或切換到 gh-pages 分支
+   - 複製前端文件到根目錄
+   - 提交並推送到 GitHub Pages
+
+2. **後端部署腳本**：
+   - 準備部署文件（後端代碼、依賴項目）
+   - 登入 Hugging Face
+   - 上傳文件到 Hugging Face Spaces
+   - 配置環境變數
+
+3. **整合部署腳本**：
+   - 運行測試和代碼格式檢查
+   - 順序執行前端和後端部署腳本
+   - 輸出部署狀態和網站鏈接
 
 ---
 
