@@ -91,3 +91,17 @@ applyTo: "**/*.py"
 - Implement test hooks for setup and teardown.
 - Use expect assertions with specific matchers.
 - Leverage parallel execution for faster test runs.
+
+---
+
+## Pydantic
+
+- Use strict mode to prevent undefined fields.
+- Use Pydantic models for request/response validation, providing strict type checking and custom validators.
+- Leverage Pydantic's data modeling features to simplify data validation and parsing logic.
+- Annotate models with additional metadata, such as descriptions and examples.
+- Use Pydantic's built-in validators for common data validation needs, such as email format and password strength.
+- Integrate Pydantic models with FastAPI's routing and dependency injection system for better maintainability and testability.
+- Use `Literal[]` to define limited choice sets and enhance type safety.
+- Use JSON-safe structures to ensure data security and predictability.
+- Not allow undefined fields in Pydantic models.
