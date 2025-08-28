@@ -26,6 +26,7 @@ class AgentDecision(str, enum.Enum):
     OUT_OF_SCOPE = "oos"  # 超出範圍
     ASK_CLARIFY = "clarify"  # 需要澄清
     NEEDS_EDIT = "needs_edit"  # 需要編輯
+    ESCALATE_TO_HUMAN = "escalate_to_human"  # 升級人工處理
 
 
 class SearchResult(BaseModel):

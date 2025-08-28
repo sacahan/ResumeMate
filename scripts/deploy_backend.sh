@@ -49,6 +49,8 @@ mkdir -p deployment
 cp -r src/backend/* deployment/
 cp requirements.txt deployment/
 cp README.md deployment/
+# 複製 chroma_db 資料夾（包含向量DB）
+cp -r chroma_db deployment/
 
 # 建立 Hugging Face Space 必要檔案
 echo "${YELLOW}創建 Hugging Face Space 配置文件...${NC}"

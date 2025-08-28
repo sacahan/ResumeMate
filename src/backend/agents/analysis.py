@@ -1,492 +1,312 @@
 """Analysis Agent 實作
 
-負責解析使用者問題、辨識問題類型、決定檢索策略
+使用 OpenAI Agents SDK 標準實現問題分析與資訊檢索功能。
 """
 
+from __future__ import annotations
+
+import os
+import json
+from dotenv import load_dotenv
 import logging
-from typing import List
+from typing import List, Dict, Literal, Any
+from pydantic import BaseModel, Field, ConfigDict
+
+# 確保 Runner 已正確引入
+from agents import (
+    Agent,
+    Runner,
+    AgentOutputSchema,
+    function_tool,
+    ModelSettings,
+)  # noqa: F401
+from backend.tools.rag import RAGTools
+
+# from models import SearchResult  # 工具回傳以 JSON dict 為主，避免序列化問題
+
 from backend.models import (
     Question,
     AnalysisResult,
     QuestionType,
     AgentDecision,
-    SearchResult,
 )
-from backend.tools.rag import rag_search
+
+load_dotenv(override=True)
 
 logger = logging.getLogger(__name__)
+
+DEFAULT_INSTRUCTIONS = """你是韓世翔本人的 AI 代理人，代表韓世翔本人回答關於他履歷的問題。**必須優先使用 rag_search_tool 工具檢索履歷內容**。
+
+**身份設定**：
+- 你代表韓世翔本人，以第一人稱（「我」、「我的」）回答所有問題
+- 回答語氣自然親切，就像韓世翔本人在回答一樣
+- 不要使用「根據履歷」、「履歷顯示」等客觀描述的前綴詞
+- 直接以本人的語氣說出事實，例如：「我已經完成了服兵役」而不是「根據履歷，您已經完成了服兵役」
+
+**核心原則**：
+- 對任何可能與個人履歷、技能、經驗、工作相關的問題，立即使用 rag_search_tool 檢索
+- 包括但不限於：技能問題、工作經驗、教育背景、聯絡方式、項目經歷等
+- 即使問題看似簡單（如"你有什麼技能？"），也必須先檢索再回答
+
+**處理流程**：
+1. **先檢索**：對所有疑似履歷相關問題，立即呼叫 rag_search_tool(query, top_k=5)
+2. **後判斷**：根據檢索結果決定後續行動：
+   - 有相關內容 → decision="retrieve"，以第一人稱整理成回答
+   - 無相關內容且確實超出履歷範圍 → decision="oos"
+   - 檢索結果不足或模糊 → decision="clarify"
+
+**檢索策略**：
+- 使用原問題的關鍵詞進行檢索
+- 如果原問題太籠統，用相關的具體詞彙檢索（如"技能"、"經驗"、"工作"）
+
+**輸出要求**：
+只允許單一 JSON 物件，包含：draft_answer, sources, confidence, question_type, decision, metadata
+draft_answer 必須以第一人稱書寫，不得編造未在檢索結果中出現的事實。sources 需包含可追溯的 doc_id。
+"""
+
+
+# =========================
+# 1) 嚴格輸出模型（只允許 6 欄）
+# =========================
+class AnalysisOutput(BaseModel):
+    """Analysis Agent 的結構化輸出"""
+
+    model_config = ConfigDict(extra="forbid")  # 嚴格：不允許多餘欄位
+
+    draft_answer: str = Field(..., description="根據檢索結果產生的初步回答")
+    sources: List[str] = Field(default_factory=list, description="引用的資訊來源IDs")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="對回答的信心程度 (0-1)")
+    question_type: Literal["skill", "experience", "contact", "fact", "other"] = Field(
+        ..., description="問題類型識別 (skill, experience, contact, fact, other)"
+    )
+    decision: Literal["retrieve", "oos", "clarify"] = Field(
+        ..., description="代理人決策 (retrieve, oos, clarify)"
+    )
+    metadata: Dict[str, Any] = Field(default_factory=dict, description="其他元數據")
+
+
+# =========================
+# 2) Tool：RAG 檢索（JSON-safe）
+# =========================
+@function_tool
+def rag_search_tool(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
+    """搜索履歷資料庫以獲取相關履歷片段。對任何履歷相關問題都應優先使用此工具。
+
+    適用於：技能查詢、工作經驗、教育背景、聯絡方式、項目經歷、個人資訊等所有履歷相關問題。
+
+    Args:
+        query: 搜索查詢詞彙，建議使用問題中的關鍵詞或相關同義詞
+        top_k: 返回結果數量，建議 3-10 個結果
+    Returns:
+        List[dict]: 搜索結果列表，每個包含 doc_id, score, excerpt, metadata
+    """
+    try:
+        rag_tools = RAGTools()
+        results = rag_tools.rag_search(query, top_k=top_k)
+
+        ### results reference:
+        # [
+        #     SearchResult(
+        #         doc_id="xxx.md_2",
+        #         score=0.38501596450805664,
+        #         excerpt="技術領導能力。近年積極投入AI/ML相關技術研發...",
+        #         metadata={
+        #             "start": 2000,
+        #             "source_filename": "xxx.md",
+        #             "end": 3000,
+        #             "chunk_index": 2,
+        #         },
+        #     ),
+        #     ...
+        # ]
+        ###
+
+        # 統一轉為可序列化 dict
+        formatted_results: List[Dict[str, Any]] = []
+        for r in results:
+            # r 可能是自定義物件；統一轉型
+            formatted_results.append(
+                {
+                    "doc_id": str(getattr(r, "doc_id", None) or r.get("doc_id")),
+                    "score": float(getattr(r, "score", 0.0) or r.get("score", 0.0)),
+                    "excerpt": str(getattr(r, "excerpt", "") or r.get("excerpt", "")),
+                    "metadata": dict(
+                        getattr(r, "metadata", {}) or r.get("metadata", {})
+                    ),
+                }
+            )
+        return formatted_results[:top_k]
+    except Exception as e:
+        logger.error(f"rag_search_tool 執行錯誤: {e}")
+        return []
 
 
 class AnalysisAgent:
     """Analysis Agent - 問題分析與檢索代理人"""
 
-    def __init__(self, rag_tools=None):
-        """初始化 Analysis Agent
+    def __init__(self, llm: str = "gpt-4o-mini"):
+        self.llm = os.environ.get("AGENT_MODEL", llm)
+        self.sdk_agent = None
+        self._initialize_sdk_agent()
 
-        Args:
-            rag_tools: optional 注入的 RAGTools 實例，測試與外部呼叫可傳入
-        """
-        # 注入的 RAG 工具（若有）
-        self.rag_tools = rag_tools
-        # 進一步降低閾值，適應當前嵌入模型
-        self.similarity_threshold = 0.01
+    def _initialize_sdk_agent(self):
+        """初始化 Agent"""
+        try:
+            # **關鍵修正**：使用嚴格輸出類型，防止 schema 汙染欄位
+            # **工具使用強化**：設置 tool_choice 確保積極使用檢索工具
+            self.sdk_agent = Agent(
+                name="Analysis Agent",
+                instructions=DEFAULT_INSTRUCTIONS,
+                tools=[rag_search_tool],
+                model=self.llm,
+                model_settings=ModelSettings(
+                    tool_choice="required"  # 強制使用工具，確保對履歷相關問題進行檢索
+                ),
+                output_type=AgentOutputSchema(AnalysisOutput, strict_json_schema=False),
+            )
+            logger.info(f"Analysis Agent ({self.llm}) 初始化成功，已啟用強制工具使用")
+        except Exception as e:
+            logger.error(f"初始化 Analysis Agent 失敗: {e}")
+
+    # -------------------------
+    # 安全解析輔助：避免 Invalid JSON
+    # -------------------------
+    def _safe_parse_output(self, result) -> AnalysisOutput | None:
+        """盡力把 SDK 輸出轉成 AnalysisOutput；失敗則回 None"""
+        try:
+            # SDK 直接轉型（最可靠）
+            return result.final_output_as(AnalysisOutput)
+        except Exception as e:
+            logger.warning(f"final_output_as 失敗，改走手動解析：{e}")
+
+        # 嘗試手動解析 result.output
+        try:
+            raw = result.output
+            if isinstance(raw, dict):
+                data = raw
+            elif isinstance(raw, str):
+                data = json.loads(raw)
+            else:
+                logger.error(f"未知輸出型別，無法解析：{type(raw)}")
+                return None
+
+            # 白名單清洗，防止 schema 汙染欄位
+            allowed = {
+                "draft_answer",
+                "sources",
+                "confidence",
+                "question_type",
+                "decision",
+                "metadata",
+            }
+            cleaned = {k: v for k, v in data.items() if k in allowed}
+
+            # 嘗試校驗
+            return AnalysisOutput.model_validate(cleaned)
+        except Exception as e:
+            logger.error(f"手動解析/校驗輸出失敗：{e}")
+            return None
 
     async def analyze(self, question: Question) -> AnalysisResult:
-        """分析問題並執行檢索
-
-        Args:
-            question: 使用者問題
-
-        Returns:
-            AnalysisResult: 分析結果
-        """
-        logger.info(f"開始分析問題: {question.text}")
-
+        """分析問題並執行檢索"""
+        logger.info(f"開始分析問題: {getattr(question, 'text', '')}")
         try:
-            # 1. 問題類型識別
-            question_type = self._classify_question(question.text)
-
-            # 2. 判斷是否需要檢索
-            if self._should_retrieve(question.text, question_type):
-                # 3. 生成檢索查詢
-                query = self._generate_search_query(question.text, question_type)
-
-                # 4. 執行 RAG 檢索
-                retrievals = rag_search(query, top_k=5)
-
-                # 5. 檢查檢索結果品質
-                if self._is_retrieval_sufficient(retrievals):
-                    # 6. 生成草稿回答
-                    draft_answer = self._generate_draft_answer(
-                        question.text, retrievals
-                    )
-
-                    return AnalysisResult(
-                        query=query,
-                        question_type=question_type,
-                        decision=AgentDecision.RETRIEVE,
-                        confidence=self._calculate_confidence(retrievals),
-                        retrievals=retrievals,
-                        draft_answer=draft_answer,
-                        metadata={
-                            "retrieval_count": len(retrievals),
-                            "max_score": max([r.score for r in retrievals])
-                            if retrievals
-                            else 0,
-                        },
-                    )
-                else:
-                    # 檢索結果不足，標記為超出範圍
-                    return AnalysisResult(
-                        query=query,
-                        question_type=question_type,
-                        decision=AgentDecision.OUT_OF_SCOPE,
-                        confidence=0.1,
-                        retrievals=retrievals,
-                        metadata={
-                            "reason": "檢索結果相關性不足",
-                            "max_score": max([r.score for r in retrievals])
-                            if retrievals
-                            else 0,
-                        },
-                    )
-            else:
-                # 不需要檢索的問題類型
-                if question_type == QuestionType.CONTACT:
-                    return AnalysisResult(
-                        query="",
-                        question_type=question_type,
-                        decision=AgentDecision.OUT_OF_SCOPE,
-                        confidence=0.9,
-                        metadata={"reason": "聯絡資訊請求"},
-                    )
-                else:
-                    return AnalysisResult(
-                        query="",
-                        question_type=question_type,
-                        decision=AgentDecision.ASK_CLARIFY,
-                        confidence=0.3,
-                        metadata={"reason": "問題不夠明確"},
-                    )
-
+            return await self._analyze_with_sdk(question)
         except Exception as e:
             logger.error(f"分析問題時發生錯誤: {e}")
             return AnalysisResult(
-                query="",
+                query=getattr(question, "text", ""),
                 question_type=QuestionType.OTHER,
                 decision=AgentDecision.OUT_OF_SCOPE,
                 confidence=0.0,
+                retrievals=[],
+                draft_answer="",
                 metadata={"error": str(e)},
             )
 
-    def _classify_question(self, question_text: str) -> QuestionType:
-        """問題類型分類
+    async def _analyze_with_sdk(self, question: Question) -> AnalysisResult:
+        """使用 OpenAI Agents SDK 分析問題"""
+        try:
+            result = await Runner.run(self.sdk_agent, input=question.text)
+            logger.info(f"Analysis Agent 回覆: {result}")
+        except Exception as e:
+            logger.error(f"執行 Analysis Agent 時發生錯誤: {e}")
+            return AnalysisResult(
+                query=question.text,
+                question_type=QuestionType.OTHER,
+                decision=AgentDecision.OUT_OF_SCOPE,
+                confidence=0.0,
+                retrievals=[],
+                draft_answer="",
+                metadata={"error": str(e), "sdk_result": False},
+            )
 
-        Args:
-            question_text: 問題文本
+        # 解析結構化輸出（具備自我修復）
+        output = self._safe_parse_output(result)
+        if output is None:
+            # 解析失敗時，回傳安全預設值
+            logger.error("解析 SDK 輸出失敗，回傳安全預設值。")
+            return AnalysisResult(
+                query=question.text,
+                question_type=QuestionType.OTHER,
+                decision=AgentDecision.OUT_OF_SCOPE,
+                confidence=0.0,
+                retrievals=[],
+                draft_answer="",
+                metadata={
+                    "error": "failed_to_parse_output",
+                    "raw_output": getattr(result, "output", None),
+                },
+            )
 
-        Returns:
-            QuestionType: 問題類型
-        """
-        text_lower = question_text.lower()
+        # 將字串映射到內部 Enum；若失敗則回退到 OTHER / OUT_OF_SCOPE
+        try:
+            question_type = QuestionType(output.question_type)
+        except Exception:
+            question_type = QuestionType.OTHER
 
-        # 技能相關關鍵字
-        skill_keywords = [
-            "技能",
-            "skill",
-            "程式",
-            "programming",
-            "開發",
-            "development",
-            "語言",
-            "language",
-            "框架",
-            "framework",
-            "工具",
-            "tool",
-        ]
+        try:
+            decision = AgentDecision(output.decision)
+        except Exception:
+            decision = AgentDecision.OUT_OF_SCOPE
 
-        # 經歷相關關鍵字
-        experience_keywords = [
-            "經驗",
-            "experience",
-            "工作",
-            "work",
-            "專案",
-            "project",
-            "公司",
-            "company",
-            "職位",
-            "position",
-            "角色",
-            "role",
-        ]
+        # 從 sources 重建檢索結果以供 EvaluateAgent 使用
+        retrievals: List[Dict[str, Any]] = []
+        if output.sources:
+            # 將 sources (doc_ids) 轉換為檢索結果格式
+            for source_id in output.sources:
+                retrievals.append(
+                    {
+                        "doc_id": source_id,
+                        "score": 0.8,  # 預設分數，表示高相關性
+                        "excerpt": f"來自文件 {source_id} 的內容",
+                        "metadata": {"source_filename": source_id},
+                    }
+                )
 
-        # 聯絡相關關鍵字
-        contact_keywords = [
-            "聯絡",
-            "contact",
-            "email",
-            "電話",
-            "phone",
-            "地址",
-            "address",
-            "面試",
-            "interview",
-            "合作",
-            "collaboration",
-        ]
+        result_metadata: Dict[str, Any] = {
+            "raw_output": getattr(result, "output", None),
+            "usage": getattr(result, "usage", None),
+            "sources": output.sources,  # 確保 sources 也保存在 metadata 中
+        }
 
-        # 事實查詢關鍵字
-        fact_keywords = [
-            "什麼",
-            "what",
-            "誰",
-            "who",
-            "哪裡",
-            "where",
-            "何時",
-            "when",
-            "如何",
-            "how",
-            "為什麼",
-            "why",
-        ]
+        # 若 LLM 在 metadata 裡有額外資訊，也一併帶出
+        if isinstance(output.metadata, dict):
+            if "retrievals" in output.metadata and isinstance(
+                output.metadata["retrievals"], list
+            ):
+                # 如果有更詳細的檢索資訊，使用它
+                retrievals = output.metadata["retrievals"]
+            result_metadata.update(
+                {k: v for k, v in output.metadata.items() if k not in {"retrievals"}}
+            )
 
-        # 根據關鍵字判斷類型
-        if any(keyword in text_lower for keyword in skill_keywords):
-            return QuestionType.SKILL
-        elif any(keyword in text_lower for keyword in experience_keywords):
-            return QuestionType.EXPERIENCE
-        elif any(keyword in text_lower for keyword in contact_keywords):
-            return QuestionType.CONTACT
-        elif any(keyword in text_lower for keyword in fact_keywords):
-            return QuestionType.FACT
-        else:
-            return QuestionType.OTHER
-
-    def _should_retrieve(self, question_text: str, question_type: QuestionType) -> bool:
-        """判斷是否需要進行檢索
-
-        Args:
-            question_text: 問題文本
-            question_type: 問題類型
-
-        Returns:
-            bool: 是否需要檢索
-        """
-        # 聯絡類型問題通常不需要檢索
-        if question_type == QuestionType.CONTACT:
-            return False
-
-        # 若為事實查詢（FACT），通常不是履歷內容可回答的，回傳 False
-        if question_type == QuestionType.FACT:
-            return False
-
-        # 其他類型問題需要檢索
-        return True
-
-    def _generate_search_query(
-        self, question_text: str, question_type: QuestionType
-    ) -> str:
-        """生成檢索查詢
-
-        Args:
-            question_text: 原始問題
-            question_type: 問題類型
-
-        Returns:
-            str: 優化後的檢索查詢
-        """
-        # 基本清理：移除標點符號、轉換為小寫
-        query = question_text.strip()
-
-        # 根據問題類型添加關鍵字
-        if question_type == QuestionType.SKILL:
-            # 技能問題：保持原樣或添加技能相關詞彙
-            pass
-        elif question_type == QuestionType.EXPERIENCE:
-            # 經歷問題：添加工作、專案相關詞彙
-            pass
-        elif question_type == QuestionType.FACT:
-            # 事實問題：移除疑問詞，保留核心概念
-            question_words = [
-                "什麼",
-                "誰",
-                "哪裡",
-                "何時",
-                "如何",
-                "為什麼",
-                "什么",
-                "谁",
-                "哪里",
-                "何时",
-                "怎么",
-                "为什么",
-            ]
-            for word in question_words:
-                query = query.replace(word, "")
-
-        return query.strip()
-
-    def _is_retrieval_sufficient(self, retrievals: List[SearchResult]) -> bool:
-        """檢查檢索結果是否足夠
-
-        Args:
-            retrievals: 檢索結果列表
-
-        Returns:
-            bool: 檢索結果是否足夠
-        """
-        if not retrievals:
-            return False
-
-        # 檢查最高分數是否超過閾值
-        max_score = max([r.score for r in retrievals])
-        return max_score >= self.similarity_threshold
-
-    def _calculate_confidence(self, retrievals: List[SearchResult]) -> float:
-        """計算信心分數
-
-        Args:
-            retrievals: 檢索結果列表
-
-        Returns:
-            float: 信心分數 (0-1)
-        """
-        if not retrievals:
-            return 0.0
-
-        # 基於最高分數和結果數量計算信心
-        max_score = max([r.score for r in retrievals])
-        avg_score = sum([r.score for r in retrievals]) / len(retrievals)
-
-        # 信心分數計算：加權平均
-        confidence = max_score * 0.7 + avg_score * 0.3
-
-        # 根據結果數量調整
-        if len(retrievals) >= 3:
-            confidence *= 1.0
-        elif len(retrievals) == 2:
-            confidence *= 0.8
-        else:
-            confidence *= 0.6
-
-        return min(confidence, 1.0)
-
-    def _generate_draft_answer(
-        self, question: str, retrievals: List[SearchResult]
-    ) -> str:
-        """生成草稿回答
-
-        Args:
-            question: 原始問題
-            retrievals: 檢索結果
-
-        Returns:
-            str: 草稿回答
-        """
-        if not retrievals:
-            return "抱歉，我找不到相關的資訊來回答您的問題。"
-
-        # 根據問題類型選擇最相關的片段
-        question_lower = question.lower()
-        relevant_excerpts = []
-        high_priority_excerpts = []  # 高優先級的片段
-
-        # 篩選高品質的檢索結果
-        for retrieval in retrievals:
-            if retrieval.score >= 0.3:  # 只使用高相關性的結果
-                # 根據問題關鍵字進一步篩選
-                excerpt_lower = retrieval.excerpt.lower()
-                doc_id = retrieval.doc_id.lower()
-                is_relevant = False
-                is_high_priority = False
-
-                # 技能相關問題 - 優先選擇 skills_ 開頭的文件
-                if any(
-                    keyword in question_lower
-                    for keyword in [
-                        "技能",
-                        "skill",
-                        "能力",
-                        "會",
-                        "語言",
-                        "框架",
-                        "程式",
-                    ]
-                ):
-                    if "skills_" in doc_id:
-                        is_relevant = True
-                        is_high_priority = True  # 技能文件優先級最高
-                    elif any(
-                        tech in excerpt_lower
-                        for tech in [
-                            "python",
-                            "javascript",
-                            "react",
-                            "django",
-                            "程式",
-                            "技術",
-                            "開發",
-                            "語言",
-                        ]
-                    ):
-                        is_relevant = True
-
-                # 經驗相關問題 - 優先選擇 experience_ 開頭的文件
-                elif any(
-                    keyword in question_lower
-                    for keyword in ["經驗", "experience", "工作", "專案", "project"]
-                ):
-                    if "experience_" in doc_id or "projects_" in doc_id:
-                        is_relevant = True
-                        is_high_priority = True  # 經驗和專案文件優先級最高
-                    elif any(
-                        exp in excerpt_lower
-                        for exp in ["工程師", "專案", "系統", "開發", "負責", "參與"]
-                    ):
-                        is_relevant = True
-
-                # 教育相關問題 - 優先選擇 education_ 開頭的文件
-                elif any(
-                    keyword in question_lower
-                    for keyword in ["教育", "學歷", "畢業", "大學", "學位"]
-                ):
-                    if "education_" in doc_id:
-                        is_relevant = True
-                        is_high_priority = True  # 教育文件優先級最高
-                    elif any(
-                        edu in excerpt_lower for edu in ["學位", "大學", "畢業", "學習"]
-                    ):
-                        is_relevant = True
-
-                # 通用相關性檢查
-                else:
-                    is_relevant = retrieval.score >= 0.4
-
-                if is_relevant:
-                    if is_high_priority:
-                        high_priority_excerpts.append(retrieval)
-                    else:
-                        relevant_excerpts.append(retrieval)
-
-        # 合併，高優先級的在前面
-        final_excerpts = high_priority_excerpts + relevant_excerpts
-
-        # 如果沒有找到相關內容，降低標準重新選擇
-        if not final_excerpts:
-            final_excerpts = [r for r in retrievals[:2] if r.score >= 0.2]
-
-        if not final_excerpts:
-            return "抱歉，找到的資訊與您的問題關聯性較低，無法提供準確的回答。"
-
-        # 根據問題類型生成更有針對性的回答
-        best_retrieval = final_excerpts[0]
-        if any(keyword in question_lower for keyword in ["技能", "skill", "能力"]):
-            draft = "關於我的技能，" + best_retrieval.excerpt
-        elif any(
-            keyword in question_lower for keyword in ["經驗", "experience", "工作"]
-        ):
-            draft = "關於我的工作經驗，" + best_retrieval.excerpt
-        elif any(keyword in question_lower for keyword in ["教育", "學歷"]):
-            draft = "關於我的教育背景，" + best_retrieval.excerpt
-        else:
-            draft = "根據我的資料，" + best_retrieval.excerpt
-
-        # 添加來源提示
-        source_ids = [r.doc_id for r in final_excerpts[:2]]
-        draft += f"\n\n[來源: {', '.join(source_ids)}]"
-
-        return draft
-
-    async def revise(
-        self, analysis: AnalysisResult, suggestions: List[str]
-    ) -> AnalysisResult:
-        """根據建議修正分析結果
-
-        Args:
-            analysis: 原始分析結果
-            suggestions: 修正建議
-
-        Returns:
-            AnalysisResult: 修正後的分析結果
-        """
-        logger.info(f"根據建議修正分析結果: {suggestions}")
-
-        # 簡單的修正邏輯：重新生成草稿
-        if analysis.retrievals:
-            revised_draft = self._apply_suggestions(analysis.draft_answer, suggestions)
-            analysis.draft_answer = revised_draft
-            analysis.metadata["revised"] = True
-            analysis.metadata["suggestions"] = suggestions
-
-        return analysis
-
-    def _apply_suggestions(self, draft: str, suggestions: List[str]) -> str:
-        """應用修正建議
-
-        Args:
-            draft: 原始草稿
-            suggestions: 建議列表
-
-        Returns:
-            str: 修正後的草稿
-        """
-        if not draft:
-            return draft
-
-        revised = draft
-
-        # 簡單的建議應用邏輯
-        for suggestion in suggestions:
-            if "too_long" in suggestion:
-                # 縮短回答
-                sentences = revised.split("。")
-                revised = "。".join(sentences[:2]) + "。"
-            elif "add_source" in suggestion:
-                # 確保有來源標註
-                if "[來源:" not in revised:
-                    revised += "\n\n[來源: 相關文件]"
-
-        return revised
+        return AnalysisResult(
+            query=question.text,
+            question_type=question_type,
+            decision=decision,
+            confidence=output.confidence,
+            retrievals=retrievals,
+            draft_answer=output.draft_answer,
+            metadata=result_metadata,
+        )

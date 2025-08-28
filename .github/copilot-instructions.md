@@ -10,7 +10,15 @@ Use spaces, not tabs.
 
 ## Shell Tool
 
-Use zsh syntax for shell commands.
+- Use zsh syntax for shell commands.
+- Prefer `uv` for Python package management.
+
+## Github Copilot Chat
+
+- Use clear and concise prompts.
+- Provide context and examples for better responses.
+- Refine prompts based on previous interactions.
+- Not always ask for approval, just do it.
 
 ## Naming Conventions
 
