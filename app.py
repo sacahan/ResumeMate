@@ -8,7 +8,6 @@ import logging
 import gradio as gr
 import sys
 import os
-from datetime import datetime
 
 # 添加 src 目錄到 Python 路徑
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
@@ -16,6 +15,11 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 from agents import trace
 from backend.models import Question
 from backend import ResumeMateProcessor
+from backend.tools.contact import (
+    ContactManager,
+    generate_contact_request_message,
+    is_contact_info_input,
+)
 
 
 # 追蹤功能已啟用標記
@@ -35,16 +39,18 @@ except Exception as e:
     logger.error(f"初始化處理器失敗: {e}")
     processor = None
 
+# 初始化聯絡資訊管理器
+contact_manager = ContactManager()
+
 
 async def stream_process_question(user_input: str, history: list):
     """
-    用於 streaming 輸出的處理函數
+    用於 streaming 輸出的處理函數，支援對話式聯絡資訊收集
     """
     if not processor:
         yield (
             history
             + [{"role": "assistant", "content": "抱歉，系統初始化失敗，請稍後再試。"}],
-            gr.update(visible=False),
             gr.update(visible=False),
             gr.update(visible=False),
         )
@@ -54,6 +60,27 @@ async def stream_process_question(user_input: str, history: list):
         yield (
             history + [{"role": "assistant", "content": "請輸入您的問題。"}],
             gr.update(visible=False),
+            gr.update(visible=False),
+        )
+        return
+
+    # 檢查是否是聯絡資訊輸入
+    if is_contact_info_input(user_input):
+        # 從歷史中找到最近的問題
+        original_question = None
+        for item in reversed(history):
+            if item["role"] == "user" and not is_contact_info_input(item["content"]):
+                original_question = item["content"]
+                break
+
+        # 處理聯絡資訊
+        success, message, contact_info = contact_manager.process_contact_input(
+            user_input, original_question
+        )
+
+        final_history = history + [{"role": "assistant", "content": message}]
+        yield (
+            final_history,
             gr.update(visible=False),
             gr.update(visible=False),
         )
@@ -127,7 +154,6 @@ async def stream_process_question(user_input: str, history: list):
 
             # 根據 SystemResponse.action 決定 UI 呈現
             action_text = ""
-            show_contact = False
             show_clarify = False
 
             action = (response.action or "").strip()
@@ -154,11 +180,18 @@ async def stream_process_question(user_input: str, history: list):
                 or str(meta.get("status", "")).lower() == "escalate_to_human"
                 or str(meta.get("status", "")).lower() == "out_of_scope"
             ):
-                show_contact = True
-                action_text = (
-                    "📨 需要人工協助：目前儲備的來源資料不足以保證回覆正確性。是否同意我先記錄原問題並轉交本人回覆？"
-                    "請提供一種稱呼與聯絡方式（Email/電話/Line/Telegram 任一），我會儘速回覆。"
+                # 直接在對話中顯示聯絡資訊請求
+                contact_request_msg = generate_contact_request_message()
+                final_answer = current_text.strip() + "\n\n" + contact_request_msg
+                final_history = history + [
+                    {"role": "assistant", "content": final_answer}
+                ]
+                yield (
+                    final_history,
+                    gr.update(visible=False),
+                    gr.update(visible=False),
                 )
+                return
 
             # 最終回應包含所有 UI 狀態
             final_history = history + [
@@ -174,7 +207,6 @@ async def stream_process_question(user_input: str, history: list):
             yield (
                 final_history,
                 gr.update(value=action_text, visible=bool(action_text)),
-                gr.update(visible=show_contact),
                 gr.update(visible=show_clarify),
             )
 
@@ -184,7 +216,6 @@ async def stream_process_question(user_input: str, history: list):
         error_history = history + [{"role": "assistant", "content": error_msg}]
         yield (
             error_history,
-            gr.update(visible=False),
             gr.update(visible=False),
             gr.update(visible=False),
         )
@@ -332,20 +363,8 @@ def create_gradio_interface():
             )
             clarify_submit = gr.Button("送出補充")
 
-        # --- Contact 區塊（人工接手/填表） ---
-        with gr.Accordion(
-            "聯絡方式（需要人工協助時顯示）", open=True, visible=False
-        ) as contact_row:
-            with gr.Row():
-                email = gr.Textbox(label="Email", placeholder="you@example.com")
-                phone = gr.Textbox(label="電話", placeholder="09xx-xxx-xxx")
-            with gr.Row():
-                line_id = gr.Textbox(label="Line ID", placeholder="可擇一提供")
-                telegram = gr.Textbox(label="Telegram", placeholder="@handle")
-            contact_submit = gr.Button("送出聯絡資訊")
-
         # 系統狀態
-        with gr.Accordion("系統狀態", open=False):
+        with gr.Accordion("系統狀態", open=False, visible=False):
             status_display = gr.Markdown(get_system_status())
             refresh_btn = gr.Button("刷新狀態")
 
@@ -360,7 +379,6 @@ def create_gradio_interface():
                     "",  # 清空輸入框
                     updated_history,  # 更新對話歷史
                     gr.update(visible=False),  # action_md
-                    gr.update(visible=False),  # contact_row
                     gr.update(visible=False),  # clarify_row
                     gr.update(interactive=False, value="處理中..."),  # 禁用發送按鈕
                 )
@@ -369,14 +387,13 @@ def create_gradio_interface():
                 last_result = None
                 async for result in stream_process_question(user_text, updated_history):
                     last_result = result
-                    if len(result) == 4:
+                    if len(result) == 3:
                         # streaming 過程中保持按鈕禁用狀態
                         yield (
                             "",  # 保持輸入框清空
                             result[0],  # 對話歷史
                             result[1],  # action_md
-                            result[2],  # contact_row
-                            result[3],  # clarify_row
+                            result[2],  # clarify_row
                             gr.update(
                                 interactive=False, value="處理中..."
                             ),  # 按鈕仍禁用
@@ -387,18 +404,16 @@ def create_gradio_interface():
                             result[0],
                             gr.update(visible=False),
                             gr.update(visible=False),
-                            gr.update(visible=False),
                             gr.update(interactive=False, value="處理中..."),
                         )
 
                 # 最後啟用按鈕
-                if last_result and len(last_result) == 4:
+                if last_result and len(last_result) == 3:
                     yield (
                         "",
                         last_result[0],
                         last_result[1],
                         last_result[2],
-                        last_result[3],
                         gr.update(interactive=True, value="發送"),  # 恢復按鈕
                     )
                 elif last_result:
@@ -413,20 +428,18 @@ def create_gradio_interface():
             else:
                 # 空輸入的情況
                 async for result in stream_process_question(user_text, history):
-                    if len(result) == 4:
+                    if len(result) == 3:
                         yield (
                             "",
                             result[0],
                             result[1],
                             result[2],
-                            result[3],
                             gr.update(interactive=True, value="發送"),
                         )
                     else:
                         yield (
                             "",
                             result[0],
-                            gr.update(visible=False),
                             gr.update(visible=False),
                             gr.update(visible=False),
                             gr.update(interactive=True, value="發送"),
@@ -439,7 +452,6 @@ def create_gradio_interface():
                 user_input,
                 chatbot,
                 action_md,
-                contact_row,
                 clarify_row,
                 send_btn,
             ],
@@ -451,7 +463,6 @@ def create_gradio_interface():
                 user_input,
                 chatbot,
                 action_md,
-                contact_row,
                 clarify_row,
                 send_btn,
             ],
@@ -467,7 +478,6 @@ def create_gradio_interface():
                     "",  # 清空 clarify_input
                     updated_history,  # 更新對話歷史
                     gr.update(visible=False),  # action_md
-                    gr.update(visible=False),  # contact_row
                     gr.update(visible=False),  # clarify_row
                     gr.update(
                         interactive=False, value="處理中..."
@@ -480,14 +490,13 @@ def create_gradio_interface():
                     clarify_text, updated_history
                 ):
                     last_result = result
-                    if len(result) == 4:
+                    if len(result) == 3:
                         # streaming 過程中保持按鈕禁用狀態
                         yield (
                             "",  # 保持輸入框清空
                             result[0],  # 對話歷史
                             result[1],  # action_md
-                            result[2],  # contact_row
-                            result[3],  # clarify_row
+                            result[2],  # clarify_row
                             gr.update(
                                 interactive=False, value="處理中..."
                             ),  # 按鈕仍禁用
@@ -498,18 +507,16 @@ def create_gradio_interface():
                             result[0],
                             gr.update(visible=False),
                             gr.update(visible=False),
-                            gr.update(visible=False),
                             gr.update(interactive=False, value="處理中..."),
                         )
 
                 # 最後啟用按鈕
-                if last_result and len(last_result) == 4:
+                if last_result and len(last_result) == 3:
                     yield (
                         "",
                         last_result[0],
                         last_result[1],
                         last_result[2],
-                        last_result[3],
                         gr.update(
                             interactive=True, value="送出補充"
                         ),  # 恢復 clarify 按鈕
@@ -526,20 +533,18 @@ def create_gradio_interface():
             else:
                 # 空輸入的情況
                 async for result in stream_process_question(clarify_text, history):
-                    if len(result) == 4:
+                    if len(result) == 3:
                         yield (
                             "",
                             result[0],
                             result[1],
                             result[2],
-                            result[3],
                             gr.update(interactive=True, value="送出補充"),
                         )
                     else:
                         yield (
                             "",
                             result[0],
-                            gr.update(visible=False),
                             gr.update(visible=False),
                             gr.update(visible=False),
                             gr.update(interactive=True, value="送出補充"),
@@ -552,49 +557,9 @@ def create_gradio_interface():
                 clarify_input,
                 chatbot,
                 action_md,
-                contact_row,
                 clarify_row,
                 clarify_submit,
             ],
-        )
-
-        # 聯絡資訊送出（將確認訊息寫回聊天，並可隱藏表單）
-        def handle_contact_submit(email_v, phone_v, line_v, tg_v, history):
-            ack = "👍 已收到您的聯絡方式："
-            items = []
-            if email_v:
-                items.append(f"Email: {email_v}")
-            if phone_v:
-                items.append(f"電話: {phone_v}")
-            if line_v:
-                items.append(f"Line: {line_v}")
-            if tg_v:
-                items.append(f"Telegram: {tg_v}")
-            ack += "；".join(items) if items else "（未填寫）"
-            history = history + [{"role": "assistant", "content": ack}]
-
-            # 若 ./contact/list.txt 不存在應該自行建立
-            if not os.path.exists("./contact/list.txt"):
-                os.makedirs(os.path.dirname("./contact/list.txt"), exist_ok=True)
-
-            with open("./contact/list.txt", "a") as f:
-                f.write(f"寫入時間: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-                f.write(f"Email: {email_v}\n")
-                f.write(f"電話: {phone_v}\n")
-                f.write(f"Line: {line_v}\n")
-                f.write(f"Telegram: {tg_v}\n")
-                f.write("\n")
-
-            return (
-                history,
-                gr.update(value="✅ 已登記聯絡方式，我們會儘速回覆。", visible=True),
-                gr.update(visible=False),
-            )
-
-        contact_submit.click(
-            fn=handle_contact_submit,
-            inputs=[email, phone, line_id, telegram, chatbot],
-            outputs=[chatbot, action_md, contact_row],
         )
 
         refresh_btn.click(fn=get_system_status, outputs=status_display)
