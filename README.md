@@ -1,64 +1,65 @@
 # ResumeMate
 
-ResumeMate 是一個 AI 驅動的履歷代理人平台，結合靜態履歷展示與 AI 互動問答功能。
+ResumeMate is an AI-powered resume agent platform that combines static resume presentation with interactive AI Q&A features.
 
-## 核心特色
+## Core Features
 
-- **智慧問答**：透過 RAG 技術實現個人化的履歷內容對話
-- **雙語支援**：中英文介面無縫切換
-- **簡潔展示**：清晰呈現個人資料、經歷與專長
+- **Smart Q&A:** Personalized resume conversations powered by RAG technology
+- **Conversational Contact Collection:** Collect contact information via natural language, suitable for iframe embedding
+- **Bilingual Support:** Seamless switching between English and Chinese interfaces
+- **Clean Presentation:** Clear display of personal details, experience, and skills
 
-## 技術架構
+## Tech Stack
 
-- **前端**：HTML + Tailwind CSS，響應式設計
-- **後端**：Python + Gradio + OpenAI SDK
-- **資料庫**：ChromaDB 向量資料庫
-- **部署**：GitHub Pages + HuggingFace Spaces
+- **Frontend:** HTML + Tailwind CSS, responsive design
+- **Backend:** Python + Gradio + OpenAI SDK
+- **Database:** ChromaDB vector database
+- **Deployment:** GitHub Pages + HuggingFace Spaces
 
-## 快速開始
+## Quick Start
 
-請參考 [開發環境設定指南](DEVELOPMENT.md) 設定您的開發環境。
+Please refer to the [Development Setup Guide](DEVELOPMENT.md) to set up your development environment.
 
-### 必要條件
+### Prerequisites
 
-- Python 3.10 或更高版本
+- Python 3.10 or above
 - Git
-- OpenAI API 金鑰
+- OpenAI API key
 
-### 設定步驟
+### Setup Steps
 
-1. 克隆儲存庫
+1. Clone the repository
 
    ```bash
    git clone https://github.com/sacahan/ResumeMate.git
    cd ResumeMate
    ```
 
-2. 執行環境設定腳本
+2. Run the environment setup script
 
    ```bash
    chmod +x scripts/setup_dev_env.sh
    ./scripts/setup_dev_env.sh
    ```
 
-3. 編輯 `.env` 檔案，添加您的 OpenAI API 金鑰
+3. Edit the `.env` file and add your OpenAI API key
 
-## 專案結構
+## Project Structure
 
-參見 [開發環境設定指南](DEVELOPMENT.md) 中的專案結構說明。
+See the [Development Setup Guide](DEVELOPMENT.md) for details about the project structure.
 
-## 開發計劃
+## Development Plan
 
-詳細的開發計劃請參見 [開發計劃文件](plans/development_plan.md)。
+For detailed development plans, see the [Development Plan Document](plans/development_plan.md).
 
-## 貢獻指南
+## Contribution Guide
 
-1. Fork 專案
-2. 創建功能分支 (`git checkout -b feature/amazing-feature`)
-3. 提交更改 (`git commit -m 'Add some amazing feature'`)
-4. 推送到分支 (`git push origin feature/amazing-feature`)
-5. 創建 Pull Request
+1. Fork the project
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to your branch (`git push origin feature/amazing-feature`)
+5. Create a Pull Request
 
-## 授權
+## License
 
-本專案採用 MIT 授權 - 詳見 [LICENSE](LICENSE) 檔案
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
