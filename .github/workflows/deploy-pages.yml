@@ -5,12 +5,14 @@ on:
     branches: [main]
     paths:
       - "src/frontend/**"
+      - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
 permissions:
   contents: read
   pages: write
   id-token: write
+  actions: read
 
 concurrency:
   group: "pages"
@@ -27,7 +29,11 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup Pages
+        id: pages
         uses: actions/configure-pages@v4
+        with:
+          # 嘗試自動啟用 Pages 如果尚未啟用
+          enablement: true
 
       - name: Copy frontend files
         run: |

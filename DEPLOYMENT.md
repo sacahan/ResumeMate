@@ -89,7 +89,7 @@ git push origin main
 
 ## 📁 檔案結構
 
-```
+```txt
 ├── .github/workflows/
 │   └── deploy-pages.yml          # GitHub Actions 工作流程
 ├── scripts/
