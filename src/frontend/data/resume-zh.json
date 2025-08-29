@@ -1,0 +1,103 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2025-01-29",
+  "language": "zh-TW",
+  "profile": {
+    "name": "AI 履歷助手",
+    "title": "AI Resume Assistant",
+    "subtitle": "我是您的智慧履歷代理人，結合 RAG 技術提供個人化問答服務",
+    "description": "軟體工程師，專精於 AI 應用開發和系統架構設計"
+  },
+  "about": {
+    "title": "關於我",
+    "summary": "專業簡介",
+    "content": "我是一位軟體工程師，專精於 Python、JavaScript 和雲端服務開發。擁有 5 年以上的全端開發經驗，熟悉 React、Django、Flask 等框架。目前專注於 AI 應用開發和系統架構設計。",
+    "coreSkills": {
+      "title": "主要技能",
+      "skills": ["Python", "JavaScript", "React", "Django", "AI/ML"]
+    },
+    "contact": {
+      "title": "聯絡資訊",
+      "message": "歡迎透過 LinkedIn 或專業平台與我聯繫"
+    }
+  },
+  "experience": {
+    "title": "工作經歷",
+    "items": [
+      {
+        "id": "exp-1",
+        "position": "資深軟體工程師",
+        "company": "",
+        "period": "2022 - 至今",
+        "description": "負責 AI 應用系統開發和架構設計。主要工作包括：設計和實作 RAG 系統、開發 AI 聊天機器人、建置微服務架構、優化系統效能。"
+      },
+      {
+        "id": "exp-2",
+        "position": "全端工程師",
+        "company": "",
+        "period": "2019 - 2022",
+        "description": "參與多個 Web 應用專案開發。主要負責前後端整合、API 設計、資料庫優化、用戶介面設計。成功交付多個企業級應用系統。"
+      }
+    ]
+  },
+  "skills": {
+    "title": "技能專長",
+    "categories": [
+      {
+        "name": "程式語言",
+        "skills": [
+          { "name": "Python", "level": "精通" },
+          { "name": "JavaScript", "level": "精通" },
+          { "name": "TypeScript", "level": "熟練" },
+          { "name": "Java", "level": "熟練" }
+        ]
+      },
+      {
+        "name": "框架技術",
+        "skills": [
+          { "name": "React", "level": "精通" },
+          { "name": "Django", "level": "精通" },
+          { "name": "FastAPI", "level": "熟練" },
+          { "name": "Node.js", "level": "熟練" }
+        ]
+      },
+      {
+        "name": "AI/雲端",
+        "skills": [
+          { "name": "LangChain", "level": "精通" },
+          { "name": "OpenAI API", "level": "精通" },
+          { "name": "AWS", "level": "熟練" },
+          { "name": "Docker", "level": "熟練" }
+        ]
+      }
+    ]
+  },
+  "aiChat": {
+    "title": "AI 智慧問答",
+    "subtitle": "與我的 AI 代理人對話，了解更多關於我的專業經驗和技能",
+    "description": "這是一個由 RAG 技術驅動的 AI 代理人展示。您可以詢問關於我的專業技能、專案經驗等問題。",
+    "notice": "注意：這是一個展示版本，回答基於預設的履歷資料",
+    "examples": [
+      "你有什麼技能？",
+      "你的工作經驗？",
+      "專案經驗如何？",
+      "如何聯絡你？"
+    ]
+  },
+  "footer": {
+    "title": "ResumeMate",
+    "subtitle": "AI 驅動的智慧履歷代理人平台",
+    "copyright": "保留所有權利。"
+  },
+  "navigation": {
+    "about": "關於我",
+    "experience": "經歷",
+    "skills": "技能",
+    "chat": "AI 問答"
+  },
+  "buttons": {
+    "startChat": "開始對話",
+    "learnMore": "了解更多",
+    "languageToggle": "EN"
+  }
+}
