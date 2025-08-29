@@ -2,6 +2,8 @@
 
 ResumeMate 是一個 AI 驅動的履歷代理人平台，結合靜態履歷展示與 AI 互動問答功能。
 
+🚀 **線上展示**: [https://huggingface.co/spaces/sacahan/resumemate-chat](https://huggingface.co/spaces/sacahan/resumemate-chat)
+
 ## 核心特色
 
 - **智慧問答**：透過 RAG 技術實現個人化的履歷內容對話
@@ -15,6 +17,8 @@ ResumeMate 是一個 AI 驅動的履歷代理人平台，結合靜態履歷展�
 - **後端**：Python + Gradio + OpenAI SDK
 - **資料庫**：ChromaDB 向量資料庫
 - **部署**：GitHub Pages + HuggingFace Spaces
+  - **AI 對話介面**: [HuggingFace Space](https://huggingface.co/spaces/sacahan/resumemate-chat)
+  - **靜態履歷**: GitHub Pages
 
 ## 快速開始
 

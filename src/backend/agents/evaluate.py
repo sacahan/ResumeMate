@@ -14,7 +14,7 @@ from pydantic import BaseModel, Field, ConfigDict
 
 # 確保 Runner 已正確引入
 from agents import Agent, Runner, AgentOutputSchema
-from backend.models import (
+from src.backend.models import (
     AnalysisResult,
     EvaluationResult,
     AgentDecision,
@@ -36,18 +36,20 @@ DEFAULT_INSTRUCTIONS = """你是回答品質審查代理。輸入為 analysis_ag
 - 回答語氣應該自然親切，就像韓世翔本人在回答一樣
 
 決策邏輯（優先順序）：
-1) 若題目完全與個人履歷/工作經歷無關（如生活習慣、興趣愛好、非工作相關問題等） → status="escalate_to_human"
-2) 若題目與履歷相關但涉及真正敏感資訊或資料庫中沒有的資訊（如薪資、內部機密、家庭狀況等） → status="escalate_to_human"
+1) **聯絡資訊問題**：若問題是詢問聯絡方式、email等，且 analysis_agent 使用了 get_contact_info 工具，則應 → status="ok"，直接提供聯絡資訊
+2) 若題目完全與個人履歷/工作經歷無關（如生活習慣、興趣愛好、非工作相關問題等） → status="escalate_to_human"
+3) 若題目與履歷相關但涉及真正敏感資訊或資料庫中沒有的資訊（如薪資、內部機密、家庭狀況等） → status="escalate_to_human"
    重要：以下履歷標準資訊應正常回答，不屬於敏感資訊：居住地點、工作地區、聯絡方式、教育背景、技能經驗、工作經歷等
-3) 若 analysis_agent.confidence < 0.4 或 sources 為空或不足 → status="escalate_to_human"
-4) 若關鍵資訊不足但可透過補充資訊解決（如缺少公司名稱、時間等可補充的具體資訊） → status="needs_clarification"，提供精準追問清單
-5) 若草稿可回覆且來源足夠且一致 → status="ok"
-6) 若草稿品質不足但能小幅編輯即可修正 → status="needs_edit" 並給出具體修改建議
-7) 其他所有情況 → status="escalate_to_human"
+4) 若 analysis_agent.confidence < 0.4 或 sources 為空或不足 → status="escalate_to_human"
+5) 若關鍵資訊不足但可透過補充資訊解決（如缺少公司名稱、時間等可補充的具體資訊） → status="needs_clarification"，提供精準追問清單
+6) 若草稿可回覆且來源足夠且一致 → status="ok"
+7) 若草稿品質不足但能小幅編輯即可修正 → status="needs_edit" 並給出具體修改建議
+8) 其他所有情況 → status="escalate_to_human"
 
 重要：傾向於選擇 escalate_to_human 以確保回答品質。當 status="escalate_to_human" 時，請在 final_answer 使用固定話術。
 
 評估規則（最低門檻）：
+- **聯絡資訊特殊處理**：對於聯絡資訊問題，如果 analysis_agent 使用了 get_contact_info 工具，則自動 → status="ok"，無需檢查 sources 或 confidence
 - 來源覆蓋度：至少 1 個可信來源，且主要結論均可在來源找到對應片段
 - 一致性：來源間不自相矛盾
 - 信心閾值：若 analysis_agent.confidence < 0.4 或 sources 為空 → 必須標記為 "escalate_to_human"
@@ -63,6 +65,8 @@ confidence ∈ [0,1]（可在原 confidence 基礎上調整）
 metadata 裡需回填：{ "reason": "...", "missing_fields": [...], "original_question": "...", "analysis_confidence": x.x }
 
 範例判斷：
+- 問題「如何聯絡你？」+ analysis_agent 使用 get_contact_info → status="ok"，final_answer="我是韓世翔，可以透過 sacahan@gmail.com 聯絡我。"
+- 問題「你的email是什麼？」+ analysis_agent 使用 get_contact_info → status="ok"，final_answer="我的email是 sacahan@gmail.com"
 - 問題「你現在住在哪裡？」+ analysis_agent 信心 0.9 + 有來源 → status="ok"，final_answer="我目前住在新北市中和區。"
 - 問題「你還需要服兵役嗎？」+ analysis_agent 信心 0.9 + 有來源 → status="ok"，final_answer="我已經完成了服兵役，擔任陸軍少尉預官，在2004年10月到2006年1月期間服役。"
 - 問題「你的薪水多少？」→ status="escalate_to_human"，因為涉及真正敏感資訊
@@ -220,6 +224,14 @@ class EvaluateAgent:
 
     async def _evaluate_with_sdk(self, analysis: AnalysisResult) -> EvaluationResult:
         """使用 OpenAI Agents SDK 評估分析結果"""
+        # 檢查是否使用了 get_contact_info 工具
+        used_contact_info_tool = False
+        if analysis.metadata and isinstance(analysis.metadata, dict):
+            # 檢查 metadata 中是否有使用工具的資訊
+            raw_output = analysis.metadata.get("raw_output")
+            if raw_output and isinstance(raw_output, str):
+                used_contact_info_tool = "get_contact_info" in raw_output
+
         # 準備 reviewer 輸入：原問題 + analysis 全量輸出
         analysis_data = {
             "original_question": getattr(analysis, "query", ""),
@@ -233,6 +245,7 @@ class EvaluateAgent:
                 "metadata": analysis.metadata or {},
                 "retrievals": [],
                 "sources": [],  # 若 analysis 直接輸出了 sources（有些管線會有）
+                "used_contact_info_tool": used_contact_info_tool,  # 新增標記
             },
         }
 

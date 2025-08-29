@@ -2,6 +2,8 @@
 
 ResumeMate is an AI-powered resume agent platform that combines static resume presentation with interactive AI Q&A features.
 
+🚀 **Live Demo**: [https://huggingface.co/spaces/sacahan/resumemate-chat](https://huggingface.co/spaces/sacahan/resumemate-chat)
+
 ## Core Features
 
 - **Smart Q&A:** Personalized resume conversations powered by RAG technology
@@ -15,6 +17,8 @@ ResumeMate is an AI-powered resume agent platform that combines static resume pr
 - **Backend:** Python + Gradio + OpenAI SDK
 - **Database:** ChromaDB vector database
 - **Deployment:** GitHub Pages + HuggingFace Spaces
+  - **AI Chat Interface**: [HuggingFace Space](https://huggingface.co/spaces/sacahan/resumemate-chat)
+  - **Static Resume**: GitHub Pages
 
 ## Quick Start
 

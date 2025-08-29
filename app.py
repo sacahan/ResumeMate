@@ -5,17 +5,29 @@
 
 import asyncio
 import logging
-import gradio as gr
 import sys
 import os
 
-# 添加 src 目錄到 Python 路徑
+# 修復 Gradio 環境變數問題
+if os.getenv("GRADIO_SERVER_PORT") == "":
+    os.environ.pop("GRADIO_SERVER_PORT", None)
+
+# 確保其他 Gradio 環境變數的正確性
+gradio_env_vars = ["GRADIO_SERVER_NAME", "GRADIO_SHARE", "GRADIO_DEBUG"]
+for var in gradio_env_vars:
+    if os.getenv(var) == "":
+        os.environ.pop(var, None)
+
+# 添加 src 目錄到 Python 路徑（必須在 gradio 導入之前）
 sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 
-from agents import trace
-from backend.models import Question
-from backend import ResumeMateProcessor
-from backend.tools.contact import (
+# 重要：gradio 必須在環境變數修復後才能導入
+import gradio as gr  # noqa: E402
+
+from agents import trace  # noqa: E402
+from backend.models import Question  # noqa: E402
+from backend import ResumeMateProcessor  # noqa: E402
+from backend.tools.contact import (  # noqa: E402
     ContactManager,
     generate_contact_request_message,
     is_contact_info_input,
