@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ResumeMate - AI 履歷助手</title>
+    <title>brianhan.cc - 關於我</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -62,7 +62,7 @@
     <nav class="fixed top-0 w-full z-50 glass-effect">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16">
-          <div class="text-xl font-bold text-gradient">ResumeMate</div>
+          <div class="text-xl font-bold text-gradient">Brian Han</div>
           <div class="hidden md:flex space-x-8">
             <a href="#about" class="hover:text-blue-400 transition-colors"
               >關於我</a
@@ -444,68 +444,27 @@
           </p>
         </div>
 
-        <div class="glass-effect p-8 rounded-2xl">
-          <div class="mb-6">
-            <p
-              class="text-gray-300 mb-4"
-              data-zh="這是一個由 RAG 技術驅動的 AI 代理人展示。您可以詢問關於我的專業技能、專案經驗等問題。"
-              data-en="This is an AI agent demo powered by RAG technology. You can ask questions about my professional skills, project experience, etc."
-            >
-              這是一個由 RAG 技術驅動的 AI
-              代理人展示。您可以詢問關於我的專業技能、專案經驗等問題。
-            </p>
-            <p
-              class="text-yellow-400 text-sm"
-              data-zh="注意：這是一個展示版本，回答基於預設的履歷資料"
-              data-en="Note: This is a demo version, answers are based on predefined resume data"
-            >
-              注意：這是一個展示版本，回答基於預設的履歷資料
-            </p>
-          </div>
-
+        <div class="glass-effect rounded-2xl">
           <div
-            class="w-full h-96 md:h-[500px] rounded-lg overflow-hidden border border-gray-700"
+            class="w-full min-h-[500px] rounded-2xl border p-4 border-gray-700 flex items-stretch justify-stretch"
+            style="background-color: #0b0f18"
           >
-            <iframe
+            <script
+              type="module"
+              src="https://gradio.s3-us-west-2.amazonaws.com/5.44.1/gradio.js"
+            ></script>
+            <gradio-app
               src="https://sacahan-resumemate-chat.hf.space"
-              width="100%"
-              height="100%"
-              frameborder="0"
-              class="bg-gray-900"
-              title="ResumeMate AI Chat"
-            >
-            </iframe>
-          </div>
-
-          <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <button
-              class="chat-example glass-effect p-3 rounded-lg text-sm hover:bg-white hover:bg-opacity-20 transition-colors"
-              data-zh="你有什麼技能？"
-              data-en="What skills do you have?"
-            >
-              你有什麼技能？
-            </button>
-            <button
-              class="chat-example glass-effect p-3 rounded-lg text-sm hover:bg-white hover:bg-opacity-20 transition-colors"
-              data-zh="你的工作經驗？"
-              data-en="Your work experience?"
-            >
-              你的工作經驗？
-            </button>
-            <button
-              class="chat-example glass-effect p-3 rounded-lg text-sm hover:bg-white hover:bg-opacity-20 transition-colors"
-              data-zh="專案經驗如何？"
-              data-en="How about projects?"
-            >
-              專案經驗如何？
-            </button>
-            <button
-              class="chat-example glass-effect p-3 rounded-lg text-sm hover:bg-white hover:bg-opacity-20 transition-colors"
-              data-zh="如何聯絡你？"
-              data-en="How to contact you?"
-            >
-              如何聯絡你？
-            </button>
+              container="false"
+              info="false"
+              style="
+                flex: 1 1 0%;
+                width: 100%;
+                height: 100%;
+                min-height: 500px;
+                display: block;
+              "
+            ></gradio-app>
           </div>
         </div>
       </div>
@@ -515,15 +474,8 @@
     <footer class="py-12 border-t border-gray-700">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         <div class="text-2xl font-bold text-gradient mb-4">ResumeMate</div>
-        <p
-          class="text-gray-400 mb-4"
-          data-zh="AI 驅動的智慧履歷代理人平台"
-          data-en="AI-powered intelligent resume agent platform"
-        >
-          AI 驅動的智慧履歷代理人平台
-        </p>
         <p class="text-sm text-gray-500">
-          © 2025 ResumeMate.
+          © 2025 Brian Han.
           <span data-zh="保留所有權利。" data-en="All rights reserved."
             >保留所有權利。</span
           >

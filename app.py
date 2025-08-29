@@ -331,7 +331,7 @@ def create_gradio_interface():
         gr.Markdown(
             """
         # 🤖 ResumeMate - AI 履歷助手
-        歡迎使用！可詢問：技能、經驗、教育、聯絡資訊。
+        這是一個由 RAG 技術驅動的 AI 代理人展示。您可以詢問關於我的技能、經驗、教育、聯絡資訊等問題。
         """
         )
 
