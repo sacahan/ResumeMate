@@ -35,7 +35,7 @@ class RAGConfig:
     max_retries: int = 1
     cache_size: int = 50
     db_path: str = "./chroma_db"
-    collection_name: str = "resumes_documents"
+    collection_name: str = "markdown_documents"
     max_top_k: int = 20
 
     @classmethod

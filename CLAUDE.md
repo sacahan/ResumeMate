@@ -14,14 +14,21 @@ ResumeMate is an AI-driven resume agent platform that combines static resume dis
 - **Processing Core**: `src/backend/processor.py` - Coordinates interaction between Analysis and Evaluate agents
 - **AI Agents**:
   - `src/backend/agents/analysis.py` - Analyzes user questions and retrieves relevant information
+    - Includes `get_contact_info` tool for contact information queries
+    - Includes `rag_search_tool` for resume content retrieval
   - `src/backend/agents/evaluate.py` - Evaluates responses and determines system actions
 - **Data Models**: `src/backend/models.py` - Pydantic models for Question and SystemResponse
 - **RAG Tools**: `src/backend/tools/rag.py` - ChromaDB vector database integration
+- **Contact Tools**: `src/backend/tools/contact.py` - Contact information collection and management
 
 ### Frontend Structure
 
 - **Static Site**: `src/frontend/index.html` - Static resume display
-- **JavaScript**: `src/frontend/static/js/main.js` - Frontend interactivity
+- **JavaScript**: `src/frontend/static/js/main.js` - Frontend interactivity (ResumeMateFrontend class)
+- **Data Files**:
+  - `src/frontend/data/resume-zh.json` - Chinese resume data
+  - `src/frontend/data/resume-en.json` - English resume data
+  - `src/frontend/data/version.json` - Version control for data updates
 - **Styling**: Tailwind CSS for responsive design
 
 ### Database
@@ -64,7 +71,7 @@ pytest -v                           # Verbose output
 
 ```bash
 # Start the Gradio interface
-python app.py
+uv run app.py
 
 # The app runs on http://localhost:7860
 ```
@@ -79,7 +86,7 @@ python app.py
 ./scripts/deploy_frontend.sh
 
 # Combined deployment
-./scripts/deploy.sh
+./scripts/build_and_deploy.sh
 ```
 
 ## Key Technologies
@@ -116,7 +123,11 @@ python app.py
 
 1. **Question Processing**: User input is structured into `Question` model
 2. **Analysis Phase**: `AnalysisAgent` processes question and retrieves relevant resume content
+   - Uses `get_contact_info` tool for contact information queries
+   - Uses `rag_search_tool` for general resume content retrieval
 3. **Evaluation Phase**: `EvaluateAgent` evaluates analysis and determines appropriate system action
+   - Supports multiple decision states: ok, needs_edit, needs_clarification, escalate_to_human
+   - Special handling for contact information queries
 4. **Response Formatting**: System returns `SystemResponse` with answer, confidence, and action suggestions
 
 ## Special Considerations
@@ -126,6 +137,43 @@ python app.py
 - **Confidence Scoring**: Responses include confidence levels for quality assessment
 - **Action System**: System can suggest clarification requests or human escalation
 - **Async Processing**: Core processing functions use async/await patterns
+
+## Current Project Status
+
+### Completed Features (Phase 2 - First Checkpoint ✅)
+
+#### Backend
+
+- **Analysis Agent MVP**: Fully implemented with OpenAI Agents SDK
+  - Dual-tool strategy: `get_contact_info` for contact queries, `rag_search_tool` for resume content
+  - Comprehensive error handling and safe output parsing
+  - First-person response generation (representing 韓世翔 directly)
+- **Evaluate Agent MVP**: Complete evaluation and quality control system
+  - Multi-state decision system (ok, needs_edit, escalate_to_human, etc.)
+  - Contact information special handling
+  - Quality validation with confidence scoring
+
+#### Frontend
+
+- **Static Resume Site**: Complete responsive HTML5 site with Tailwind CSS
+- **Dynamic Data Loading**: JSON-driven content management system
+- **Bilingual Support**: Seamless Chinese/English switching
+- **Interactive Features**: Smooth scrolling, animations, chat examples
+
+#### Testing & Integration
+
+- **Unit Tests**: 161 lines in `tests/unit/test_analysis_agent.py`
+- **Integration Tests**: Full agent cooperation testing
+- **Contact Information Tools**: Dedicated contact collection system
+
+### Next Phase
+
+The project is ready to move into Phase 3 (Feature Enhancement) focusing on:
+
+- AI capability improvements
+- Performance optimizations
+- Advanced UI/UX enhancements
+- Production deployment preparation
 
 ## Development Standards
 

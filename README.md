@@ -7,9 +7,11 @@ ResumeMate is an AI-powered resume agent platform that combines static resume pr
 ## Core Features
 
 - **Smart Q&A:** Personalized resume conversations powered by RAG technology
+- **Contact Information Queries:** Dedicated tool for quick contact information responses
 - **Conversational Contact Collection:** Collect contact information via natural language, suitable for iframe embedding
 - **Bilingual Support:** Seamless switching between English and Chinese interfaces
-- **Clean Presentation:** Clear display of personal details, experience, and skills
+- **Responsive Design:** Optimized experience across all screen sizes
+- **JSON-Driven Content:** Flexible data management with version control
 
 ## Tech Stack
 
@@ -55,6 +57,40 @@ See the [Development Setup Guide](DEVELOPMENT.md) for details about the project 
 ## Development Plan
 
 For detailed development plans, see the [Development Plan Document](plans/development_plan.md).
+
+## Project Status
+
+### 🎉 Phase 2 Complete (Analysis Agent MVP + Frontend Foundation)
+
+#### ✅ Backend Core Features
+
+- **Analysis Agent**: Complete dual-tool strategy implementation
+  - `get_contact_info`: Dedicated contact information query tool
+  - `rag_search_tool`: Resume content retrieval tool
+- **Evaluate Agent**: Multi-state evaluation system with quality control
+- **Async Architecture**: High-performance async/await processing pattern
+
+#### ✅ Frontend Complete Features
+
+- **Responsive Resume Site**: Complete HTML5 + Tailwind CSS implementation
+- **Bilingual Support**: Seamless Chinese/English switching mechanism
+- **JSON Data Management**: Dynamic loading with version control system
+- **Interactive Effects**: Smooth scrolling, animations, chat examples
+
+#### ✅ Testing & Quality Assurance
+
+- **Unit Tests**: Complete Analysis Agent test coverage
+- **Integration Tests**: Frontend-backend cooperation validation
+- **Contact Information Tools**: Dedicated contact information collection system
+
+### 📋 Next Phase: Feature Enhancement & Optimization
+
+Ready to enter Phase 3, focusing on:
+
+- AI capability improvements and prompt optimization
+- System performance optimization
+- UI/UX experience enhancements
+- Production deployment preparation
 
 ## Contribution Guide
 

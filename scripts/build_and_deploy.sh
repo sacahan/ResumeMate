@@ -1,112 +1,101 @@
 #!/bin/bash
-# 最安全的部署方案：純本地構建 + 手動上傳
+# ResumeMate 完整部署腳本 - 統一部署前端和後端
 
 # 輸出顏色設定
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
+RED='\033[0;31m'
 NC='\033[0m'
 
-echo "${BLUE}ResumeMate 前端構建與部署工具${NC}"
+echo "${BLUE}ResumeMate 完整部署工具${NC}"
 echo "=================================="
 
-# 檢查前端檔案
-if [ ! -f "src/frontend/index.html" ]; then
-    echo "${RED}錯誤: src/frontend/index.html 不存在${NC}"
+# 獲取腳本目錄
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# 切換到專案根目錄
+cd "$REPO_ROOT"
+
+# 檢查必要腳本是否存在
+if [ ! -f "$SCRIPT_DIR/deploy_backend.sh" ]; then
+    echo "${RED}錯誤: deploy_backend.sh 腳本不存在${NC}"
     exit 1
 fi
 
-# 創建構建目錄
-BUILD_DIR="build"
-echo "${YELLOW}清理並創建構建目錄: $BUILD_DIR${NC}"
-rm -rf "$BUILD_DIR"
-mkdir -p "$BUILD_DIR"
-
-# 複製檔案
-echo "${YELLOW}複製前端檔案...${NC}"
-cp -r src/frontend/* "$BUILD_DIR"/
-
-# 更新配置
-echo "${YELLOW}更新生產環境配置...${NC}"
-
-# 更新 iframe URL
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    sed -i '' 's|http://localhost:7860|https://sacahan-resumemate-chat.hf.space|g' "$BUILD_DIR/index.html"
-    # 確保相對路径正確
-    sed -i '' 's|src="./data/|src="data/|g' "$BUILD_DIR/static/js/main.js" 2>/dev/null || true
-else
-    sed -i 's|http://localhost:7860|https://sacahan-resumemate-chat.hf.space|g' "$BUILD_DIR/index.html"
-    sed -i 's|src="./data/|src="data/|g' "$BUILD_DIR/static/js/main.js" 2>/dev/null || true
+if [ ! -f "$SCRIPT_DIR/deploy_frontend.sh" ]; then
+    echo "${RED}錯誤: deploy_frontend.sh 腳本不存在${NC}"
+    exit 1
 fi
 
-# 創建 CNAME 檔案（如果有自定義域名）
-# echo "your-domain.com" > "$BUILD_DIR/CNAME"
+# 確保腳本有執行權限
+chmod +x "$SCRIPT_DIR/deploy_backend.sh"
+chmod +x "$SCRIPT_DIR/deploy_frontend.sh"
 
-# 創建 .nojekyll 檔案（避免 Jekyll 處理）
-touch "$BUILD_DIR/.nojekyll"
-
-# 創建部署資訊
-cat > "$BUILD_DIR/deploy-info.json" << EOF
-{
-  "deployTime": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
-  "branch": "$(git rev-parse --abbrev-ref HEAD)",
-  "commit": "$(git rev-parse HEAD)",
-  "version": "1.0.0"
-}
-EOF
-
-echo "${GREEN}構建完成！${NC}"
-echo "構建檔案位於: $BUILD_DIR/"
-echo ""
 echo "${BLUE}部署選項:${NC}"
-echo "1. 手動上傳: 將 $BUILD_DIR/ 內容上傳到 GitHub Pages"
-echo "2. 使用 GitHub CLI: gh-pages branch 推送"
-echo "3. 使用 GitHub Actions: 推送到 main 分支自動部署"
+echo "1. 部署後端 (Hugging Face Spaces)"
+echo "2. 部署前端 (GitHub Pages)"
+echo "3. 完整部署 (後端 + 前端)"
+echo "4. 退出"
 echo ""
 
-read -p "是否要使用 GitHub CLI 自動推送到 gh-pages? (y/N): " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "${YELLOW}使用 GitHub CLI 推送...${NC}"
-
-    # 檢查 gh 是否安裝
-    if ! command -v gh &> /dev/null; then
-        echo "${YELLOW}安裝 GitHub CLI...${NC}"
-        if [[ "$OSTYPE" == "darwin"* ]]; then
-            brew install gh
-        else
-            echo "請先安裝 GitHub CLI: https://cli.github.com/"
-            exit 1
-        fi
-    fi
-
-    # 檢查登入狀態
-    if ! gh auth status &> /dev/null; then
-        echo "${YELLOW}請登入 GitHub CLI...${NC}"
-        gh auth login
-    fi
-
-    # 推送到 gh-pages
-    cd "$BUILD_DIR"
-    git init
-    git add .
-    git commit -m "deploy: 前端部署 $(date +'%Y-%m-%d %H:%M:%S')"
-    git branch -M gh-pages
-    git remote add origin "$(cd .. && git config --get remote.origin.url)"
-    git push -f origin gh-pages
-    cd ..
-
-    echo "${GREEN}部署成功！${NC}"
-    REPO_URL=$(git config --get remote.origin.url | sed 's/git@github.com:/https:\/\/github.com\//' | sed 's/.git$//')
-    echo "GitHub Pages 設定: $REPO_URL/settings/pages"
-else
-    echo "${BLUE}手動部署步驟:${NC}"
-    echo "1. 前往 GitHub repository settings"
-    echo "2. 啟用 GitHub Pages"
-    echo "3. 選擇 'Deploy from a branch' → 'gh-pages'"
-    echo "4. 將 $BUILD_DIR/ 內容推送到 gh-pages 分支"
-fi
-
-echo ""
-echo "${GREEN}構建檔案保留在: $BUILD_DIR/${NC}"
-echo "如需清理，執行: rm -rf $BUILD_DIR"
+while true; do
+    read -p "請選擇部署選項 (1-4): " choice
+    case $choice in
+        1)
+            echo "${YELLOW}開始部署後端...${NC}"
+            "$SCRIPT_DIR/deploy_backend.sh"
+            if [ $? -eq 0 ]; then
+                echo "${GREEN}後端部署完成！${NC}"
+            else
+                echo "${RED}後端部署失敗！${NC}"
+                exit 1
+            fi
+            break
+        ;;
+        2)
+            echo "${YELLOW}開始部署前端...${NC}"
+            "$SCRIPT_DIR/deploy_frontend.sh"
+            if [ $? -eq 0 ]; then
+                echo "${GREEN}前端部署完成！${NC}"
+            else
+                echo "${RED}前端部署失敗！${NC}"
+                exit 1
+            fi
+            break
+        ;;
+        3)
+            echo "${YELLOW}開始完整部署...${NC}"
+            echo ""
+            echo "${BLUE}步驟 1/2: 部署後端${NC}"
+            "$SCRIPT_DIR/deploy_backend.sh"
+            if [ $? -eq 0 ]; then
+                echo "${GREEN}後端部署完成！${NC}"
+                echo ""
+                echo "${BLUE}步驟 2/2: 部署前端${NC}"
+                "$SCRIPT_DIR/deploy_frontend.sh"
+                if [ $? -eq 0 ]; then
+                    echo ""
+                    echo "${GREEN}=== 完整部署成功！===${NC}"
+                    echo "後端: https://huggingface.co/spaces/sacahan/resumemate-chat"
+                    echo "前端: https://sacahan.github.io/ResumeMate"
+                else
+                    echo "${RED}前端部署失敗！${NC}"
+                    exit 1
+                fi
+            else
+                echo "${RED}後端部署失敗，停止後續部署${NC}"
+                exit 1
+            fi
+            break
+        ;;
+        4)
+            echo "${YELLOW}取消部署${NC}"
+            exit 0
+        ;;
+        *)
+            echo "${RED}無效選項，請輸入 1-4${NC}"
+        ;;
+    esac
+done

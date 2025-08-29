@@ -54,15 +54,47 @@ except Exception as e:
 # 初始化聯絡資訊管理器
 contact_manager = ContactManager()
 
+# 語言配置 - 僅中文
+TEXTS = {
+    "title": "🤖 ResumeMate - AI 履歷助手",
+    "description": "這是一個由 RAG 技術驅動的 AI 代理人展示。您可以詢問關於我的技能、經驗、教育、聯絡資訊等問題。",
+    "chat_label": "對話",
+    "chat_placeholder": "目前還沒有對話記錄...",
+    "input_label": "您的問題",
+    "input_placeholder": "例如：你有什麼程式設計經驗？",
+    "send_button": "發送",
+    "examples_label": "範例問題",
+    "examples": [
+        "先介紹一下自己",
+        "你有什麼技能？",
+        "你的工作經驗如何？",
+        "你的教育背景是什麼？",
+        "如何聯絡你？",
+    ],
+    "thinking": "正在思考您的問題...",
+    "processing": "處理中...",
+    "clarify_title": "補充資訊（當系統需要更多資訊時顯示）",
+    "clarify_label": "請補充資訊後直接送出",
+    "clarify_placeholder": "例如：公司名稱、年份、職稱、專案名稱...",
+    "clarify_submit": "送出補充",
+    "status_title": "系統狀態",
+    "refresh_button": "刷新狀態",
+    "low_confidence_hint": "\n\n💡 提示：此回答的可信度較低，建議使用更詳細的提問。",
+    "system_error": "抱歉，系統初始化失敗，請稍後再試。",
+    "empty_input": "請輸入您的問題。",
+    "processing_error": "抱歉，處理您的問題時發生錯誤：",
+}
+
 
 async def stream_process_question(user_input: str, history: list):
     """
     用於 streaming 輸出的處理函數，支援對話式聯絡資訊收集
     """
+    texts = TEXTS
+
     if not processor:
         yield (
-            history
-            + [{"role": "assistant", "content": "抱歉，系統初始化失敗，請稍後再試。"}],
+            history + [{"role": "assistant", "content": texts["system_error"]}],
             gr.update(visible=False),
             gr.update(visible=False),
         )
@@ -70,7 +102,7 @@ async def stream_process_question(user_input: str, history: list):
 
     if not user_input.strip():
         yield (
-            history + [{"role": "assistant", "content": "請輸入您的問題。"}],
+            history + [{"role": "assistant", "content": texts["empty_input"]}],
             gr.update(visible=False),
             gr.update(visible=False),
         )
@@ -101,7 +133,7 @@ async def stream_process_question(user_input: str, history: list):
     try:
         # 先顯示 "正在思考..." 的訊息
         thinking_history = history + [
-            {"role": "assistant", "content": "正在思考您的問題..."}
+            {"role": "assistant", "content": texts["thinking"]}
         ]
         yield (
             thinking_history,
@@ -150,10 +182,7 @@ async def stream_process_question(user_input: str, history: list):
 
             # 低信心提示
             if response.confidence < 0.3:
-                final_answer = (
-                    current_text.strip()
-                    + "\n\n💡 提示：此回答的可信度較低，建議使用更詳細的提問。"
-                )
+                final_answer = current_text.strip() + texts["low_confidence_hint"]
                 final_history = history + [
                     {"role": "assistant", "content": final_answer}
                 ]
@@ -224,7 +253,7 @@ async def stream_process_question(user_input: str, history: list):
 
     except Exception as e:
         logging.getLogger(__name__).error(f"處理問題時發生錯誤: {e}")
-        error_msg = f"抱歉，處理您的問題時發生錯誤：{str(e)}"
+        error_msg = f"{texts['processing_error']}{str(e)}"
         error_history = history + [{"role": "assistant", "content": error_msg}]
         yield (
             error_history,
@@ -262,7 +291,67 @@ def create_gradio_interface():
     """
 
     custom_css = """
-    .gradio-container { max-width: 800px !important; margin: auto !important; }
+    /* 匹配前端的字體設定 */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+    * {
+        font-family: "Inter", "Noto Sans TC", sans-serif !important;
+    }
+
+    /* 主容器樣式匹配前端 */
+    .gradio-container {
+        max-width: 800px !important;
+        margin: auto !important;
+        color: #d1d5db !important;
+        background: linear-gradient(-45deg, #282a50, #4c408e, #282a50, #1f2937) !important;
+        background-size: 400% 400% !important;
+        animation: gradient 25s ease infinite !important;
+    }
+
+    .gradio-container p {
+        font-size: 0.9rem !important;
+    }
+
+    @keyframes gradient {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+
+    /* 玻璃效果匹配前端 */
+    .glass-effect {
+        background: rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    }
+
+    /* 文字漸層效果 */
+    .text-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
+    }
+
+    /* 標題樣式匹配前端 */
+    h1, h2, h3 {
+        color: #d1d5db !important;
+        font-size: 2.5rem !important;
+        font-weight: 700 !important;
+        text-align: center !important;
+        margin: 1.5rem 0 !important;
+    }
+
+    /* 特別針對主標題的樣式 */
+    .gradio-container h1:first-of-type {
+        font-size: 3rem !important;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        -webkit-background-clip: text !important;
+        -webkit-text-fill-color: transparent !important;
+        background-clip: text !important;
+    }
+
+    /* Gradio 組件樣式調整 */
     .chat-message { border-radius: 10px !important; padding: 10px !important; margin: 5px 0 !important; }
 
     /* 針對 Gradio 4.0+ 的 Chatbot 組件樣式 */
@@ -278,24 +367,53 @@ def create_gradio_interface():
         margin-right: 0 !important;
         max-width: 80% !important;
         border-radius: 18px 18px 4px 18px !important;
+        font-family: "Inter", "Noto Sans TC", sans-serif !important;
     }
 
-    /* AI 回覆靠左對齊 */
+    /* AI 回覆靠左對齊 - 使用玻璃效果 */
     .message-wrap[data-testid*="bot"] .message,
     .message-wrap[data-testid*="assistant"] .message {
-        background: #f1f3f4 !important;
-        color: #333 !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: #d1d5db !important;
         margin-left: 0 !important;
         margin-right: auto !important;
         max-width: 80% !important;
         border-radius: 18px 18px 18px 4px !important;
+        font-family: "Inter", "Noto Sans TC", sans-serif !important;
     }
 
     /* 深色主題支援 */
     .dark .message-wrap[data-testid*="bot"] .message,
     .dark .message-wrap[data-testid*="assistant"] .message {
-        background: #374151 !important;
-        color: #f9fafb !important;
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: #d1d5db !important;
+    }
+
+    /* 輸入框樣式匹配前端 */
+    input, textarea {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: #d1d5db !important;
+        font-family: "Inter", "Noto Sans TC", sans-serif !important;
+    }
+
+    /* 按鈕樣式匹配前端 */
+    .btn-primary, button[variant="primary"] {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        border: none !important;
+        color: white !important;
+        font-family: "Inter", "Noto Sans TC", sans-serif !important;
+    }
+
+    /* 其他按鈕使用玻璃效果 */
+    button:not([variant="primary"]) {
+        background: rgba(255, 255, 255, 0.1) !important;
+        backdrop-filter: blur(10px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: #d1d5db !important;
+        font-family: "Inter", "Noto Sans TC", sans-serif !important;
     }
 
     /* 訊息內容樣式優化 */
@@ -323,22 +441,31 @@ def create_gradio_interface():
         opacity: 0.6 !important;
         cursor: not-allowed !important;
     }
+
+    /* Scrollbar 樣式匹配前端 */
+    ::-webkit-scrollbar {
+        width: 8px !important;
+    }
+    ::-webkit-scrollbar-track {
+        background: #1f2937 !important;
+    }
+    ::-webkit-scrollbar-thumb {
+        background: #4b5563 !important;
+        border-radius: 4px !important;
+    }
     """
 
     with gr.Blocks(
         title="ResumeMate - AI 履歷助手", css=custom_css, theme=gr.themes.Soft()
     ) as app:
-        gr.Markdown(
-            """
-        # 🤖 ResumeMate - AI 履歷助手
-        這是一個由 RAG 技術驅動的 AI 代理人展示。您可以詢問關於我的技能、經驗、教育、聯絡資訊等問題。
-        """
-        )
+        # 標題區域
+        # title_md = gr.Markdown(TEXTS["title"])
+        # description_md = gr.Markdown(TEXTS["description"])
 
         chatbot = gr.Chatbot(
-            label="對話",
+            label=TEXTS["chat_label"],
             height=400,
-            placeholder="目前還沒有對話記錄...",
+            placeholder=TEXTS["chat_placeholder"],
             type="messages",
         )
 
@@ -347,38 +474,33 @@ def create_gradio_interface():
 
         with gr.Row():
             user_input = gr.Textbox(
-                label="您的問題", placeholder="例如：你有什麼程式設計經驗？", scale=4
+                label=TEXTS["input_label"],
+                placeholder=TEXTS["input_placeholder"],
+                scale=4,
             )
-            send_btn = gr.Button("發送", variant="primary", scale=1)
+            send_btn = gr.Button(TEXTS["send_button"], variant="primary", scale=1)
 
-        # 範例
-        with gr.Row():
-            gr.Examples(
-                examples=[
-                    "先介紹一下自己",
-                    "你有什麼技能？",
-                    "你的工作經驗如何？",
-                    "你的教育背景是什麼？",
-                    "如何聯絡你？",
-                ],
-                inputs=user_input,
-                label="範例問題",
-            )
+        # 範例問題
+        gr.Examples(
+            examples=TEXTS["examples"],
+            inputs=user_input,
+            label=TEXTS["examples_label"],
+        )
 
         # --- Clarify 區塊（需要補充資訊時顯示） ---
         with gr.Accordion(
-            "補充資訊（當系統需要更多資訊時顯示）", open=True, visible=False
+            TEXTS["clarify_title"], open=True, visible=False
         ) as clarify_row:
             clarify_input = gr.Textbox(
-                label="請補充資訊後直接送出",
-                placeholder="例如：公司名稱、年份、職稱、專案名稱...",
+                label=TEXTS["clarify_label"],
+                placeholder=TEXTS["clarify_placeholder"],
             )
-            clarify_submit = gr.Button("送出補充")
+            clarify_submit = gr.Button(TEXTS["clarify_submit"])
 
         # 系統狀態
-        with gr.Accordion("系統狀態", open=False, visible=False):
+        with gr.Accordion(TEXTS["status_title"], open=False, visible=False):
             status_display = gr.Markdown(get_system_status())
-            refresh_btn = gr.Button("刷新狀態")
+            refresh_btn = gr.Button(TEXTS["refresh_button"])
 
         # --- 事件處理（支援 streaming） ---
         async def handle_user_input_with_streaming(user_text, history):

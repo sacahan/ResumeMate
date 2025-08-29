@@ -30,13 +30,19 @@ DEFAULT_INSTRUCTIONS = """你是回答品質審查代理。輸入為 analysis_ag
 - 產出「最終回答」與明確狀態；必要時引導澄清或升級人工。
 
 **重要語氣要求**：
-- 系統代表韓世翔本人回答問題，final_answer 必須保持第一人稱（「我」、「我的」）
+- 系統代表韓世翔本人回答問題，final_answer 必須保持第一人稱視角但語句要自然
 - 不要使用「根據履歷」、「履歷顯示」、「您已經」等客觀描述語句
 - 如果 analysis_agent 的 draft_answer 已經是正確的第一人稱，直接使用或稍作潤飾
 - 回答語氣應該自然親切，就像韓世翔本人在回答一樣
+- **自然表達原則**：避免生硬的「我可以...」開頭，改用「你可以...」、「我的...是」等自然表達
+- **語言要求**：使用正體中文（zh_TW），避免簡體中文字符
 
 決策邏輯（優先順序）：
-1) **聯絡資訊問題**：若問題是詢問聯絡方式、email等，且 analysis_agent 使用了 get_contact_info 工具，則應 → status="ok"，直接提供聯絡資訊
+1) **聯絡資訊問題**：若問題是詢問聯絡方式、email等，且滿足以下任一條件，則應 → status="ok"：
+   - analysis_agent 使用了 get_contact_info 工具（used_contact_info_tool=true）
+   - question_type="contact" 且 confidence > 0.8
+   - metadata 中有 source="get_contact_info"
+   直接提供聯絡資訊，不需要額外的來源驗證
 2) 若題目完全與個人履歷/工作經歷無關（如生活習慣、興趣愛好、非工作相關問題等） → status="escalate_to_human"
 3) 若題目與履歷相關但涉及真正敏感資訊或資料庫中沒有的資訊（如薪資、內部機密、家庭狀況等） → status="escalate_to_human"
    重要：以下履歷標準資訊應正常回答，不屬於敏感資訊：居住地點、工作地區、聯絡方式、教育背景、技能經驗、工作經歷等
@@ -49,7 +55,10 @@ DEFAULT_INSTRUCTIONS = """你是回答品質審查代理。輸入為 analysis_ag
 重要：傾向於選擇 escalate_to_human 以確保回答品質。當 status="escalate_to_human" 時，請在 final_answer 使用固定話術。
 
 評估規則（最低門檻）：
-- **聯絡資訊特殊處理**：對於聯絡資訊問題，如果 analysis_agent 使用了 get_contact_info 工具，則自動 → status="ok"，無需檢查 sources 或 confidence
+- **聯絡資訊特殊處理**：對於聯絡資訊問題，如果滿足以下任一條件，則自動 → status="ok"，無需檢查 sources：
+  * used_contact_info_tool=true（已使用聯絡資訊工具）
+  * question_type="contact" 且 confidence > 0.8
+  * metadata.source="get_contact_info"
 - 來源覆蓋度：至少 1 個可信來源，且主要結論均可在來源找到對應片段
 - 一致性：來源間不自相矛盾
 - 信心閾值：若 analysis_agent.confidence < 0.4 或 sources 為空 → 必須標記為 "escalate_to_human"
@@ -59,13 +68,14 @@ DEFAULT_INSTRUCTIONS = """你是回答品質審查代理。輸入為 analysis_ag
 輸出：只允許單一 JSON，且只包含：
 final_answer, sources, confidence, status, metadata
 （嚴禁輸出 title/description/properties/required/$schema 等任何 schema 欄位）
+sources 必須是字串陣列，直接沿用 analysis_agent 輸出的格式，例如：["韓世翔-統一履歷匯總.md_1", "韓世翔-統一履歷匯總.md_2"]
 
 status ∈ {ok, needs_edit, needs_clarification, out_of_scope, escalate_to_human}
 confidence ∈ [0,1]（可在原 confidence 基礎上調整）
 metadata 裡需回填：{ "reason": "...", "missing_fields": [...], "original_question": "...", "analysis_confidence": x.x }
 
 範例判斷：
-- 問題「如何聯絡你？」+ analysis_agent 使用 get_contact_info → status="ok"，final_answer="我是韓世翔，可以透過 sacahan@gmail.com 聯絡我。"
+- 問題「如何聯絡你？」+ analysis_agent 使用 get_contact_info → status="ok"，final_answer="你可以透過 sacahan@gmail.com 與我聯絡。"
 - 問題「你的email是什麼？」+ analysis_agent 使用 get_contact_info → status="ok"，final_answer="我的email是 sacahan@gmail.com"
 - 問題「你現在住在哪裡？」+ analysis_agent 信心 0.9 + 有來源 → status="ok"，final_answer="我目前住在新北市中和區。"
 - 問題「你還需要服兵役嗎？」+ analysis_agent 信心 0.9 + 有來源 → status="ok"，final_answer="我已經完成了服兵役，擔任陸軍少尉預官，在2004年10月到2006年1月期間服役。"
@@ -73,7 +83,7 @@ metadata 裡需回填：{ "reason": "...", "missing_fields": [...], "original_qu
 - 問題「你喜歡什麼電影？」→ status="escalate_to_human"，因為與履歷無關
 
 當 status="escalate_to_human" 時，請在 final_answer 使用此話術：
-「目前儲備的來源資料不足以保證回覆正確性。是否同意我先記錄原問題，由本人進行回覆？請提供聯絡方式（稱呼/Email/電話/Line），稍後再由本人回覆。」
+「由於目前可查到的資料無法保證答案正確性。是否同意我先記錄下問題，再由本人進行回覆？麻煩再提供聯絡方式（稱呼/Email/電話/Line）。」
 """
 
 # ---------- JSON-safe type
@@ -85,8 +95,8 @@ class EvaluateOutput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     final_answer: str
-    # 使用 dict 以保留 id/title/loc 等追溯欄位
-    sources: List[Dict[str, Any]] = Field(default_factory=list)
+    # 改為字串列表以符合 Analysis Agent 輸出格式
+    sources: List[str] = Field(default_factory=list)
     confidence: float = Field(ge=0.0, le=1.0)
     status: Literal[
         "ok",
@@ -103,22 +113,45 @@ class EvaluateAgent:
 
     def __init__(self, llm: str = "gpt-4o-mini"):
         self.llm = os.environ.get("AGENT_MODEL", llm)
+        self.response_length = os.environ.get("AGENT_RESPONSE_LENGTH", "normal")
         self.sdk_agent: Optional[Agent] = None
         self._initialize_sdk_agent()
 
     def _initialize_sdk_agent(self):
         """初始化 Evaluate Agent"""
         try:
+            # 根據回覆長度設定調整 instructions
+            response_instructions = self._get_response_length_instructions()
+            full_instructions = DEFAULT_INSTRUCTIONS + "\n\n" + response_instructions
+
             # 使用嚴格 Pydantic 輸出，避免 schema 汙染
             self.sdk_agent = Agent(
                 name="Evaluate Agent",
-                instructions=DEFAULT_INSTRUCTIONS,
+                instructions=full_instructions,
                 model=self.llm,
                 output_type=AgentOutputSchema(EvaluateOutput, strict_json_schema=False),
             )
             logger.info(f"Evaluate Agent ({self.llm}) 初始化成功")
         except Exception as e:
             logger.error(f"初始化 Evaluate Agent 失敗: {e}")
+
+    def _get_response_length_instructions(self) -> str:
+        """根據環境變數設定回傳回覆長度控制指令"""
+        if self.response_length.lower() == "brief":
+            return """**回覆長度控制**：
+- final_answer 應該簡潔扼要，1-2句話即可
+- 只包含核心資訊，避免冗長描述
+- 適合快速問答的場景"""
+        elif self.response_length.lower() == "detailed":
+            return """**回覆長度控制**：
+- final_answer 可以提供詳細說明
+- 包含背景脈絡和具體細節
+- 適合複雜問題或需要完整說明的場景"""
+        else:  # normal
+            return """**回覆長度控制**：
+- final_answer 保持適中長度，通常2-4句話
+- 提供足夠資訊但不過於冗長
+- 平衡簡潔性和完整性"""
 
     # -------------------------
     # 安全解析：即使模型回 schema/雜訊也能修復
@@ -227,10 +260,23 @@ class EvaluateAgent:
         # 檢查是否使用了 get_contact_info 工具
         used_contact_info_tool = False
         if analysis.metadata and isinstance(analysis.metadata, dict):
-            # 檢查 metadata 中是否有使用工具的資訊
+            # 多種方式檢查是否使用了聯絡資訊工具
+            # 1. 檢查 metadata 中的 source 欄位
+            if analysis.metadata.get("source") == "get_contact_info":
+                used_contact_info_tool = True
+            # 2. 檢查 raw_output 中是否包含工具調用
             raw_output = analysis.metadata.get("raw_output")
             if raw_output and isinstance(raw_output, str):
-                used_contact_info_tool = "get_contact_info" in raw_output
+                if "get_contact_info" in raw_output:
+                    used_contact_info_tool = True
+            # 3. 檢查問題類型是否為聯絡資訊
+            if (
+                getattr(analysis.question_type, "value", str(analysis.question_type))
+                == "contact"
+            ):
+                # 對於聯絡資訊類型的問題，如果信心度高，也視為使用了工具
+                if analysis.confidence > 0.8:
+                    used_contact_info_tool = True
 
         # 準備 reviewer 輸入：原問題 + analysis 全量輸出
         analysis_data = {
@@ -315,18 +361,8 @@ class EvaluateAgent:
         result_metadata.setdefault("original_question", getattr(analysis, "query", ""))
         result_metadata.setdefault("analysis_confidence", analysis.confidence)
 
-        # sources 正常化為字串列表（EvaluationResult 期望 List[str]）
-        sources = []
-        if isinstance(output.sources, list):
-            for source in output.sources:
-                if isinstance(source, str):
-                    sources.append(source)
-                elif isinstance(source, dict):
-                    # 從字典中提取 id 或其他識別字段
-                    source_id = source.get("id") or source.get("doc_id") or str(source)
-                    sources.append(source_id)
-                else:
-                    sources.append(str(source))
+        # sources 已經是字串列表，直接使用
+        sources = output.sources if isinstance(output.sources, list) else []
 
         return EvaluationResult(
             final_answer=output.final_answer,
