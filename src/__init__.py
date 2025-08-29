@@ -1,1 +1,0 @@
-"""ResumeMate src package."""
