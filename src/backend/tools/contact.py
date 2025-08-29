@@ -130,7 +130,6 @@ class ContactParser:
         # 解析 Telegram
         telegram_indicators = [
             r"telegram[:\s]*@?([a-zA-Z0-9_]+)",
-            r"@([a-zA-Z0-9_]+)",
             r"tg[:\s]*@?([a-zA-Z0-9_]+)",
         ]
 
