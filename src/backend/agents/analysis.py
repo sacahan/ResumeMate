@@ -35,42 +35,43 @@ load_dotenv(override=True)
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_INSTRUCTIONS = """你是韓世翔本人的 AI 代理人，代表韓世翔本人回答關於他履歷的問題。
+DEFAULT_INSTRUCTIONS = """你是問題分析代理。輸入為用戶問題。你的目標：
+- 分析問題類型並檢索相關履歷資訊
+- 代表韓世翔本人以第一人稱回答問題
 
-**聯絡資訊處理**：
-- 當用戶詢問如何聯絡我、我的email、聯絡方式、聯絡資訊等問題時，直接使用 get_contact_info 工具
-- 不需要透過RAG檢索，直接提供準確的聯絡資訊
+**重要語氣要求**：
+- 系統代表韓世翔本人回答問題，draft_answer 必須保持第一人稱（「我」、「我的」）
+- 不要使用「根據履歷」、「履歷顯示」等客觀描述語句
+- 回答語氣應該自然親切，就像韓世翔本人在回答一樣
+- **語言要求**：使用正體中文（zh_TW），避免簡體中文字符
 
-**其他問題處理**：
-- 對於履歷、技能、經驗等相關問題，使用 rag_search_tool 工具檢索履歷內容
+決策邏輯（優先順序）：
+1) **聯絡資訊問題**：若問題是詢問聯絡方式、email等 → 直接使用 get_contact_info 工具，設定 metadata.source="get_contact_info"
+2) **履歷相關問題**：若問題涉及技能、經驗、教育、工作等 → 使用 rag_search_tool 進行檢索
+3) **超出範圍問題**：若問題完全與履歷無關 → decision="oos"
+4) **不明確問題**：若檢索結果不足或模糊 → decision="clarify"
 
-**身份設定**：
-- 你代表韓世翔本人，以第一人稱（「我」、「我的」）回答所有問題
-- 回答語氣自然親切，就像韓世翔本人在回答一樣
-- 不要使用「根據履歷」、「履歷顯示」等客觀描述的前綴詞
-- 直接以本人的語氣說出事實，例如：「我已經完成了服兵役」而不是「根據履歷，您已經完成了服兵役」
-
-**核心原則**：
+處理原則：
 - 聯絡資訊問題：直接使用 get_contact_info 工具，無需檢索
-- 其他履歷相關問題：使用 rag_search_tool 檢索，包括技能問題、工作經驗、教育背景、項目經歷等
-- 即使問題看似簡單（如"你有什麼技能？"），也必須先檢索再回答
+- 其他履歷相關問題：必須使用 rag_search_tool 進行檢索，即使是看似簡單的問題
+- 所有回答都要以第一人稱撰寫，如同韓世翔本人在回答
+- 檢索時使用問題中的關鍵詞，若問題過於籠統則使用相關具體詞彙
 
-**處理流程**：
-1. **判斷問題類型**：
-   - 聯絡資訊相關 → 直接使用 get_contact_info 工具
-   - 其他履歷相關 → 使用 rag_search_tool 檢索
-2. **根據結果決定後續行動**：
-   - 有相關內容 → decision="retrieve"，以第一人稱整理成回答
-   - 無相關內容且確實超出履歷範圍 → decision="oos"
-   - 檢索結果不足或模糊 → decision="clarify"
+輸出：只允許單一 JSON，且只包含：
+draft_answer, sources, confidence, question_type, decision, metadata
+（嚴禁輸出 title/description/properties/required/$schema 等任何 schema 欄位）
 
-**檢索策略**：
-- 使用原問題的關鍵詞進行檢索
-- 如果原問題太籠統，用相關的具體詞彙檢索（如"技能"、"經驗"、"工作"）
+格式要求：
+- draft_answer：第一人稱回答，不可虛構事實
+- sources：字串陣列，例如 ["韓世翔-統一履歷匯總.md_1", "韓世翔-統一履歷匯總.md_2"]
+- question_type ∈ {skill, experience, contact, fact, other}
+- decision ∈ {retrieve, oos, clarify}
+- confidence ∈ [0,1]
 
-**輸出要求**：
-只允許單一 JSON 物件，包含：draft_answer, sources, confidence, question_type, decision, metadata
-draft_answer 必須以第一人稱書寫，不得編造未在檢索結果中出現的事實。sources 需包含可追溯的 doc_id。
+聯絡資訊問題特殊設定：
+- metadata = {"source": "get_contact_info"}
+- question_type = "contact"
+- decision = "retrieve"
 """
 
 
@@ -165,17 +166,22 @@ class AnalysisAgent:
 
     def __init__(self, llm: str = "gpt-4o-mini"):
         self.llm = os.environ.get("AGENT_MODEL", llm)
+        self.response_length = os.environ.get("AGENT_RESPONSE_LENGTH", "normal")
         self.sdk_agent = None
         self._initialize_sdk_agent()
 
     def _initialize_sdk_agent(self):
         """初始化 Agent"""
         try:
+            # 根據回覆長度設定調整 instructions
+            response_instructions = self._get_response_length_instructions()
+            full_instructions = DEFAULT_INSTRUCTIONS + "\n\n" + response_instructions
+
             # **關鍵修正**：使用嚴格輸出類型，防止 schema 汙染欄位
             # **工具使用強化**：設置 tool_choice 確保積極使用檢索工具
             self.sdk_agent = Agent(
                 name="Analysis Agent",
-                instructions=DEFAULT_INSTRUCTIONS,
+                instructions=full_instructions,
                 tools=[get_contact_info, rag_search_tool],
                 model=self.llm,
                 model_settings=ModelSettings(
@@ -186,6 +192,24 @@ class AnalysisAgent:
             logger.info(f"Analysis Agent ({self.llm}) 初始化成功，已啟用強制工具使用")
         except Exception as e:
             logger.error(f"初始化 Analysis Agent 失敗: {e}")
+
+    def _get_response_length_instructions(self) -> str:
+        """根據環境變數設定回傳回覆長度控制指令"""
+        if self.response_length.lower() == "brief":
+            return """**回覆長度控制**：
+- draft_answer 應該簡潔扼要，1-2句話即可
+- 只包含核心資訊，避免冗長描述
+- 適合快速回答或簡單問題的場景"""
+        elif self.response_length.lower() == "detailed":
+            return """**回覆長度控制**：
+- draft_answer 可以提供詳細說明
+- 包含背景脈絡和具體細節
+- 適合複雜問題或需要完整說明的場景"""
+        else:  # normal
+            return """**回覆長度控制**：
+- draft_answer 保持適中長度，通常2-4句話
+- 提供足夠資訊但不過於冗長
+- 平衡簡潔性和完整性"""
 
     # -------------------------
     # 安全解析輔助：避免 Invalid JSON
@@ -219,6 +243,21 @@ class AnalysisAgent:
                 "metadata",
             }
             cleaned = {k: v for k, v in data.items() if k in allowed}
+
+            # 修正常見的格式錯誤
+            if "decision" in cleaned and isinstance(cleaned["decision"], list):
+                # 如果 decision 是列表，取第一個元素
+                if len(cleaned["decision"]) > 0:
+                    cleaned["decision"] = cleaned["decision"][0]
+                else:
+                    cleaned["decision"] = "oos"  # 預設值
+
+            if "sources" in cleaned and not isinstance(cleaned["sources"], list):
+                # 確保 sources 是列表格式
+                if isinstance(cleaned["sources"], str):
+                    cleaned["sources"] = [cleaned["sources"]]
+                else:
+                    cleaned["sources"] = []
 
             # 嘗試校驗
             return AnalysisOutput.model_validate(cleaned)
