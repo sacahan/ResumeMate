@@ -50,8 +50,8 @@ echo "${YELLOW}準備部署文件...${NC}"
 mkdir -p deployment
 # 複製主要應用程式檔案
 cp app.py deployment/
-# 複製整個 src 目錄結構以保持正確的導入路徑
-cp -r src deployment/
+# 複製整個 src 目錄結構以保持正確的導入路徑〈應該排除 frontend 目錄〉
+rsync -av --exclude='frontend' src/ deployment/src/
 cp requirements.txt deployment/
 # 複製 chroma_db 資料夾（包含向量DB）
 cp -r chroma_db deployment/

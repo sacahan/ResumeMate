@@ -65,10 +65,10 @@ TEXTS = {
     "send_button": "發送",
     "examples_label": "範例問題",
     "examples": [
-        "先介紹一下自己",
-        "你有什麼技能？",
-        "你的工作經驗如何？",
-        "你的教育背景是什麼？",
+        "介紹一下自己",
+        "你的工作經驗？",
+        "你擅長哪些技術？",
+        "你的教育背景？",
         "如何聯絡你？",
     ],
     "thinking": "正在思考您的問題...",
@@ -291,60 +291,59 @@ def create_gradio_interface():
     """
 
     custom_css = """
-    /* 匹配前端的字體設定 */
+    /* 匹配前端的字體設定 - 僅針對 gradio-app 組件 */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap');
 
-    * {
+    /* 限制字體樣式僅應用於 Gradio 容器內部 */
+    .gradio-container *,
+    .gradio-container {
         font-family: "Inter", "Noto Sans TC", sans-serif !important;
     }
 
-    /* 主容器樣式匹配前端 */
+    /* 主容器樣式匹配前端 - 確保不影響外部頁面背景 */
     .gradio-container {
         max-width: 800px !important;
         margin: auto !important;
         color: #d1d5db !important;
-        background: linear-gradient(-45deg, #282a50, #4c408e, #282a50, #1f2937) !important;
-        background-size: 400% 400% !important;
-        animation: gradient 25s ease infinite !important;
+        /* 移除背景樣式，讓外部頁面控制背景 */
+        background: transparent !important;
+        padding: 0.5rem !important;
+        border-radius: 1rem !important;
     }
 
     .gradio-container p {
         font-size: 0.9rem !important;
     }
 
-    @keyframes gradient {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-
-    /* 玻璃效果匹配前端 */
-    .glass-effect {
+    /* 玻璃效果僅應用於 Gradio 內部組件 */
+    .gradio-container .glass-effect {
         background: rgba(255, 255, 255, 0.1) !important;
         backdrop-filter: blur(10px) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
     }
 
-    /* 文字漸層效果 */
-    .text-gradient {
+    /* 文字漸層效果僅應用於 Gradio 內部 */
+    .gradio-container .text-gradient {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
         -webkit-background-clip: text !important;
         -webkit-text-fill-color: transparent !important;
         background-clip: text !important;
     }
 
-    /* 標題樣式匹配前端 */
-    h1, h2, h3 {
+    /* 標題樣式僅應用於 Gradio 內部 */
+    .gradio-container h1,
+    .gradio-container h2,
+    .gradio-container h3 {
         color: #d1d5db !important;
-        font-size: 2.5rem !important;
-        font-weight: 700 !important;
-        text-align: center !important;
-        margin: 1.5rem 0 !important;
+        font-size: 1.5rem !important;
+        font-weight: 600 !important;
+        text-align: left !important;
+        margin: 1rem 0 !important;
     }
 
     /* 特別針對主標題的樣式 */
     .gradio-container h1:first-of-type {
-        font-size: 3rem !important;
+        font-size: 2rem !important;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
         -webkit-background-clip: text !important;
         -webkit-text-fill-color: transparent !important;
@@ -352,15 +351,19 @@ def create_gradio_interface():
     }
 
     /* Gradio 組件樣式調整 */
-    .chat-message { border-radius: 10px !important; padding: 10px !important; margin: 5px 0 !important; }
+    .gradio-container .chat-message {
+        border-radius: 10px !important;
+        padding: 10px !important;
+        margin: 5px 0 !important;
+    }
 
     /* 針對 Gradio 4.0+ 的 Chatbot 組件樣式 */
-    .message-wrap {
+    .gradio-container .message-wrap {
         margin-bottom: 1rem !important;
     }
 
     /* 用戶消息靠右對齊 */
-    .message-wrap[data-testid*="user"] .message {
+    .gradio-container .message-wrap[data-testid*="user"] .message {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
         color: white !important;
         margin-left: auto !important;
@@ -371,8 +374,8 @@ def create_gradio_interface():
     }
 
     /* AI 回覆靠左對齊 - 使用玻璃效果 */
-    .message-wrap[data-testid*="bot"] .message,
-    .message-wrap[data-testid*="assistant"] .message {
+    .gradio-container .message-wrap[data-testid*="bot"] .message,
+    .gradio-container .message-wrap[data-testid*="assistant"] .message {
         background: rgba(255, 255, 255, 0.1) !important;
         backdrop-filter: blur(10px) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -385,30 +388,32 @@ def create_gradio_interface():
     }
 
     /* 深色主題支援 */
-    .dark .message-wrap[data-testid*="bot"] .message,
-    .dark .message-wrap[data-testid*="assistant"] .message {
+    .gradio-container.dark .message-wrap[data-testid*="bot"] .message,
+    .gradio-container.dark .message-wrap[data-testid*="assistant"] .message {
         background: rgba(255, 255, 255, 0.1) !important;
         color: #d1d5db !important;
     }
 
-    /* 輸入框樣式匹配前端 */
-    input, textarea {
+    /* 輸入框樣式匹配前端 - 僅影響 Gradio 內部 */
+    .gradio-container input,
+    .gradio-container textarea {
         background: rgba(255, 255, 255, 0.1) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
         color: #d1d5db !important;
         font-family: "Inter", "Noto Sans TC", sans-serif !important;
     }
 
-    /* 按鈕樣式匹配前端 */
-    .btn-primary, button[variant="primary"] {
+    /* 按鈕樣式匹配前端 - 僅影響 Gradio 內部 */
+    .gradio-container .btn-primary,
+    .gradio-container button[variant="primary"] {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
         border: none !important;
         color: white !important;
         font-family: "Inter", "Noto Sans TC", sans-serif !important;
     }
 
-    /* 其他按鈕使用玻璃效果 */
-    button:not([variant="primary"]) {
+    /* 其他按鈕使用玻璃效果 - 僅影響 Gradio 內部 */
+    .gradio-container button:not([variant="primary"]) {
         background: rgba(255, 255, 255, 0.1) !important;
         backdrop-filter: blur(10px) !important;
         border: 1px solid rgba(255, 255, 255, 0.2) !important;
@@ -416,40 +421,40 @@ def create_gradio_interface():
         font-family: "Inter", "Noto Sans TC", sans-serif !important;
     }
 
-    /* 訊息內容樣式優化 */
-    .message p {
+    /* 訊息內容樣式優化 - 僅影響 Gradio 內部 */
+    .gradio-container .message p {
         margin-bottom: 0.5rem !important;
     }
 
-    .message p:last-child {
+    .gradio-container .message p:last-child {
         margin-bottom: 0 !important;
     }
 
-    /* 載入狀態樣式 */
-    .message-wrap.generating .message {
+    /* 載入狀態樣式 - 僅影響 Gradio 內部 */
+    .gradio-container .message-wrap.generating .message {
         opacity: 0.8 !important;
-        animation: pulse 1.5s ease-in-out infinite !important;
+        animation: gradio-pulse 1.5s ease-in-out infinite !important;
     }
 
-    @keyframes pulse {
+    @keyframes gradio-pulse {
         0%, 100% { opacity: 0.8; }
         50% { opacity: 1; }
     }
 
-    /* 按鈕載入狀態 */
-    .btn-loading {
+    /* 按鈕載入狀態 - 僅影響 Gradio 內部 */
+    .gradio-container .btn-loading {
         opacity: 0.6 !important;
         cursor: not-allowed !important;
     }
 
-    /* Scrollbar 樣式匹配前端 */
-    ::-webkit-scrollbar {
+    /* Scrollbar 樣式僅應用於 Gradio 內部的滾動條 */
+    .gradio-container ::-webkit-scrollbar {
         width: 8px !important;
     }
-    ::-webkit-scrollbar-track {
+    .gradio-container ::-webkit-scrollbar-track {
         background: #1f2937 !important;
     }
-    ::-webkit-scrollbar-thumb {
+    .gradio-container ::-webkit-scrollbar-thumb {
         background: #4b5563 !important;
         border-radius: 4px !important;
     }

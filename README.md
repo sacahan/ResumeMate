@@ -9,7 +9,7 @@ ResumeMate is an AI-powered resume agent platform that combines static resume pr
 - **Smart Q&A:** Personalized resume conversations powered by RAG technology
 - **Contact Information Queries:** Dedicated tool for quick contact information responses
 - **Conversational Contact Collection:** Collect contact information via natural language, suitable for iframe embedding
-- **Bilingual Support:** Seamless switching between English and Chinese interfaces
+- **Traditional Chinese Interface:** Optimized for Traditional Chinese (zh_TW) users
 - **Responsive Design:** Optimized experience across all screen sizes
 - **JSON-Driven Content:** Flexible data management with version control
 
@@ -73,7 +73,7 @@ For detailed development plans, see the [Development Plan Document](plans/develo
 #### ✅ Frontend Complete Features
 
 - **Responsive Resume Site**: Complete HTML5 + Tailwind CSS implementation
-- **Bilingual Support**: Seamless Chinese/English switching mechanism
+- **Traditional Chinese Interface**: Optimized Chinese language interface
 - **JSON Data Management**: Dynamic loading with version control system
 - **Interactive Effects**: Smooth scrolling, animations, chat examples
 
