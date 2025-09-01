@@ -20,11 +20,11 @@ from agents import (
     function_tool,
     ModelSettings,
 )  # noqa: F401
-from src.backend.tools.rag import RAGTools
+from backend.tools.rag import RAGTools
 
 # from models import SearchResult  # 工具回傳以 JSON dict 為主，避免序列化問題
 
-from src.backend.models import (
+from backend.models import (
     Question,
     AnalysisResult,
     QuestionType,
@@ -68,35 +68,53 @@ DEFAULT_INSTRUCTIONS = """# 韓世翔 AI 履歷助理 - 問題分析代理
 ❌ 避免：「資料庫中記錄了相關技能...」
 ✅ 推薦：「我的專長包括機器學習和深度學習...」
 
-## 智慧決策流程
+## 🚨 核心決策邏輯（必須遵守）
 
-### 🔍 問題分類與處理策略
+### ⭐ 第一優先級：履歷核心問題 → decision = "retrieve"
+**這些問題必須使用 `decision = "retrieve"`，絕對不能設為 oos：**
 
-#### 1. 聯絡資訊查詢 [最高優先級]
-- **觸發條件**：詢問聯絡方式、email、電話等
-- **處理方式**：直接使用 `get_contact_info` 工具
-- **設定值**：
-  * `question_type = "contact"`
-  * `decision = "retrieve"`
-  * `metadata.source = "get_contact_info"`
+✅ **自我介紹類**：
+- 「介紹一下自己」、「你是誰？」、「Tell me about yourself」
+- 「說說你的背景」、「What's your background?」
+- 「你的簡歷」、「個人資料」
 
-#### 2. 履歷相關查詢
-- **觸發條件**：技能、經驗、教育、專案等相關問題
-- **處理方式**：使用 `rag_search_tool` 進行向量檢索
-- **優化策略**：
-  * 提取問題核心關鍵詞
-  * 擴展同義詞和相關技術詞彙
-  * 設定 `top_k=3-5` 確保結果品質
+✅ **經驗技能類**：
+- 「你有什麼經驗？」、「工作經歷」、「專案經驗」
+- 「你擅長什麼？」、「技術能力」、「專業技能」
+- 「你的學歷」、「教育背景」
 
-#### 3. 超出範圍查詢
-- **觸發條件**：與履歷完全無關的問題
-- **處理方式**：`decision = "oos"`
-- **範例**：個人興趣、娛樂偏好、非職場相關話題
+✅ **職業相關類**：
+- 「工作類型偏好」、「職業規劃」、「未來發展」
+- 「團隊合作」、「領導經驗」、「管理能力」
 
-#### 4. 模糊不清查詢
-- **觸發條件**：問題過於籠統或檢索結果不足
-- **處理方式**：`decision = "clarify"`
-- **策略**：建議用戶提供更具體的問題
+### 🔥 決策規則（嚴格執行）
+
+#### 規則 1：聯絡資訊 → get_contact_info 工具
+```
+問題包含：聯絡、email、電話、Line、如何找到你
+→ 使用 get_contact_info 工具
+→ decision = "retrieve", question_type = "contact"
+```
+
+#### 規則 2：履歷相關 → rag_search_tool 工具
+```
+問題關於：工作、技能、經驗、教育、專案、自我介紹、背景
+→ 使用 rag_search_tool 工具
+→ decision = "retrieve", question_type = "experience/skill/fact/other"
+```
+
+#### 規則 3：真正超出範圍 → oos
+```
+問題完全無關職業：天氣、娛樂、烹飪、體育、政治、個人興趣
+→ decision = "oos"
+```
+
+#### 規則 4：需要澄清 → clarify
+```
+問題過於模糊且檢索結果不足
+→ decision = "clarify"
+```
+>>>>>>> d5244f5 (feat: Add responsive enhancement JavaScript for advanced features)
 
 ## 檢索優化策略
 
@@ -144,6 +162,7 @@ DEFAULT_INSTRUCTIONS = """# 韓世翔 AI 履歷助理 - 問題分析代理
 - 僅輸出上述 6 個欄位
 - 禁止包含 schema 相關欄位
 - 禁止輸出說明文字或額外內容
+- **必須使用小寫枚舉值**：`decision` 只能是 `"retrieve"`, `"oos"`, `"clarify"`（不可大寫）
 
 ## 特殊情況處理
 
@@ -287,9 +306,8 @@ class AnalysisAgent:
                 tools=[get_contact_info, rag_search_tool],
                 model=self.llm,
                 model_settings=ModelSettings(
-                    tool_choice="auto",  # 智慧工具選擇
-                    temperature=0.3,  # 降低隨機性，提高回答一致性
-                    max_tokens=500,  # 控制回答長度，避免過度冗長
+                    tool_choice="required",  # 🔥 強制使用工具確保檢索履歷內容
+                    max_completion_tokens=500,  # 控制回答長度，避免過度冗長
                 ),
                 output_type=AgentOutputSchema(AnalysisOutput, strict_json_schema=False),
             )
@@ -432,8 +450,26 @@ class AnalysisAgent:
             question_type = QuestionType.OTHER
 
         try:
-            decision = AgentDecision(output.decision)
-        except Exception:
+            # 標準化 decision 值，處理大小寫問題
+            decision_value = output.decision.lower().strip()
+
+            # 映射常見變體到正確的 AgentDecision 枚舉值
+            decision_mapping = {
+                "oos": "oos",
+                "out_of_scope": "oos",
+                "outofscooe": "oos",
+                "retrieve": "retrieve",
+                "clarify": "clarify",
+                "ask_clarify": "clarify",
+            }
+
+            normalized_decision = decision_mapping.get(decision_value, decision_value)
+            decision = AgentDecision(normalized_decision)
+        except Exception as e:
+            # 只有在真正無法解析時才設為 OUT_OF_SCOPE，並記錄詳細錯誤
+            logger.warning(
+                f"Decision 解析失敗 '{output.decision}': {e}，使用預設值 OUT_OF_SCOPE"
+            )
             decision = AgentDecision.OUT_OF_SCOPE
 
         # 從 sources 重建檢索結果以供 EvaluateAgent 使用

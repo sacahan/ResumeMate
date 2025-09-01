@@ -10,9 +10,9 @@ import logging
 from typing import Any, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 
-from src.backend.models import Question, SystemResponse
-from src.backend.tools.rag import RAGTools  # ← 修正可能的匯入路徑
-from src.backend.agents import AnalysisAgent, EvaluateAgent
+from backend.models import Question, SystemResponse
+from backend.tools.rag import RAGTools
+from backend.agents import AnalysisAgent, EvaluateAgent
 
 logger = logging.getLogger(__name__)
 

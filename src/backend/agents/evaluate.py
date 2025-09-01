@@ -14,12 +14,12 @@ from pydantic import BaseModel, Field, ConfigDict
 
 # 確保 Runner 已正確引入
 from agents import Agent, Runner, AgentOutputSchema, ModelSettings
-from src.backend.models import (
+from backend.models import (
     AnalysisResult,
     EvaluationResult,
     AgentDecision,
 )
-from src.backend.tools.answer_quality import (
+from backend.tools.answer_quality import (
     AnswerQualityAnalyzer,
 )
 
@@ -68,10 +68,14 @@ DEFAULT_INSTRUCTIONS = """# 韓世翔 AI 履歷助理 - 品質評估代理
 
 #### 2. 🚫 完全超出範圍
 **觸發條件**:
-- 與履歷/職場完全無關 (興趣愛好、娛樂偏好等)
-- 非職業相關的個人生活問題
+- 與職業生涯完全無關的問題 (天氣、娛樂八卦、烹飪食譜、體育賽事等)
+- ⚠️ **重要**：以下屬於正常範圍，不應歸類為超出範圍
+  * 自我介紹、個人背景、工作經驗
+  * 技能、教育、專案經驗
+  * 職業規劃、工作理念
+  * 團隊合作、領導經驗
 
-**處理方式**: `status = "escalate_to_human"`
+**處理方式**: `status = "out_of_scope"`
 
 #### 3. 🔒 真正敏感資訊
 **觸發條件**:
@@ -253,8 +257,7 @@ class EvaluateAgent:
                 instructions=full_instructions,
                 model=self.llm,
                 model_settings=ModelSettings(
-                    temperature=0.2,  # 降低隨機性，提升決策一致性
-                    max_tokens=600,  # 適度控制回答長度
+                    max_completion_tokens=600,  # 適度控制回答長度
                 ),
                 output_type=AgentOutputSchema(EvaluateOutput, strict_json_schema=False),
             )
