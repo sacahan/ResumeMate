@@ -23,10 +23,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 # 重要：gradio 必須在環境變數修復後才能導入
 import gradio as gr  # noqa: E402
 
-from agents import trace  # noqa: E402
-from backend.models import Question  # noqa: E402
-from backend import ResumeMateProcessor  # noqa: E402
-from backend.tools.contact import (  # noqa: E402
+from agents import trace, set_default_openai_api  # noqa: E402
+
+# 🔧 設置使用 Chat Completions API 而非 Responses API 以避免推理錯誤
+set_default_openai_api("chat_completions")
+from src.backend.models import Question  # noqa: E402
+from src.backend.processor import ResumeMateProcessor  # noqa: E402
+from src.backend.tools.contact import (  # noqa: E402
     ContactManager,
     generate_contact_request_message,
     is_contact_info_input,

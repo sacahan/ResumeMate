@@ -18,7 +18,7 @@ from chromadb.config import Settings
 import openai
 from openai import APIError, RateLimitError
 
-from src.backend.models import SearchResult
+from backend.models import SearchResult
 
 # 載入環境變數
 load_dotenv(override=True)

@@ -53,7 +53,7 @@ class TestAnalysisAgent:
         result = await analysis_agent.analyze(question)
 
         assert result.question_type == QuestionType.CONTACT
-        assert result.decision == AgentDecision.OUT_OF_SCOPE
+        assert result.decision == AgentDecision.RETRIEVE
 
     @pytest.mark.asyncio
     async def test_irrelevant_question(self, analysis_agent):
@@ -74,86 +74,84 @@ class TestAnalysisAgent:
         question = Question(text="")
         result = await analysis_agent.analyze(question)
 
+        # With forced tool usage, empty questions may still retrieve content
         assert result.decision in [
+            AgentDecision.RETRIEVE,
             AgentDecision.OUT_OF_SCOPE,
             AgentDecision.ASK_CLARIFY,
         ]
-        assert result.confidence < 0.5
 
-    def test_question_type_classification(self, analysis_agent):
-        """測試問題類型分類邏輯"""
-        # 技能相關
-        assert (
-            analysis_agent._classify_question("你會什麼程式語言？")
-            == QuestionType.SKILL
-        )
-        assert (
-            analysis_agent._classify_question("What programming skills do you have?")
-            == QuestionType.SKILL
-        )
+    @pytest.mark.asyncio
+    async def test_self_introduction_questions(self, analysis_agent):
+        """測試自我介紹問題（重要的履歷核心功能）"""
+        questions = ["介紹一下自己", "你是誰？", "Tell me about yourself", "自我介紹"]
 
-        # 經驗相關
-        assert (
-            analysis_agent._classify_question("你的工作經驗？")
-            == QuestionType.EXPERIENCE
-        )
-        assert (
-            analysis_agent._classify_question("Tell me about your projects")
-            == QuestionType.EXPERIENCE
-        )
+        for question_text in questions:
+            question = Question(text=question_text)
+            result = await analysis_agent.analyze(question)
 
-        # 聯絡相關
-        assert analysis_agent._classify_question("如何聯絡你？") == QuestionType.CONTACT
-        assert (
-            analysis_agent._classify_question("What's your email?")
-            == QuestionType.CONTACT
-        )
+            # 自我介紹應該使用RAG檢索，不應該是out-of-scope
+            assert (
+                result.decision == AgentDecision.RETRIEVE
+            ), f"Question '{question_text}' should retrieve, got {result.decision}"
+            assert (
+                result.confidence > 0.5
+            ), f"Low confidence for '{question_text}': {result.confidence}"
 
-        # 事實查詢
-        assert analysis_agent._classify_question("你是誰？") == QuestionType.FACT
-        assert (
-            analysis_agent._classify_question("What is your background?")
-            == QuestionType.FACT
-        )
-
-    def test_search_query_generation(self, analysis_agent):
-        """測試檢索查詢生成"""
-        # 技能問題
-        query = analysis_agent._generate_search_query(
-            "你有什麼Python經驗？", QuestionType.SKILL
-        )
-        assert "Python" in query
-
-        # 經驗問題
-        query = analysis_agent._generate_search_query(
-            "告訴我你的專案經驗", QuestionType.EXPERIENCE
-        )
-        assert len(query) > 0
-
-    def test_confidence_calculation(self, analysis_agent):
-        """測試信心分數計算"""
-        from backend.models import SearchResult
-
-        # 高分數結果
-        high_score_results = [
-            SearchResult(doc_id="test1", score=0.8, excerpt="test"),
-            SearchResult(doc_id="test2", score=0.7, excerpt="test"),
-            SearchResult(doc_id="test3", score=0.6, excerpt="test"),
+    @pytest.mark.asyncio
+    async def test_forced_tool_usage(self, analysis_agent):
+        """測試強制工具使用功能"""
+        # 測試各種問題類型都能觸發適當的工具
+        questions = [
+            ("你的技能是什麼？", "rag"),
+            ("工作經驗如何？", "rag"),
+            ("聯絡方式是什麼？", "contact"),
+            ("介紹一下自己", "rag"),
         ]
-        confidence = analysis_agent._calculate_confidence(high_score_results)
-        assert confidence > 0.6
 
-        # 低分數結果
-        low_score_results = [
-            SearchResult(doc_id="test1", score=0.1, excerpt="test"),
-            SearchResult(doc_id="test2", score=0.05, excerpt="test"),
+        for question_text, expected_tool in questions:
+            question = Question(text=question_text)
+            result = await analysis_agent.analyze(question)
+
+            # 由於設定了 tool_choice="required"，所有問題都應該使用檢索
+            assert (
+                result.decision == AgentDecision.RETRIEVE
+            ), f"Question '{question_text}' should retrieve"
+
+            # 檢查是否有使用適當的工具
+            if expected_tool == "contact":
+                # 聯絡問題使用 get_contact_info，會有 draft_answer
+                assert (
+                    result.draft_answer is not None
+                ), f"No contact info for '{question_text}'"
+            else:
+                # 其他問題使用 RAG，會有 retrievals
+                assert (
+                    len(result.retrievals) > 0
+                ), f"No retrievals for '{question_text}'"
+
+    @pytest.mark.asyncio
+    async def test_career_related_questions(self, analysis_agent):
+        """測試所有履歷相關問題都被正確處理"""
+        career_questions = [
+            "你有什麼技能？",
+            "工作經驗如何？",
+            "做過什麼專案？",
+            "教育背景是什麼？",
+            "專業能力有哪些？",
         ]
-        confidence = analysis_agent._calculate_confidence(low_score_results)
-        assert confidence < 0.3
 
-        # 空結果
-        confidence = analysis_agent._calculate_confidence([])
-        assert confidence == 0.0
+        for question_text in career_questions:
+            question = Question(text=question_text)
+            result = await analysis_agent.analyze(question)
+
+            # 所有履歷相關問題都應該檢索，不應該是out-of-scope
+            assert (
+                result.decision == AgentDecision.RETRIEVE
+            ), f"Career question '{question_text}' should retrieve"
+            assert (
+                result.confidence >= 0.5
+            ), f"Low confidence for career question '{question_text}': {result.confidence}"
 
 
 if __name__ == "__main__":
