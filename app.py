@@ -3,7 +3,6 @@
 提供 AI 履歷問答介面
 """
 
-import asyncio
 import logging
 import sys
 import os
@@ -61,14 +60,14 @@ TEXTS = {
     "chat_label": "對話",
     "chat_placeholder": "目前還沒有對話記錄...",
     "input_label": "您的問題",
-    "input_placeholder": "例如：你有什麼程式設計經驗？",
+    "input_placeholder": "例如：你的工作經驗？",
     "send_button": "發送",
     "examples_label": "範例問題",
     "examples": [
         "介紹一下自己",
-        "你的工作經驗？",
-        "你擅長哪些技術？",
-        "你的教育背景？",
+        "你的學經歷？",
+        "你擅長的技術？",
+        "偏好的工作類型？",
         "如何聯絡你？",
     ],
     "thinking": "正在思考您的問題...",
@@ -160,25 +159,17 @@ async def stream_process_question(user_input: str, history: list):
 
             answer = response.answer or ""
 
-            # 模擬 streaming 效果 - 逐字顯示
-            current_text = ""
-            words = answer.split()
-
-            for i, word in enumerate(words):
-                current_text += word + " "
-                # 每隔幾個字更新一次顯示
-                if i % 3 == 0 or i == len(words) - 1:
-                    streaming_history = history + [
-                        {"role": "assistant", "content": current_text.strip()}
-                    ]
-                    yield (
-                        streaming_history,
-                        gr.update(visible=False),
-                        gr.update(visible=False),
-                        gr.update(visible=False),
-                    )
-                    # 短暫延遲模擬打字效果
-                    await asyncio.sleep(0.1)
+            # 優化 streaming 效果 - 減少不必要延遲
+            current_text = answer.strip()
+            streaming_history = history + [
+                {"role": "assistant", "content": current_text}
+            ]
+            yield (
+                streaming_history,
+                gr.update(visible=False),
+                gr.update(visible=False),
+                gr.update(visible=False),
+            )
 
             # 低信心提示
             if response.confidence < 0.3:
@@ -460,8 +451,58 @@ def create_gradio_interface():
     }
     """
 
+    # 創建強制深色模式主題
+    dark_theme = gr.themes.Soft(
+        primary_hue="violet",
+        secondary_hue="blue",
+    ).set(
+        # 強制深色模式背景
+        background_fill_primary="*neutral_950",
+        background_fill_secondary="*neutral_900",
+        block_background_fill="*neutral_900",
+        # 文字顏色
+        body_text_color="*neutral_200",
+        body_text_color_subdued="*neutral_400",
+        # 輸入框樣式
+        input_background_fill="*neutral_800",
+        input_border_color="*neutral_600",
+        # 按鈕樣式
+        button_primary_background_fill="linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        button_primary_background_fill_hover="linear-gradient(135deg, #5a6fd8 0%, #694396 100%)",
+        button_secondary_background_fill="*neutral_700",
+        button_secondary_background_fill_hover="*neutral_600",
+    )
+
     with gr.Blocks(
-        title="ResumeMate - AI 履歷助手", css=custom_css, theme=gr.themes.Soft()
+        title="ResumeMate - AI 履歷助手",
+        css=custom_css,
+        theme=dark_theme,
+        js="""
+        function() {
+            // 強制深色模式
+            document.documentElement.setAttribute('data-theme', 'dark');
+            document.body.classList.add('dark');
+
+            // 防止主題自動切換
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'attributes' &&
+                        mutation.attributeName === 'data-theme') {
+                        const theme = document.documentElement.getAttribute('data-theme');
+                        if (theme !== 'dark') {
+                            document.documentElement.setAttribute('data-theme', 'dark');
+                            document.body.classList.add('dark');
+                        }
+                    }
+                });
+            });
+
+            observer.observe(document.documentElement, {
+                attributes: true,
+                attributeFilter: ['data-theme']
+            });
+        }
+        """,
     ) as app:
         # 標題區域
         # title_md = gr.Markdown(TEXTS["title"])

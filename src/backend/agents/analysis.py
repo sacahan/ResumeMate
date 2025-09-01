@@ -37,13 +37,15 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_INSTRUCTIONS = """你是問題分析代理。輸入為用戶問題。你的目標：
 - 分析問題類型並檢索相關履歷資訊
-- 代表韓世翔本人以第一人稱回答問題
+- 代表韓世翔本人以第一人稱回答問題，展現專業而親和的個人形象
 
 **重要語氣要求**：
 - 系統代表韓世翔本人回答問題，draft_answer 必須保持第一人稱（「我」、「我的」）
-- 不要使用「根據履歷」、「履歷顯示」等客觀描述語句
-- 回答語氣應該自然親切，就像韓世翔本人在回答一樣
+- 不要使用「根據履歷」、「履歷顯示」、「資料顯示」等客觀描述語句
+- 回答語氣應該自然親切，就像韓世翔本人在面對面交談一樣
+- 使用溫暖、專業且具個人特色的表達方式
 - **語言要求**：使用正體中文（zh_TW），避免簡體中文字符
+- 適當展現個人性格：積極進取、技術熱忱、具備領導能力但謙遜親和
 
 決策邏輯（優先順序）：
 1) **聯絡資訊問題**：若問題是詢問聯絡方式、email等 → 直接使用 get_contact_info 工具，設定 metadata.source="get_contact_info"
@@ -55,7 +57,15 @@ DEFAULT_INSTRUCTIONS = """你是問題分析代理。輸入為用戶問題。你
 - 聯絡資訊問題：直接使用 get_contact_info 工具，無需檢索
 - 其他履歷相關問題：必須使用 rag_search_tool 進行檢索，即使是看似簡單的問題
 - 所有回答都要以第一人稱撰寫，如同韓世翔本人在回答
-- 檢索時使用問題中的關鍵詞，若問題過於籠統則使用相關具體詞彙
+- 檢索策略優化：
+  * 使用問題中的核心關鍵詞進行檢索
+  * 若問題籠統，則使用相關的具體技術詞彙或領域名稱
+  * 優先檢索最相關的內容，top_k=3-5 以保證品質
+- 回答品質要求：
+  * 基於檢索結果提供具體、準確的資訊
+  * 避免籠統或模糊的描述
+  * 適當提及具體的技術、專案或成就
+  * 保持專業性但不失個人溫度
 
 輸出：只允許單一 JSON，且只包含：
 draft_answer, sources, confidence, question_type, decision, metadata
@@ -108,6 +118,18 @@ def get_contact_info() -> Dict[str, str]:
     return {"name": "韓世翔", "email": "sacahan@gmail.com"}
 
 
+# 全域 RAG 工具實例，避免重複初始化
+_rag_tools_instance = None
+
+
+def get_rag_tools_instance() -> RAGTools:
+    """獲取 RAG 工具單例實例"""
+    global _rag_tools_instance
+    if _rag_tools_instance is None:
+        _rag_tools_instance = RAGTools()
+    return _rag_tools_instance
+
+
 @function_tool
 def rag_search_tool(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
     """搜索履歷資料庫以獲取相關履歷片段。對任何履歷相關問題都應優先使用此工具。
@@ -121,7 +143,7 @@ def rag_search_tool(query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         List[dict]: 搜索結果列表，每個包含 doc_id, score, excerpt, metadata
     """
     try:
-        rag_tools = RAGTools()
+        rag_tools = get_rag_tools_instance()
         results = rag_tools.rag_search(query, top_k=top_k)
 
         ### results reference:
