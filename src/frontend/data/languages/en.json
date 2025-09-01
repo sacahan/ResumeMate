@@ -1,0 +1,119 @@
+{
+  "meta": {
+    "language": "en",
+    "displayName": "English",
+    "direction": "ltr",
+    "version": "1.0.0"
+  },
+  "navigation": {
+    "about": "About Me",
+    "experience": "Experience",
+    "skills": "Skills",
+    "portfolio": "Portfolio",
+    "ai_qa": "AI Q&A",
+    "language_toggle": "中"
+  },
+  "hero": {
+    "greeting": "Hello, I'm Brian",
+    "title": "Software Engineer Specializing in AI-Driven Solutions",
+    "description": "Full-stack developer (Java, Python, JS) experienced in cloud architecture, microservices, containers and CI/CD. Focused on building scalable, production-ready AI agent solutions.",
+    "cta_chat": "Start Chat",
+    "cta_more": "Learn More"
+  },
+  "about": {
+    "title": "About Me",
+    "main_text": "With over 18 years of expertise in full-stack software development and architecture design, I specialize in Java enterprise applications and cloud microservice architectures. My experience spans the complete development lifecycle—from requirements analysis and system design through testing to production deployment. Throughout my career in telecommunications and financial services, I've led technical teams in delivering enterprise portals, mission-critical business systems, CI/CD automation, and AI application integrations.",
+    "hobby_text": "Beyond work, I actively contribute to open-source projects, engage with the tech community at conferences, and continuously expand my technical expertise. My current focus lies in AI application development, particularly frontier LLM and AI Agent framework design, where I bridge cutting-edge AI technology with practical business solutions.",
+    "programming_languages": "Programming Languages",
+    "contact_info": "Contact Information",
+    "contact_welcome": "Welcome to contact by AI Q&A"
+  },
+  "experience": {
+    "title": "Work & Education",
+    "taiwan_mobile": {
+      "period": "March 2024 - May 2025",
+      "title": "Senior Chief Engineer",
+      "company": "Taiwan Mobile Telecom Inc.",
+      "description": "Architected and developed enterprise user websites, integrating backend content management systems with distributed frontend services. Successfully delivered the Institute for Information Industry's ASR project, rapidly deploying a multilingual speech recognition platform. Enhanced cryptocurrency systems and e-commerce platforms by optimizing payment flows and user experience. Designed comprehensive CI/CD pipelines and reporting systems, boosting deployment efficiency and system observability. Mentored AppWorks T program interns on large-scale organizational operations and system interactions."
+    },
+    "tstar": {
+      "period": "March 2016 - December 2023",
+      "title": "Chief Engineer",
+      "company": "TStar Telecom Inc.",
+      "description": "Architected and implemented enterprise portals and corporate websites, enhancing online self-service experiences. Built and maintained IoT enterprise management platforms handling 100,000+ daily data transactions with robust third-party RESTful APIs. Engineered high-concurrency authentication systems for Double 11 campaigns, ensuring system stability under peak loads. Pioneered automated CI/CD pipelines using Jenkins and Docker, achieving 80% reduction in deployment time while significantly improving reliability and observability."
+    },
+    "rd_contract": {
+      "period": "March 2006 - February 2016",
+      "title": "Software Engineer",
+      "company": "R&D / On-site Deployment",
+      "description": "Delivered software solutions across retail, financial services, and telecommunications sectors, contributing to multiple enterprise-scale projects. Specialized in system analysis, architecture design, full-stack development, and database integration. Leveraged Java as primary technology alongside JavaScript, SQL, and PHP to build cross-domain system integrations and high-performance solutions, enabling digital transformation and process optimization for enterprise clients."
+    },
+    "education": {
+      "period": "September 2002 - June 2004",
+      "degree": "Master of Information Management",
+      "school": "Chung Yuan Christian University",
+      "thesis_description": "During the master's program, the research focus was on designing a system platform that integrates mobile devices and ambient intelligence to enhance learning effectiveness.",
+      "thesis_title": "Thesis title: Adaptive Mobile Learning Platform Considering Ambient Intelligence."
+    }
+  },
+  "skills": {
+    "title": "Professional Skills"
+  },
+  "portfolio": {
+    "title": "Portfolio",
+    "subtitle": "Side projects based on personal ideas",
+    "resumemate": {
+      "description": "Enabling AI agents to converse based on personal resumes using RAG technology"
+    },
+    "youtube_location": {
+      "description": "AI real-time analysis and tagging of locations mentioned in YouTube videos, integrated with a Chrome Extension for interactive presentation."
+    },
+    "sports_center": {
+      "description": "A people flow monitoring and analytics system designed for sports centers, collecting and displaying real-time traffic data for each center, providing usage trend analysis for areas such as gyms and swimming pools."
+    },
+    "demo": "Demo",
+    "repo": "Repo"
+  },
+  "ai_qa": {
+    "title": "AI Q&A",
+    "description": "Chat with my AI agent to learn more about my professional experience and skills"
+  },
+  "footer": {
+    "contact_prefix": "You can contact me at",
+    "contact_suffix": ".",
+    "copyright": "All rights reserved."
+  },
+  "ui": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Retry",
+    "close": "Close",
+    "open": "Open",
+    "menu": "Menu",
+    "home": "Home",
+    "back_to_top": "Back to Top",
+    "scroll_to_section": "Scroll to {section}",
+    "language_switched": "Language switched to English",
+    "keyboard_shortcut": "Shortcut: Alt + {key}",
+    "accessibility": {
+      "main_content": "Main content",
+      "navigation": "Site navigation",
+      "skip_to_content": "Skip to main content",
+      "external_link": "External link",
+      "opens_in_new_window": "Opens in new window"
+    }
+  },
+  "aria_labels": {
+    "main_navigation": "Main navigation",
+    "language_toggle": "Toggle language",
+    "social_links": "Social media links",
+    "contact_form": "Contact form",
+    "project_gallery": "Project gallery",
+    "skill_list": "Skills list"
+  },
+  "notifications": {
+    "language_changed": "Language changed",
+    "scroll_progress": "Scroll progress",
+    "interaction_feedback": "Action completed"
+  }
+}
