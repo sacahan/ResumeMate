@@ -7,7 +7,7 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
-echo "${YELLOW}開始部署後端到 Hugging Face Spaces...${NC}"
+echo -e "${YELLOW}開始部署後端到 Hugging Face Spaces...${NC}"
 
 # 確認當前目錄
 CURRENT_DIR=$(pwd)
@@ -17,36 +17,36 @@ cd "$REPO_ROOT"
 # 載入環境變數
 if [ -f .env ]; then
     source .env
-    echo "${GREEN}已載入環境變數${NC}"
+    echo -e "${GREEN}已載入環境變數${NC}"
 else
-    echo "${RED}找不到 .env 文件，請確保其存在並包含必要的環境變數${NC}"
+    echo -e "${RED}找不到 .env 文件，請確保其存在並包含必要的環境變數${NC}"
     exit 1
 fi
 
 # 檢查 HF_TOKEN 是否存在
 if [ -z "$HF_TOKEN" ]; then
-    echo "${RED}找不到 HF_TOKEN 環境變數，請在 .env 文件中設定 HF_TOKEN=${NC}"
+    echo -e "${RED}找不到 HF_TOKEN 環境變數，請在 .env 文件中設定 HF_TOKEN=${NC}"
     exit 1
 fi
 
 # 檢查 HF_SPACE_NAME 是否存在
 if [ -z "$HF_SPACE_NAME" ]; then
-    echo "${YELLOW}找不到 HF_SPACE_NAME 環境變數，使用預設名稱 'resumemate-chat'${NC}"
+    echo -e "${YELLOW}找不到 HF_SPACE_NAME 環境變數，使用預設名稱 'resumemate-chat'${NC}"
     HF_SPACE_NAME="resumemate-chat"
 fi
 
 # 先判斷是否已經安裝才安裝必要的套件
 if ! command -v huggingface-cli &> /dev/null; then
-    echo "${YELLOW}安裝 Hugging Face CLI...${NC}"
+    echo -e "${YELLOW}安裝 Hugging Face CLI...${NC}"
     pip install -U "huggingface_hub[cli]"
 fi
 
 #  登入 Hugging Face
-echo "${YELLOW}登入 Hugging Face...${NC}"
+echo -e "${YELLOW}登入 Hugging Face...${NC}"
 python -c "from huggingface_hub import login; login('$HF_TOKEN')"
 
 # 建立部署目錄
-echo "${YELLOW}準備部署文件...${NC}"
+echo -e "${YELLOW}準備部署文件...${NC}"
 mkdir -p deployment
 # 複製主要應用程式檔案
 cp app.py deployment/
@@ -57,7 +57,7 @@ cp requirements.txt deployment/
 cp -r chroma_db deployment/
 
 # 創建部署環境配置
-echo "${YELLOW}創建部署環境配置...${NC}"
+echo -e "${YELLOW}創建部署環境配置...${NC}"
 cat > deployment/.env << EOF
 # Gradio 配置
 GRADIO_SERVER_PORT=80
@@ -66,7 +66,7 @@ GRADIO_SERVER_NAME=0.0.0.0
 EOF
 
 # 建立 Hugging Face Space 必要檔案
-echo "${YELLOW}創建 Hugging Face Space 配置文件...${NC}"
+echo -e "${YELLOW}創建 Hugging Face Space 配置文件...${NC}"
 cat > deployment/README.md << EOF
 ---
 title: ResumeMate Chat
@@ -88,7 +88,7 @@ EOF
 # 切換到部署目錄
 cd deployment
 
-echo "${YELLOW}使用 Hugging Face Hub API 部署到 Spaces...${NC}"
+echo -e "${YELLOW}使用 Hugging Face Hub API 部署到 Spaces...${NC}"
 # 使用 Python API 創建或更新 Space
 python -c "
 import os
@@ -127,11 +127,11 @@ except Exception as e:
     exit(1)
 "
 
-echo "${GREEN}後端部署完成！${NC}"
-echo "請前往 https://huggingface.co/spaces/sacahan/$HF_SPACE_NAME 查看您的應用"
+echo -e "${GREEN}後端部署完成！${NC}"
+echo -e "請前往 https://huggingface.co/spaces/sacahan/$HF_SPACE_NAME 查看您的應用"
 
 # 清理
-echo "${YELLOW}清理臨時文件...${NC}"
+echo -e "${YELLOW}清理臨時文件...${NC}"
 cd "$REPO_ROOT"
 rm -rf deployment
 
