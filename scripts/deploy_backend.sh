@@ -62,7 +62,7 @@ cat > deployment/.env << EOF
 # Gradio 配置
 GRADIO_SERVER_PORT=80
 GRADIO_SERVER_NAME=0.0.0.0
-# 其他環境變數可以在這裡添加
+# 環境變數應該到Hugging Face Spaces Settings中配置
 EOF
 
 # 建立 Hugging Face Space 必要檔案
