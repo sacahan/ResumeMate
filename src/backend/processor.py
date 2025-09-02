@@ -100,7 +100,7 @@ class ResumeMateProcessor:
 
         # 🚀 性能優化配置
         self.enable_parallel_processing = True
-        self.request_timeout = 30.0  # 30 秒逾時
+        self.request_timeout = 60.0  # 60 秒逾時
 
         logger.info("🎆 ResumeMate 高性能處理器初始化完成")
         logger.info(
