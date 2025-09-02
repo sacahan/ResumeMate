@@ -18,6 +18,13 @@ from chromadb.config import Settings
 import openai
 from openai import APIError, RateLimitError
 
+try:
+    from sentence_transformers import SentenceTransformer
+
+    SENTENCE_TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    SENTENCE_TRANSFORMERS_AVAILABLE = False
+
 from backend.models import SearchResult
 
 # 載入環境變數
@@ -31,12 +38,17 @@ logger = logging.getLogger(__name__)
 class RAGConfig:
     """RAG 工具配置類 - 性能優化版"""
 
-    embedding_model: str = "text-embedding-3-small"  # 使用更快的嵌入模型
+    # 🎯 向量化提供者配置
+    embedding_provider: str = "local"  # local | openai
+    embedding_model: str = "text-embedding-3-small"  # OpenAI 模型名稱
+    local_model_name: str = "all-MiniLM-L6-v2"  # 本地模型名稱
+    device: str = "cpu"  # cpu | cuda | mps
+
     batch_size: int = 100  # 優化批次大小平衡速度與記憶體
     max_retries: int = 2  # 增加重試次數提高穩定性
     cache_size: int = 100  # 擴大快取大小
     db_path: str = "./chroma_db"
-    collection_name: str = "markdown_documents"
+    collection_name: str = ""  # 自動根據模型選擇
     max_top_k: int = 15  # 降低最大檢索數量提升速度
 
     # 🚀 新增性能優化配置
@@ -48,11 +60,38 @@ class RAGConfig:
     query_preprocessing: bool = True  # 啟用查詢預處理
     result_reranking: bool = True  # 啟用結果重排序
 
+    def get_collection_name(self) -> str:
+        """根據使用的模型自動選擇 collection 名稱"""
+        if self.collection_name:  # 如果手動指定，則使用指定的名稱
+            return self.collection_name
+
+        if self.embedding_provider == "openai":
+            if self.embedding_model == "text-embedding-3-small":
+                return "markdown_documents_openai"
+            else:
+                # 其他 OpenAI 模型也使用 openai collection
+                return "markdown_documents_openai"
+        elif self.embedding_provider == "local":
+            if self.local_model_name == "all-MiniLM-L6-v2":
+                return "markdown_documents_minilm"
+            elif "bge" in self.local_model_name.lower():
+                return "markdown_documents_bge"
+            elif "m3e" in self.local_model_name.lower():
+                return "markdown_documents_m3e"
+            else:
+                # 其他本地模型使用通用名稱
+                return "markdown_documents_local"
+        else:
+            return "markdown_documents"  # 預設名稱
+
     @classmethod
     def from_env(cls) -> "RAGConfig":
         """從環境變數創建配置"""
         return cls(
+            embedding_provider=os.getenv("EMBEDDING_PROVIDER", cls.embedding_provider),
             embedding_model=os.getenv("EMBEDDING_MODEL", cls.embedding_model),
+            local_model_name=os.getenv("LOCAL_MODEL_NAME", cls.local_model_name),
+            device=os.getenv("DEVICE", cls.device),
             batch_size=int(os.getenv("BATCH_SIZE", cls.batch_size)),
             db_path=os.getenv("CHROMA_DB_PATH", cls.db_path),
             collection_name=os.getenv("CHROMA_COLLECTION_NAME", cls.collection_name),
@@ -94,14 +133,17 @@ class RAGTools:
             "last_reset_time": time.time(),
         }
 
-        # 驗證 API 金鑰
+        # 驗證 API 金鑰（僅當使用 OpenAI 時需要）
         self.api_key = os.getenv("OPENAI_API_KEY")
-        if not self.api_key:
-            raise ValueError("OPENAI_API_KEY environment variable is required")
+        if self.config.embedding_provider == "openai" and not self.api_key:
+            raise ValueError(
+                "OPENAI_API_KEY environment variable is required for OpenAI provider"
+            )
 
         # 初始化組件
         self.dbClient: Optional[chromadb.PersistentClient] = None
         self.provider: Optional[openai.OpenAI] = None
+        self.local_model: Optional[SentenceTransformer] = None
         self.collection = None
 
         self._initialize_db()
@@ -119,25 +161,48 @@ class RAGTools:
                 settings=Settings(anonymized_telemetry=False, allow_reset=True),
             )
 
-            # 設定 OpenAI 嵌入提供者
-            self.provider = openai.OpenAI(api_key=self.api_key)
+            # 初始化嵌入提供者
+            self._initialize_embedding_provider()
 
-            # 取得或創建 collection
+            # 取得或創建 collection (使用自動選擇的名稱)
+            collection_name = self.config.get_collection_name()
             try:
-                self.collection = self.dbClient.get_collection(
-                    self.config.collection_name
-                )
-                logger.info(f"連接到 {self.config.collection_name} collection")
+                self.collection = self.dbClient.get_collection(collection_name)
+                logger.info(f"連接到 {collection_name} collection")
             except Exception:
                 # 如果 collection 不存在，創建一個新的
-                self.collection = self.dbClient.create_collection(
-                    self.config.collection_name
-                )
-                logger.info(f"創建新的 {self.config.collection_name} collection")
+                self.collection = self.dbClient.create_collection(collection_name)
+                logger.info(f"創建新的 {collection_name} collection")
 
         except Exception as e:
             logger.error(f"初始化 ChromaDB 失敗: {e}")
             raise RuntimeError(f"Database initialization failed: {e}") from e
+
+    def _initialize_embedding_provider(self) -> None:
+        """初始化嵌入提供者"""
+        if self.config.embedding_provider == "openai":
+            self.provider = openai.OpenAI(api_key=self.api_key)
+            logger.info("初始化 OpenAI 嵌入提供者")
+        elif self.config.embedding_provider == "local":
+            if not SENTENCE_TRANSFORMERS_AVAILABLE:
+                raise RuntimeError(
+                    "sentence-transformers is required for local embeddings. "
+                    "Install with: pip install sentence-transformers"
+                )
+            try:
+                self.local_model = SentenceTransformer(
+                    self.config.local_model_name, device=self.config.device
+                )
+                logger.info(
+                    f"載入本地模型: {self.config.local_model_name} ({self.config.device})"
+                )
+            except Exception as e:
+                logger.error(f"載入本地模型失敗: {e}")
+                raise RuntimeError(f"Failed to load local model: {e}") from e
+        else:
+            raise ValueError(
+                f"Unsupported embedding provider: {self.config.embedding_provider}"
+            )
 
     def _validate_input(self, query: str, top_k: int) -> None:
         """驗證輸入參數
@@ -207,6 +272,34 @@ class RAGTools:
         if not texts:
             return []
 
+        if self.config.embedding_provider == "local":
+            return self._embed_texts_local(texts)
+        else:
+            return self._embed_texts_openai(texts)
+
+    def _embed_texts_local(self, texts: List[str]) -> List[List[float]]:
+        """使用本地模型生成嵌入向量"""
+        try:
+            # Sentence Transformers 自動處理批次，非常高效
+            embeddings = self.local_model.encode(
+                texts,
+                batch_size=self.config.batch_size,
+                show_progress_bar=False,
+                convert_to_numpy=False,  # 保持為 tensor，後續轉為 list
+            )
+
+            # 轉換為 list 格式
+            embeddings_list = [embedding.tolist() for embedding in embeddings]
+
+            logger.debug(f"本地模型成功生成 {len(embeddings_list)} 個嵌入向量")
+            return embeddings_list
+
+        except Exception as e:
+            logger.error(f"本地嵌入向量生成失敗: {e}")
+            raise RuntimeError(f"Local embedding generation failed: {e}") from e
+
+    def _embed_texts_openai(self, texts: List[str]) -> List[List[float]]:
+        """使用 OpenAI API 生成嵌入向量"""
         all_embeddings = []
 
         # 分批處理文字
@@ -240,7 +333,7 @@ class RAGTools:
                         raise
                     time.sleep(1)
 
-        logger.debug(f"成功生成 {len(all_embeddings)} 個嵌入向量")
+        logger.debug(f"OpenAI 成功生成 {len(all_embeddings)} 個嵌入向量")
         return all_embeddings
 
     def rag_search(self, query: str, top_k: int = 10) -> List[SearchResult]:
@@ -552,8 +645,8 @@ class RAGTools:
             raise ValueError("path must be a non-empty string")
 
         try:
-            # 使用配置中的 collection 名稱
-            collection_name = self.config.collection_name
+            # 使用自動選擇的 collection 名稱
+            collection_name = self.config.get_collection_name()
 
             # 重置 collection
             try:
@@ -578,7 +671,7 @@ class RAGTools:
             return {
                 "status": "error",
                 "details": str(e),
-                "collection_name": self.config.collection_name,
+                "collection_name": self.config.get_collection_name(),
             }
 
     def get_collection_info(self) -> Dict:
@@ -588,17 +681,22 @@ class RAGTools:
             Dict: collection 統計資訊
         """
         try:
+            collection_name = self.config.get_collection_name()
             count = self.collection.count()
             return {
-                "name": self.config.collection_name,
+                "name": collection_name,
                 "document_count": count,
                 "status": "active",
                 "cache_size": len(self._query_cache),
+                "embedding_provider": self.config.embedding_provider,
+                "model": self.config.embedding_model
+                if self.config.embedding_provider == "openai"
+                else self.config.local_model_name,
             }
         except Exception as e:
             logger.error(f"取得 collection 資訊失敗: {e}")
             return {
-                "name": self.config.collection_name,
+                "name": self.config.get_collection_name(),
                 "document_count": 0,
                 "status": "error",
                 "error": str(e),

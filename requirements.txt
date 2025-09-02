@@ -8,4 +8,6 @@ pytest>=7.0.0
 black>=23.0.0
 isort>=5.0.0
 flake8>=6.0.0
+sentence-transformers>=5.1.0
+torch>=2.8.0
 openai-agents @ git+https://github.com/openai/openai-agents-python.git@main
