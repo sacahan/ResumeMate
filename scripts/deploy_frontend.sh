@@ -15,15 +15,15 @@ if [ -n "$(git status --porcelain)" ]; then
 fi
 
 # 確認在 gh-pages 分支且工作區乾淨
-# CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-# if [ "$CURRENT_BRANCH" != "gh-pages" ]; then
-#     echo -e "${YELLOW}正在切換到 gh-pages 分支...${NC}"
-#     if git show-ref --verify --quiet refs/heads/gh-pages; then
-#         git checkout gh-pages
-#     else
-#         git checkout -b gh-pages
-#     fi
-# fi
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+if [ "$CURRENT_BRANCH" != "gh-pages" ]; then
+    echo -e "${YELLOW}正在切換到 gh-pages 分支...${NC}"
+    if git show-ref --verify --quiet refs/heads/gh-pages; then
+        git checkout gh-pages
+    else
+        git checkout -b gh-pages
+    fi
+fi
 
 # 確認當前目錄
 CURRENT_DIR=$(pwd)
@@ -52,7 +52,7 @@ echo -e "${YELLOW}推送到 gh-pages 分支...${NC}"
 # 使用 git subtree 推送（如果 gh-pages 分支不存在會自動創建）
 if git rev-parse --verify origin/gh-pages >/dev/null 2>&1; then
     # gh-pages 分支存在，推送更新
-    git subtree push --force --prefix="$BUILD_DIR" origin gh-pages
+    git subtree push --prefix="$BUILD_DIR" origin gh-pages
 else
     # gh-pages 分支不存在，創建並推送
     git subtree push --prefix="$BUILD_DIR" origin gh-pages
@@ -67,3 +67,6 @@ rm -rf "$BUILD_DIR"
 echo -e "${GREEN}前端部署完成！${NC}"
 echo -e "GitHub Pages 將在幾分鐘後更新"
 echo -e "網站地址: https://$(git config --get remote.origin.url | sed 's/.*github.com[:/]\([^/]*\)\/\([^.]*\).*/\1.github.io\/\2/')"
+
+echo -e "${YELLOW}切換回 main 分支...${NC}"
+git checkout main
