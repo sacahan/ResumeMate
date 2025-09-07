@@ -33,22 +33,12 @@ if [ ! -f "src/frontend/index.html" ]; then
 fi
 
 # 創建臨時構建目錄
-BUILD_DIR="dist"
+BUILD_DIR="dist_frontend"
 rm -rf "$BUILD_DIR"
 mkdir -p "$BUILD_DIR"
 
 echo -e "${YELLOW}複製前端檔案...${NC}"
-cp -r src/frontend/* "$BUILD_DIR"/
-
-# 確保 iframe 使用正確的 HuggingFace Space URL
-echo -e "${YELLOW}更新 iframe URL...${NC}"
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    # macOS
-    sed -i '' 's|http://localhost:7860|https://sacahan-resumemate-chat.hf.space|g' "$BUILD_DIR/index.html"
-else
-    # Linux
-    sed -i 's|http://localhost:7860|https://sacahan-resumemate-chat.hf.space|g' "$BUILD_DIR/index.html"
-fi
+cp -rv src/frontend/* "$BUILD_DIR"/
 
 # 確保構建目錄被 git 追蹤（臨時）
 git add "$BUILD_DIR"
