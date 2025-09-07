@@ -23,7 +23,6 @@ if [ "$CURRENT_BRANCH" != "gh-pages" ]; then
     else
         git checkout -b gh-pages
     fi
-    exit 1
 fi
 
 # 確認當前目錄
