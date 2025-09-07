@@ -52,7 +52,7 @@ echo -e "${YELLOW}推送到 gh-pages 分支...${NC}"
 # 使用 git subtree 推送（如果 gh-pages 分支不存在會自動創建）
 if git rev-parse --verify origin/gh-pages >/dev/null 2>&1; then
     # gh-pages 分支存在，推送更新
-    git subtree push --prefix="$BUILD_DIR" origin gh-pages --force
+    git subtree push --force --prefix="$BUILD_DIR" origin gh-pages
 else
     # gh-pages 分支不存在，創建並推送
     git subtree push --prefix="$BUILD_DIR" origin gh-pages
