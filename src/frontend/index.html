@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-TW" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
@@ -61,9 +61,7 @@
       .fade-in-section {
         opacity: 0;
         transform: translateY(20px);
-        transition:
-          opacity 0.6s ease-out,
-          transform 0.6s ease-out;
+        transition: opacity 0.6s ease-out, transform 0.6s ease-out;
       }
 
       .fade-in-section.is-visible {
@@ -71,6 +69,20 @@
         transform: translateY(0);
       }
     </style>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "Brian Han",
+        "url": "https://www.brianhan.cc/",
+        "sameAs": [
+          "https://github.com/sacahan",
+          "https://linkedin.com/in/brian-han-64551919"
+        ],
+        "jobTitle": "Senior Engineer",
+        "knowsAbout": ["AI", "Full Stack Development", "Cloud Architecture"]
+      }
+    </script>
   </head>
   <body>
     <!-- Navigation -->
@@ -290,6 +302,7 @@
           <!-- Contact Information -->
           <div class="glass-effect p-8 rounded-2xl">
             <h3
+              id="contact-information"
               class="text-2xl font-bold mb-6 text-blue-400"
               data-zh="聯絡資訊"
               data-en="Contact Information"
@@ -1093,7 +1106,7 @@
           },
           {
             threshold: 0.1,
-          },
+          }
         );
 
         sections.forEach((section) => {

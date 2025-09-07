@@ -220,3 +220,25 @@ Based on `.github/instructions/` configurations:
 - Achieve high test coverage using pytest for Python and Jest for JavaScript
 - Include realistic test scenarios and edge cases
 - Use mocking for external dependencies
+
+## Claude Code Workflow Rules
+
+### General Development Guidelines
+
+- 每次完成重構後應該回頭檢視 README.md 是否也需要相應更新內容
+- 如果要執行與python相關的程式優先考慮使用"uv run"，或透過"uv init"建立虛擬環境，或使用"uv add"增加依賴包
+- 總是先判斷目前專案/使用者scope是否已有設定子代理，若有則將任務分拆給子代理 (Sub Agents) 執行
+
+### Python Environment Management
+
+- Prefer using `uv` for Python package management:
+  - `uv run` for executing Python programs
+  - `uv init` for creating virtual environments
+  - `uv add` for adding dependencies
+- This approach ensures consistent dependency management and virtual environment handling
+
+### Task Delegation Strategy
+
+- Always check if the current project/user scope has configured sub-agents
+- When sub-agents are available, break down tasks and delegate to appropriate sub-agents
+- This ensures optimal task distribution and specialized handling

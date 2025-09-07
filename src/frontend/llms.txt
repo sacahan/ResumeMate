@@ -1,0 +1,27 @@
+# llms.txt for brianhan.cc
+
+## 導覽
+- [關於我](https://www.brianhan.cc/#about): AI 開發資深工程師簡介與職業背景。
+
+## 經歷與專業背景
+- [工作與學術經歷](https://www.brianhan.cc/#experience): 18 年全端／雲端／AI 專案實戰經歷；歷任台灣大哥大、台灣之星工程職位。
+
+## 專業技能
+- [技能清單](https://www.brianhan.cc/#skills): Python、JavaScript、Java、CI/CD、自動化、雲端架構、LLM 調教等。
+
+## 作品展示
+- [ResumeMate](https://www.brianhan.cc/#portfolio): 使用 RAG 技術實作 AI 履歷助理（含展示 & GitHub 連結）。
+    - [Demo](https://huggingface.co/spaces/sacahan/resumemate-chat)
+    - [GitHub](https://github.com/sacahan/ResumeMate)
+- [TrailTag](https://www.brianhan.cc/#portfolio): AI 即時標註 YouTube 影片地點，可互動（含展示 & GitHub）。
+    - [Demo](https://www.youtube.com/watch?v=DzmGJXYH4-g)
+    - [GitHub](https://github.com/sacahan/TrailTag)
+- [CSC Flow](https://www.brianhan.cc/#portfolio): 運動中心人流分析儀表板（含展示 & GitHub）。
+    - [Demo](https://flow.brianhan.cc/)
+    - [GitHub](https://github.com/sacahan/CSCFlow)
+
+## AI 智慧問答互動
+- [AI 智慧問答](https://www.brianhan.cc/#chat): 可與 AI Agent 對話，了解專業與背景詳情。
+
+## 聯絡方式
+- [聯絡資訊](https://www.brianhan.cc/#contact-information): Email（sacahan@gmail.com）與 Telegram（@sacahan）。
