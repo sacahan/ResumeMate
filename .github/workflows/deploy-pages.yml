@@ -2,9 +2,9 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [gh-pages]
+    branches: [main]
     paths:
-      - "**"
+      - "src/frontend/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
@@ -35,12 +35,10 @@ jobs:
           # 嘗試自動啟用 Pages 如果尚未啟用
           enablement: true
 
-      # gh-pages 分支已是靜態檔案，無需複製
-
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: "."
+          path: "src/frontend"
 
       - name: Deploy to GitHub Pages
         id: deployment
