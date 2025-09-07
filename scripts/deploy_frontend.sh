@@ -9,10 +9,11 @@ NC='\033[0m' # No Color
 
 echo -e "${YELLOW}開始安全部署前端到 GitHub Pages...${NC}"
 
-# 確認在 main 分支且工作區乾淨
+
+# 確認在 gh-pages 分支且工作區乾淨
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [ "$CURRENT_BRANCH" != "main" ]; then
-    echo -e "${RED}錯誤: 必須在 main 分支執行部署${NC}"
+if [ "$CURRENT_BRANCH" != "gh-pages" ]; then
+    echo -e "${RED}錯誤: 必須在 gh-pages 分支執行部署${NC}"
     exit 1
 fi
 
