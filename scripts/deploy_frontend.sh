@@ -15,15 +15,15 @@ if [ -n "$(git status --porcelain)" ]; then
 fi
 
 # 確認在 gh-pages 分支且工作區乾淨
-CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
-if [ "$CURRENT_BRANCH" != "gh-pages" ]; then
-    echo -e "${YELLOW}正在切換到 gh-pages 分支...${NC}"
-    if git show-ref --verify --quiet refs/heads/gh-pages; then
-        git checkout gh-pages
-    else
-        git checkout -b gh-pages
-    fi
-fi
+# CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+# if [ "$CURRENT_BRANCH" != "gh-pages" ]; then
+#     echo -e "${YELLOW}正在切換到 gh-pages 分支...${NC}"
+#     if git show-ref --verify --quiet refs/heads/gh-pages; then
+#         git checkout gh-pages
+#     else
+#         git checkout -b gh-pages
+#     fi
+# fi
 
 # 確認當前目錄
 CURRENT_DIR=$(pwd)
@@ -67,6 +67,3 @@ rm -rf "$BUILD_DIR"
 echo -e "${GREEN}前端部署完成！${NC}"
 echo -e "GitHub Pages 將在幾分鐘後更新"
 echo -e "網站地址: https://$(git config --get remote.origin.url | sed 's/.*github.com[:/]\([^/]*\)\/\([^.]*\).*/\1.github.io\/\2/')"
-
-echo -e "${YELLOW}切換回 main 分支...${NC}"
-git checkout main
