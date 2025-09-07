@@ -29,8 +29,18 @@ if [ ! -f "src/frontend/index.html" ]; then
     exit 1
 fi
 
-echo -e "${YELLOW}推送到 main 分支以觸發 GitHub Actions...${NC}"
+echo -e "${YELLOW}推送到 main 分支...${NC}"
 git push origin main
+
+echo -e "${YELLOW}手動觸發 GitHub Actions 部署...${NC}"
+# 檢查是否安裝了 gh CLI
+if command -v gh &> /dev/null; then
+    gh workflow run deploy-pages.yml
+    echo -e "${GREEN}GitHub Actions 已手動觸發！${NC}"
+else
+    echo -e "${YELLOW}注意: 未安裝 GitHub CLI (gh)${NC}"
+    echo -e "${YELLOW}請手動到 GitHub Actions 頁面觸發 'Deploy to GitHub Pages' workflow${NC}"
+fi
 
 echo -e "${GREEN}部署請求已提交！${NC}"
 echo -e "${YELLOW}GitHub Actions 將自動處理前端部署...${NC}"
