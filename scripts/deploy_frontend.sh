@@ -9,16 +9,20 @@ NC='\033[0m' # No Color
 
 echo -e "${YELLOW}開始安全部署前端到 GitHub Pages...${NC}"
 
+if [ -n "$(git status --porcelain)" ]; then
+    echo -e "${RED}錯誤: 工作區有未提交的更改，請先提交或暫存${NC}"
+    exit 1
+fi
 
 # 確認在 gh-pages 分支且工作區乾淨
 CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
 if [ "$CURRENT_BRANCH" != "gh-pages" ]; then
-    echo -e "${RED}錯誤: 必須在 gh-pages 分支執行部署${NC}"
-    exit 1
-fi
-
-if [ -n "$(git status --porcelain)" ]; then
-    echo -e "${RED}錯誤: 工作區有未提交的更改，請先提交或暫存${NC}"
+    echo -e "${YELLOW}正在切換到 gh-pages 分支...${NC}"
+    if git show-ref --verify --quiet refs/heads/gh-pages; then
+        git checkout gh-pages
+    else
+        git checkout -b gh-pages
+    fi
     exit 1
 fi
 
@@ -64,3 +68,6 @@ rm -rf "$BUILD_DIR"
 echo -e "${GREEN}前端部署完成！${NC}"
 echo -e "GitHub Pages 將在幾分鐘後更新"
 echo -e "網站地址: https://$(git config --get remote.origin.url | sed 's/.*github.com[:/]\([^/]*\)\/\([^.]*\).*/\1.github.io\/\2/')"
+
+echo -e "${YELLOW}切換回 main 分支...${NC}"
+git checkout main
