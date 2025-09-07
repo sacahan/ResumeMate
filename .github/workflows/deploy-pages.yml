@@ -2,9 +2,9 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [gh-pages]
     paths:
-      - "src/frontend/**"
+      - "**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 
@@ -35,14 +35,7 @@ jobs:
           # 嘗試自動啟用 Pages 如果尚未啟用
           enablement: true
 
-      - name: Copy frontend files
-        run: |
-          # 複製前端檔案到根目錄
-          cp -r src/frontend/* .
-          # 確保 iframe 使用正確的 HuggingFace Space URL
-          sed -i 's|http://localhost:7860|https://sacahan-resumemate-chat.hf.space|g' index.html
-          # 移除不需要的目錄
-          rm -rf src/
+      # gh-pages 分支已是靜態檔案，無需複製
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
