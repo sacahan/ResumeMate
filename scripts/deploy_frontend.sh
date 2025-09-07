@@ -21,6 +21,11 @@ if [ -n "$(git status --porcelain)" ]; then
     exit 1
 fi
 
+# 確認當前目錄
+CURRENT_DIR=$(pwd)
+REPO_ROOT=$(git rev-parse --show-toplevel)
+cd "$REPO_ROOT"
+
 # 確保前端檔案存在
 if [ ! -f "src/frontend/index.html" ]; then
     echo -e "${RED}錯誤: src/frontend/index.html 不存在${NC}"
