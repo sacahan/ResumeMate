@@ -155,6 +155,11 @@ class RAGTools:
             RuntimeError: 當資料庫初始化失敗時
         """
         try:
+            # 確保 chroma_db 目錄存在
+            import os
+
+            os.makedirs(self.config.db_path, exist_ok=True)
+
             # 設定 ChromaDB 客戶端
             self.dbClient = chromadb.PersistentClient(
                 path=self.config.db_path,
