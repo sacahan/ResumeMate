@@ -50,23 +50,18 @@ echo -e "${YELLOW}準備部署文件...${NC}"
 mkdir -p deployment
 # 複製主要應用程式檔案
 cp app.py deployment/
-# 複製整個 src 目錄結構以保持正確的導入路徑〈應該排除 frontend 目錄〉
-rsync -av --exclude='frontend' src/ deployment/src/
+# 複製整個 src 目錄結構以保持正確的導入路徑（排除 frontend 和 __pycache__）
+rsync -av --exclude='frontend' --exclude='__pycache__' src/ deployment/src/
 cp requirements.txt deployment/
-# 複製 chroma_db 資料夾（包含向量DB）
-cp -r chroma_db deployment/
+# 注意：NOT 複製 chroma_db，因為：
+# 1. 向量 DB 非常大（數百 MB）
+# 2. Hugging Face Spaces 有存儲限制
+# 3. 可以在運行時動態生成或使用 git-lfs
 
 # 創建部署環境配置
-echo -e "${YELLOW}創建部署環境配置...${NC}"
-cat > deployment/.env << EOF
-# Gradio 配置
-GRADIO_SERVER_PORT=80
-GRADIO_SERVER_NAME=0.0.0.0
-# 環境變數應該到Hugging Face Spaces Settings中配置
-EOF
-
-# 建立 Hugging Face Space 必要檔案
 echo -e "${YELLOW}創建 Hugging Face Space 配置文件...${NC}"
+# 注意：不在這裡設定 .env，因為密鑰應該在 Hugging Face Spaces Settings 中設定
+# Hugging Face 會自動注入環境變數
 cat > deployment/README.md << EOF
 ---
 title: ResumeMate Chat
@@ -83,6 +78,24 @@ license: apache-2.0
 # ResumeMate
 
 ResumeMate is an AI-powered resume agent platform that combines static resume presentation with interactive AI Q&A features.
+EOF
+
+# 創建 .gitignore 以避免大文件被上傳
+cat > deployment/.gitignore << EOF
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.env
+.env.local
+*.db
+*.sqlite3
+chroma_db/
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
 EOF
 
 # 切換到部署目錄
