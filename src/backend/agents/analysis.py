@@ -284,10 +284,51 @@ class AnalysisAgent:
     """Analysis Agent - 問題分析與檢索代理人"""
 
     def __init__(self, llm: str = "gpt-4o-mini"):
-        self.llm = os.environ.get("AGENT_MODEL", llm)
+        self.llm_model, self.llm_settings = self._create_litellm_model_and_settings()
         self.response_length = os.environ.get("AGENT_RESPONSE_LENGTH", "normal")
         self.sdk_agent = None
         self._initialize_sdk_agent()
+
+    def _create_litellm_model_and_settings(self):
+        """為 GitHub Copilot 創建 LiteLLM 模型實例和 ModelSettings
+
+        Returns:
+            Tuple[LitellmModel, ModelSettings]: (模型實例, 設置)
+
+        Note:
+            GITHUB_COPILOT_TOKEN 環境變數是可選的。
+            若不提供，LiteLLM 會自動使用 OAuth Device Flow 進行認證。
+            首次使用時會提示設備代碼，之後 Token 會自動快取。
+        """
+        try:
+            from agents.extensions.models.litellm_model import LitellmModel
+        except ImportError:
+            logger.error("LiteLLM 未安裝，請運行: pip install litellm>=1.0.0")
+            raise
+
+        # 從環境變數讀取 Token (可選)
+        api_key = os.getenv("GITHUB_COPILOT_TOKEN")
+        model = os.getenv("AGENT_MODEL", "gpt-5-mini")
+
+        # 建立 LiteLLM 模型實例
+        # 若 api_key 為 None，LiteLLM 會自動使用 OAuth Device Flow
+        llm_model = LitellmModel(
+            model=f"github_copilot/{model}",
+            api_key=api_key,
+        )
+
+        # 建立 ModelSettings，配置 GitHub Copilot 所需的 Headers
+        model_settings = ModelSettings(
+            extra_headers={
+                "editor-version": "vscode/1.85.1",  # Editor version
+                "editor-plugin-version": "copilot/1.155.0",  # Plugin version
+                "Copilot-Integration-Id": "vscode-chat",  # Integration ID
+                "user-agent": "GithubCopilot/1.155.0",  # User agent
+            }
+        )
+
+        logger.info(f"✅ GitHub Copilot LiteLLM 模型已建立: {model}")
+        return llm_model, model_settings
 
     def _initialize_sdk_agent(self):
         """初始化 Agent"""
@@ -295,6 +336,19 @@ class AnalysisAgent:
             # 根據回覆長度設定調整 instructions
             response_instructions = self._get_response_length_instructions()
             full_instructions = DEFAULT_INSTRUCTIONS + "\n\n" + response_instructions
+
+            # 建立基礎 ModelSettings
+            base_settings = ModelSettings(
+                # tool_choice="required",  # 🔥 強制使用工具確保檢索履歷內容
+                max_completion_tokens=500,  # 控制回答長度，避免過度冗長
+            )
+
+            # 合併 GitHub Copilot 的 extra_headers
+            if self.llm_settings and self.llm_settings.extra_headers:
+                base_settings.extra_headers = {
+                    **(base_settings.extra_headers or {}),
+                    **self.llm_settings.extra_headers,
+                }
 
             # 💡 智慧代理設定優化
             # - 嚴格輸出格式防止 schema 汙染
@@ -304,14 +358,11 @@ class AnalysisAgent:
                 name="韓世翔履歷分析助理",
                 instructions=full_instructions,
                 tools=[get_contact_info, rag_search_tool],
-                model=self.llm,
-                model_settings=ModelSettings(
-                    tool_choice="required",  # 🔥 強制使用工具確保檢索履歷內容
-                    max_completion_tokens=500,  # 控制回答長度，避免過度冗長
-                ),
+                model=self.llm_model,
+                model_settings=base_settings,
                 output_type=AgentOutputSchema(AnalysisOutput, strict_json_schema=False),
             )
-            logger.info(f"🚀 韓世翔履歷分析助理 ({self.llm}) 初始化成功")
+            logger.info("🚀 韓世翔履歷分析助理 (GitHub Copilot) 初始化成功")
             logger.info("✅ 已啟用智慧工具選擇與品質控制機制")
         except Exception as e:
             logger.error(f"初始化 Analysis Agent 失敗: {e}")
