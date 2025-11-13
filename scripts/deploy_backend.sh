@@ -53,10 +53,16 @@ cp app.py deployment/
 # 複製整個 src 目錄結構以保持正確的導入路徑（排除 frontend 和 __pycache__）
 rsync -av --exclude='frontend' --exclude='__pycache__' src/ deployment/src/
 cp requirements.txt deployment/
-# 注意：NOT 複製 chroma_db，因為：
-# 1. 向量 DB 非常大（數百 MB）
-# 2. Hugging Face Spaces 有存儲限制
-# 3. 可以在運行時動態生成或使用 git-lfs
+
+# 複製 chroma_db 向量資料庫
+if [ -d "chroma_db" ] && [ "$(ls -A chroma_db)" ]; then
+    echo -e "${YELLOW}部署 chroma_db 到 Hugging Face Spaces...${NC}"
+    cp -r chroma_db deployment/
+    echo -e "${GREEN}chroma_db 已複製${NC}"
+else
+    echo -e "${YELLOW}警告：chroma_db 目錄為空或不存在${NC}"
+    echo -e "應用將在運行時動態生成 chroma_db"
+fi
 
 # 創建部署環境配置
 echo -e "${YELLOW}創建 Hugging Face Space 配置文件...${NC}"
@@ -96,6 +102,7 @@ dist/
 build/
 .venv/
 venv/
+.DS_Store
 EOF
 
 # 切換到部署目錄
