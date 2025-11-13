@@ -756,8 +756,44 @@ def main():
 
     app = create_gradio_interface()
 
+    # 確定是否使用共享模式
+    use_share = os.getenv("GRADIO_SHARE", "").lower() in ("true", "1", "yes")
+
+    model = os.getenv("AGENT_MODEL", "gpt-5-mini")
+    logger.info(f"使用的代理模型: {model}")
+
     # 啟動應用程式
-    app.launch(server_name="0.0.0.0", server_port=7860, share=False, debug=True)
+    if use_share:
+        # 使用 Gradio 的共享連結（允許外部訪問）
+        logger.info("使用 Gradio 共享模式，生成公開連結...")
+        app.launch(
+            server_name="0.0.0.0",
+            server_port=7860,
+            share=True,
+            debug=True,
+            quiet=False,
+        )
+    else:
+        # 先嘗試在所有網絡介面上啟動（允許同網絡內訪問）
+        try:
+            logger.info("在所有網絡介面啟動應用 (0.0.0.0:7860)...")
+            app.launch(
+                server_name="0.0.0.0",
+                server_port=7860,
+                share=False,
+                debug=True,
+                quiet=False,
+            )
+        except ValueError as e:
+            # 如果失敗，回退到本地模式並啟用共享
+            logger.warning(f"無法在所有介面上啟動：{e}。自動啟用共享連結...")
+            app.launch(
+                server_name="0.0.0.0",
+                server_port=7860,
+                share=True,
+                debug=True,
+                quiet=False,
+            )
 
 
 if __name__ == "__main__":

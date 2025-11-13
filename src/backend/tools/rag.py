@@ -157,8 +157,31 @@ class RAGTools:
         try:
             # 確保 chroma_db 目錄存在
             import os
+            import shutil
 
             os.makedirs(self.config.db_path, exist_ok=True)
+
+            # 檢查是否需要重置損壞的數據庫
+            # 如果存在特定的損壞跡象，則清理並重新初始化
+            db_needs_reset = self._check_db_corruption()
+
+            if db_needs_reset:
+                logger.warning(
+                    f"檢測到 ChromaDB 損壞，正在重置 {self.config.db_path}..."
+                )
+                try:
+                    # 備份現有數據庫
+                    backup_path = f"{self.config.db_path}.backup"
+                    if os.path.exists(self.config.db_path):
+                        if os.path.exists(backup_path):
+                            shutil.rmtree(backup_path)
+                        shutil.move(self.config.db_path, backup_path)
+                    # 重新創建目錄
+                    os.makedirs(self.config.db_path, exist_ok=True)
+                    logger.info(f"數據庫備份已保存到 {backup_path}")
+                except Exception as backup_error:
+                    logger.error(f"備份數據庫時出錯: {backup_error}")
+                    # 繼續嘗試重新初始化
 
             # 設定 ChromaDB 客戶端
             self.dbClient = chromadb.PersistentClient(
@@ -174,14 +197,59 @@ class RAGTools:
             try:
                 self.collection = self.dbClient.get_collection(collection_name)
                 logger.info(f"連接到 {collection_name} collection")
-            except Exception:
+            except Exception as get_collection_error:
                 # 如果 collection 不存在，創建一個新的
+                logger.debug(
+                    f"無法獲取 collection {collection_name}: {get_collection_error}"
+                )
                 self.collection = self.dbClient.create_collection(collection_name)
                 logger.info(f"創建新的 {collection_name} collection")
 
         except Exception as e:
             logger.error(f"初始化 ChromaDB 失敗: {e}")
             raise RuntimeError(f"Database initialization failed: {e}") from e
+
+    def _check_db_corruption(self) -> bool:
+        """檢查數據庫是否可能損壞
+
+        Returns:
+            bool: 如果檢測到損壞則返回 True
+        """
+        import os
+
+        db_path = self.config.db_path
+
+        # 檢查數據庫文件是否存在
+        if not os.path.exists(db_path):
+            return False
+
+        # 檢查 chroma.sqlite3 文件是否存在且可訪問
+        sqlite_path = os.path.join(db_path, "chroma.sqlite3")
+        if os.path.exists(sqlite_path):
+            try:
+                # 嘗試打開並檢查 SQLite 文件的有效性
+                if os.path.getsize(sqlite_path) == 0:
+                    logger.warning("chroma.sqlite3 文件為空，需要重置")
+                    return True
+            except Exception as e:
+                logger.warning(f"無法訪問 chroma.sqlite3: {e}")
+                return False
+
+        # 檢查是否存在損壞的向量文件
+        try:
+            # 嘗試列出數據庫目錄中的文件
+            for item in os.listdir(db_path):
+                item_path = os.path.join(db_path, item)
+                # 檢查文件大小是否異常（過小可能表示損壞）
+                if os.path.isfile(item_path) and os.path.getsize(item_path) < 64:
+                    if item.endswith(".bin"):
+                        logger.warning(f"檢測到可能損壞的 bin 文件: {item}")
+                        return True
+        except Exception as e:
+            logger.debug(f"檢查數據庫文件時出錯: {e}")
+            return False
+
+        return False
 
     def _initialize_embedding_provider(self) -> None:
         """初始化嵌入提供者"""
