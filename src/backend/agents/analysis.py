@@ -188,7 +188,9 @@ DEFAULT_INSTRUCTIONS = """# 韓世翔 AI 履歷助理 - 問題分析代理
 class AnalysisOutput(BaseModel):
     """Analysis Agent 的結構化輸出"""
 
-    model_config = ConfigDict(extra="forbid")  # 嚴格：不允許多餘欄位
+    model_config = ConfigDict(
+        extra="ignore"
+    )  # ✅ 寬容：自動忽略 LLM 輸出的額外欄位（如 description）
 
     draft_answer: str = Field(..., description="根據檢索結果產生的初步回答")
     sources: List[str] = Field(default_factory=list, description="引用的資訊來源IDs")
@@ -392,54 +394,56 @@ class AnalysisAgent:
     # 安全解析輔助：避免 Invalid JSON
     # -------------------------
     def _safe_parse_output(self, result) -> AnalysisOutput | None:
-        """盡力把 SDK 輸出轉成 AnalysisOutput；失敗則回 None"""
+        """盡力把 SDK 輸出轉成 AnalysisOutput；失敗則回 None
+
+        由於使用 extra="ignore"，Pydantic 會自動忽略額外欄位（如 description），
+        所以無需手動清洗 schema 相關欄位。
+        """
         try:
-            # SDK 直接轉型（最可靠）
+            # 嘗試 SDK 的 final_output_as
             return result.final_output_as(AnalysisOutput)
         except Exception as e:
-            logger.warning(f"final_output_as 失敗，改走手動解析：{e}")
+            logger.warning(f"final_output_as 失敗，嘗試手動解析：{e}")
 
-        # 嘗試手動解析 result.output
+        # 備用方案：手動解析 result.output
+        raw = getattr(result, "output", None)
+        if raw is None:
+            logger.error("無法取得 result.output")
+            return None
+
         try:
-            raw = result.output
-            if isinstance(raw, dict):
-                data = raw
-            elif isinstance(raw, str):
+            if isinstance(raw, str):
                 data = json.loads(raw)
+            elif isinstance(raw, dict):
+                data = raw
             else:
-                logger.error(f"未知輸出型別，無法解析：{type(raw)}")
+                logger.error(f"未知輸出型別：{type(raw)}")
                 return None
 
-            # 白名單清洗，防止 schema 汙染欄位
-            allowed = {
-                "draft_answer",
-                "sources",
-                "confidence",
-                "question_type",
-                "decision",
-                "metadata",
-            }
-            cleaned = {k: v for k, v in data.items() if k in allowed}
-
             # 修正常見的格式錯誤
-            if "decision" in cleaned and isinstance(cleaned["decision"], list):
-                # 如果 decision 是列表，取第一個元素
-                if len(cleaned["decision"]) > 0:
-                    cleaned["decision"] = cleaned["decision"][0]
-                else:
-                    cleaned["decision"] = "oos"  # 預設值
+            if "decision" in data and isinstance(data["decision"], list):
+                data["decision"] = data["decision"][0] if data["decision"] else "oos"
 
-            if "sources" in cleaned and not isinstance(cleaned["sources"], list):
-                # 確保 sources 是列表格式
-                if isinstance(cleaned["sources"], str):
-                    cleaned["sources"] = [cleaned["sources"]]
-                else:
-                    cleaned["sources"] = []
+            if "sources" in data and not isinstance(data["sources"], list):
+                data["sources"] = (
+                    [data["sources"]] if isinstance(data["sources"], str) else []
+                )
 
-            # 嘗試校驗
-            return AnalysisOutput.model_validate(cleaned)
+            if "metadata" in data and data["metadata"] is None:
+                data["metadata"] = {}
+
+            if "confidence" in data and not isinstance(
+                data["confidence"], (int, float)
+            ):
+                try:
+                    data["confidence"] = float(data["confidence"])
+                except (ValueError, TypeError):
+                    data["confidence"] = 0.5
+
+            # 由於 extra="ignore"，額外欄位會被自動忽略
+            return AnalysisOutput.model_validate(data)
         except Exception as e:
-            logger.error(f"手動解析/校驗輸出失敗：{e}")
+            logger.error(f"手動解析輸出失敗：{e}")
             return None
 
     async def analyze(self, question: Question) -> AnalysisResult:

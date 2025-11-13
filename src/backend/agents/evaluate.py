@@ -206,9 +206,11 @@ status: "needs_clarification"
 JsonValue = Any
 
 
-# 嚴格輸出模型（只允許 5 欄）
+# 寬容輸出模型（自動忽略 LLM 的額外欄位）
 class EvaluateOutput(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(
+        extra="ignore"
+    )  # ✅ 寬容：自動忽略 LLM 輸出的額外欄位（如 description）
 
     final_answer: str
     # 改為字串列表以符合 Analysis Agent 輸出格式
@@ -344,12 +346,22 @@ class EvaluateAgent:
     # 安全解析：即使模型回 schema/雜訊也能修復
     # -------------------------
     def _safe_parse_output(self, result) -> Optional[EvaluateOutput]:
+        """盡力把 SDK 輸出轉成 EvaluateOutput；失敗則回 None
+
+        由於使用 extra="ignore"，Pydantic 會自動忽略額外欄位（如 description），
+        所以無需手動清洗 schema 相關欄位。
+        """
         try:
+            # 嘗試 SDK 的 final_output_as
             return result.final_output_as(EvaluateOutput)
         except Exception as e:
             logger.warning(f"final_output_as 失敗，嘗試手動解析：{e}")
 
+        # 備用方案：手動解析 result.output
         raw = getattr(result, "output", None)
+        if raw is None:
+            logger.error("無法取得 result.output")
+            return None
 
         try:
             if isinstance(raw, str):
@@ -360,19 +372,31 @@ class EvaluateAgent:
                 logger.error(f"未知輸出型別：{type(raw)}")
                 return None
 
-            # 白名單清洗
-            allowed = {"final_answer", "sources", "confidence", "status", "metadata"}
-            cleaned = {k: v for k, v in data.items() if k in allowed}
-
             # 某些模型會回 schema-like 結構，嘗試從 example 補值
-            if not cleaned and isinstance(data, dict) and "example" in data:
-                ex = data["example"]
-                if isinstance(ex, dict):
-                    cleaned = {k: v for k, v in ex.items() if k in allowed}
+            if "example" in data and isinstance(data["example"], dict):
+                data = data["example"]
 
-            return EvaluateOutput.model_validate(cleaned)
-        except Exception as ee:
-            logger.error(f"手動解析/校驗輸出失敗：{ee}")
+            # 修正常見的格式錯誤
+            if "sources" in data and not isinstance(data["sources"], list):
+                data["sources"] = (
+                    [data["sources"]] if isinstance(data["sources"], str) else []
+                )
+
+            if "metadata" in data and data["metadata"] is None:
+                data["metadata"] = {}
+
+            if "confidence" in data and not isinstance(
+                data["confidence"], (int, float)
+            ):
+                try:
+                    data["confidence"] = float(data["confidence"])
+                except (ValueError, TypeError):
+                    data["confidence"] = 0.5
+
+            # 由於 extra="ignore"，額外欄位會被自動忽略
+            return EvaluateOutput.model_validate(data)
+        except Exception as e:
+            logger.error(f"手動解析輸出失敗：{e}")
             return None
 
     async def evaluate(self, analysis: AnalysisResult) -> EvaluationResult:
