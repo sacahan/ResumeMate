@@ -12,6 +12,8 @@ document.addEventListener("DOMContentLoaded", () => {
     ResumeMate: {
       cover: "static/images/resume_mate_cover.png",
       tags: ["OpenAI Agent", "RAG", "Gradio", "ChromaDB"],
+      demoUrl: "https://www.brianhan.cc/",
+      githubUrl: "https://github.com/sacahan/ResumeMate",
       zh: {
         title: "ResumeMate",
         desc: "ResumeMate 是一個基於 AI 的簡歷代理平台，協助使用者優化職涯發展與履歷撰寫。",
@@ -24,6 +26,8 @@ document.addEventListener("DOMContentLoaded", () => {
     TrailTag: {
       cover: "static/images/trail_tag_cover.png",
       tags: ["CrewAI", "Gradio", "Chrome Extension", "Redis", "FastAPI"],
+      demoUrl: "https://www.youtube.com/watch?v=DzmGJXYH4-g",
+      githubUrl: "https://github.com/sacahan/TrailTag",
       zh: {
         title: "TrailTag",
         desc: "AI 驅動的工具，可自動偵測 YouTube 影片中提到的位置並即時標記座標與 Chrome 擴充功能整合。",
@@ -36,6 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
     CSCFlow: {
       cover: "static/images/csc_flow_cover.png",
       tags: ["Python", "Typescript", "HTML", "Shell", "Docker"],
+      demoUrl: "https://flow.brianhan.cc/",
+      githubUrl: "https://github.com/sacahan/cscflow",
       zh: {
         title: "CSCFlow",
         desc: "針對台灣公共運動中心的即時人流監控與分析系統，提供歷史與當下流量視覺化。",
@@ -48,6 +54,8 @@ document.addEventListener("DOMContentLoaded", () => {
     CasualTrader: {
       cover: "static/images/casual_trader_cover.png",
       tags: ["Python", "OpenAI SDK", "MCP", "Trading"],
+      demoUrl: "https://trader.brianhan.cc/",
+      githubUrl: "https://github.com/sacahan/CasualTrader",
       zh: {
         title: "CasualTrader",
         desc: "台股 AI 交易模擬平台，結合 OpenAI Agent SDK 與 MCP 核心，實現從研發到執行的全自動化。",
@@ -58,7 +66,10 @@ document.addEventListener("DOMContentLoaded", () => {
       },
     },
     CasualMarket: {
+      cover: "static/images/casual_market_cover.png",
       tags: ["TypeScript", "MCP Server", "Finance API", "Taiwan Stock"],
+      demoUrl: "https://trader.brianhan.cc/",
+      githubUrl: "https://github.com/sacahan/CasualMarket",
       zh: {
         title: "CasualMarket",
         desc: "功能完整的台股交易 Model Context Protocol (MCP) Server，提供即時股價、財務分析與 K 線視覺化接口。",
@@ -79,6 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
         "FastAPI",
         "SDD",
       ],
+      githubUrl: "https://github.com/sacahan/SpecPilot",
       zh: {
         title: "SpecPilot",
         desc: "專案規範管理 MCP 伺服器，將自然語言需求轉化為結構化規格並追蹤進度，提升開發協作效率。",
@@ -89,7 +101,9 @@ document.addEventListener("DOMContentLoaded", () => {
       },
     },
     YTSearch: {
+      cover: "static/images/yt_search_cover.png",
       tags: ["Python", "FastAPI", "Web Scraping", "MCP"],
+      githubUrl: "https://github.com/sacahan/YTSearch",
       zh: {
         title: "YTSearch",
         desc: "高效且零成本的 YouTube 影片搜尋 API，支援 MCP 協定，為 AI 助手提供強大的影片與頻道檢索能力。",
@@ -100,7 +114,9 @@ document.addEventListener("DOMContentLoaded", () => {
       },
     },
     MarkdownVault: {
+      cover: "static/images/markdown_vault_cover.png",
       tags: ["Python", "ChromaDB", "RAG", "Markdown"],
+      githubUrl: "https://github.com/sacahan/MarkdownVault",
       zh: {
         title: "MarkdownVault",
         desc: "將 Markdown 知識庫轉換為向量並存儲於本地 Chroma 資料庫，支援語意搜尋與 RAG 提示詞整合。",
@@ -113,6 +129,8 @@ document.addEventListener("DOMContentLoaded", () => {
     MediaGrabber: {
       cover: "static/images/media_grabber_cover.png",
       tags: ["Python", "yt-dlp", "FFmpeg", "Downloader", "GUI"],
+      demoUrl: "https://media.brianhan.cc/",
+      githubUrl: "https://github.com/sacahan/MediaGrabber",
       zh: {
         title: "MediaGrabber",
         desc: "支援 YouTube、Facebook 與 Instagram 的簡約高效媒體下載器，支援多種解析度與格式選擇。",
@@ -176,11 +194,24 @@ document.addEventListener("DOMContentLoaded", () => {
       ? `background-image: url('${staticData.cover}')`
       : `background: ${DEFAULT_COVERS[index % DEFAULT_COVERS.length]}`;
 
-    const demoLink = repo.homepage
+    // Determine demo and GitHub URLs from static data or repo data
+    const demoUrl = staticData.demoUrl || repo.homepage || null;
+    const githubUrl =
+      staticData.githubUrl !== undefined ? staticData.githubUrl : repo.html_url;
+
+    const demoLink = demoUrl
       ? `
-            <a href="${repo.homepage}" target="_blank" class="px-4 py-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-lg text-sm transition-colors flex items-center gap-2">
+            <a href="${demoUrl}" target="_blank" class="px-4 py-2 bg-blue-600/80 hover:bg-blue-600 text-white rounded-lg text-sm transition-colors flex items-center gap-2">
                 <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
                 Demo
+            </a>`
+      : "";
+
+    const githubLink = githubUrl
+      ? `
+            <a href="${githubUrl}" target="_blank" class="px-4 py-2 glass-effect hover:bg-white/10 text-white rounded-lg text-sm transition-all duration-300 flex items-center gap-2 border border-white/10 hover:border-white/20">
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.298 24 12c0-6.627-5.373-12-12-12z"/></svg>
+                GitHub
             </a>`
       : "";
 
@@ -219,10 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
                         <!-- Links -->
                         <div class="flex gap-3 mt-auto">
                             ${demoLink}
-                            <a href="${repo.html_url}" target="_blank" class="px-4 py-2 glass-effect hover:bg-white/10 text-white rounded-lg text-sm transition-all duration-300 flex items-center gap-2 border border-white/10 hover:border-white/20">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.43.372.823 1.102.823 2.222 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 21.795 24 17.298 24 12c0-6.627-5.373-12-12-12z"/></svg>
-                                GitHub
-                            </a>
+                            ${githubLink}
                         </div>
                     </div>
                 </div>
