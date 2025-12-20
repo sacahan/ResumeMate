@@ -7,6 +7,9 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 
+SCRIPT_DIR="$( cd "$( dirname "${ZSH_SOURCE[0]}" )" &> /dev/null && pwd )"
+PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." &> /dev/null && pwd )"
+
 echo -e "${YELLOW}準備部署前端到 GitHub Pages...${NC}"
 
 # 檢查是否在 main 分支
@@ -24,8 +27,8 @@ if [ -n "$(git status --porcelain)" ]; then
 fi
 
 # 確認前端檔案存在
-if [ ! -f "src/frontend/index.html" ]; then
-    echo -e "${RED}錯誤: src/frontend/index.html 不存在${NC}"
+if [ ! -f "$PROJECT_ROOT/src/frontend/index.html" ]; then
+    echo -e "${RED}錯誤: $PROJECT_ROOT/src/frontend/index.html 不存在${NC}"
     exit 1
 fi
 
