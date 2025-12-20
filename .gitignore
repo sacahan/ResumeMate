@@ -210,3 +210,7 @@ __marimo__/
 chroma_db/
 contact/
 deployment/
+
+# Docker
+.env.docker
+logs/

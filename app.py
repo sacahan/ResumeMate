@@ -40,9 +40,19 @@ from src.backend.tools.contact import (  # noqa: E402
 TRACING_AVAILABLE = True
 
 # 設定日誌
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+from src.backend.logging_config import configure_logging  # noqa: E402
+
+# 從環境變數讀取日誌配置
+LOG_CONSOLE_LEVEL = os.getenv("LOG_CONSOLE_LEVEL", "INFO")
+LOG_FILE_LEVEL = os.getenv("LOG_FILE_LEVEL", "DEBUG")
+LOG_FILE = os.getenv("LOG_FILE", "logs/resumemate.log")
+
+configure_logging(
+    console_level=LOG_CONSOLE_LEVEL,
+    file_level=LOG_FILE_LEVEL,
+    log_file=LOG_FILE,
 )
+
 logger = logging.getLogger(__name__)
 
 # 初始化處理器
@@ -516,6 +526,7 @@ def create_gradio_interface():
             height=400,
             placeholder=TEXTS["chat_placeholder"],
             type="messages",
+            allow_tags=False,
         )
 
         # --- Action Bar（依 action 顯示） ---

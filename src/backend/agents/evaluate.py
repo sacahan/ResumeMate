@@ -19,9 +19,7 @@ from backend.models import (
     EvaluationResult,
     AgentDecision,
 )
-from backend.tools.answer_quality import (
-    AnswerQualityAnalyzer,
-)
+
 
 load_dotenv(override=True)
 
@@ -235,25 +233,17 @@ class EvaluateAgent:
         self.response_length = os.environ.get("AGENT_RESPONSE_LENGTH", "normal")
         self.sdk_agent: Optional[Agent] = None
 
-        # 🎆 初始化品質分析器
-        self.quality_analyzer = AnswerQualityAnalyzer()
-        self.enable_quality_check = (
-            os.environ.get("ENABLE_QUALITY_CHECK", "true").lower() == "true"
-        )
-        self.quality_threshold = float(os.environ.get("QUALITY_THRESHOLD", "0.75"))
-
         self._initialize_sdk_agent()
 
     def _create_litellm_model_and_settings(self):
-        """為 GitHub Copilot 創建 LiteLLM 模型實例和 ModelSettings
+        """創建 GitHub Copilot 模型實例和 ModelSettings
 
         Returns:
             Tuple[LitellmModel, ModelSettings]: (模型實例, 設置)
 
         Note:
-            GITHUB_COPILOT_TOKEN 環境變數是可選的。
-            若不提供，LiteLLM 會自動使用 OAuth Device Flow 進行認證。
-            首次使用時會提示設備代碼，之後 Token 會自動快取。
+            直接使用 GitHub Copilot API。
+            需要配置 COPILOT_GITHUB_TOKEN 環境變數。
         """
         try:
             from agents.extensions.models.litellm_model import LitellmModel
@@ -261,12 +251,16 @@ class EvaluateAgent:
             logger.error("LiteLLM 未安裝，請運行: pip install litellm>=1.0.0")
             raise
 
-        # 從環境變數讀取 Token (可選)
+        # 從環境變數讀取配置
         api_key = os.getenv("GITHUB_COPILOT_TOKEN")
-        model = os.getenv("AGENT_MODEL", "gpt-5-mini")
+        if not api_key:
+            logger.error("❌ 未設定 GITHUB_COPILOT_TOKEN 環境變數")
+            raise ValueError("GITHUB_COPILOT_TOKEN is required")
+
+        model = os.getenv("AGENT_MODEL", "gpt-4o-mini")
+        logger.info("📡 使用直接的 GitHub Copilot 認證")
 
         # 建立 LiteLLM 模型實例
-        # 若 api_key 為 None，LiteLLM 會自動使用 OAuth Device Flow
         llm_model = LitellmModel(
             model=f"github_copilot/{model}",
             api_key=api_key,
@@ -274,13 +268,16 @@ class EvaluateAgent:
 
         # 建立 ModelSettings，配置 GitHub Copilot 所需的 Headers
         model_settings = ModelSettings(
+            include_usage=True,
             extra_headers={
                 "editor-version": "vscode/1.85.1",
+                "editor-plugin-version": "copilot/1.155.0",
                 "Copilot-Integration-Id": "vscode-chat",
-            }
+                "user-agent": "GithubCopilot/1.155.0",
+            },
         )
 
-        logger.info(f"✅ GitHub Copilot LiteLLM 模型已建立: {model}")
+        logger.info(f"✅ GitHub Copilot 模型已建立: {model}")
         return llm_model, model_settings
 
     def _initialize_sdk_agent(self):
@@ -315,11 +312,9 @@ class EvaluateAgent:
             )
             logger.info("🔍 韓世翔品質評估助理 (GitHub Copilot) 初始化成功")
             logger.info("✅ 已啟用智慧品質控制與決策穩定機制")
-            logger.info(f"🎆 進階品質分析器已啟用（闾值: {self.quality_threshold}）")
+
         except Exception as e:
             logger.error(f"初始化 Evaluate Agent 失敗: {e}")
-            # 在初始化失敗時禁用品質檢核
-            self.enable_quality_check = False
 
     def _get_response_length_instructions(self) -> str:
         """根據環境變數設定回傳回覆長度控制指令"""
@@ -575,79 +570,10 @@ class EvaluateAgent:
         # sources 已經是字串列表，直接使用
         sources = output.sources if isinstance(output.sources, list) else []
 
-        # 🎆 進階品質檢核與優化
-        final_answer = output.final_answer
-        final_confidence = output.confidence
-        quality_metadata = {}
-
-        if self.enable_quality_check and status_enum.value in ["ok", "retrieve"]:
-            try:
-                # 執行品質分析
-                quality_score = self.quality_analyzer.analyze_quality(
-                    final_answer, result_metadata.get("original_question", "")
-                )
-
-                quality_metadata = {
-                    "quality_overall_score": quality_score.overall_score,
-                    "quality_personality_score": quality_score.personality_score,
-                    "quality_tone_score": quality_score.tone_consistency_score,
-                    "quality_issues": [issue.value for issue in quality_score.issues],
-                    "quality_suggestions": quality_score.suggestions[
-                        :3
-                    ],  # 限制建議數量
-                }
-
-                logger.info(f"📈 品質分析結果：{quality_score.overall_score:.2f}")
-
-                # 如果品質低於闾值，嘗試優化
-                if quality_score.overall_score < self.quality_threshold:
-                    logger.info(f"🔧 品質低於闾值 {self.quality_threshold}，執行優化")
-
-                    optimized = self.quality_analyzer.optimize_answer(
-                        final_answer,
-                        result_metadata.get("original_question", ""),
-                        quality_score,
-                    )
-
-                    # 如果優化有效，使用優化後的答案
-                    if (
-                        optimized.quality_improvement > 0.1
-                        and optimized.confidence > 0.6
-                    ):
-                        final_answer = optimized.optimized_answer
-                        final_confidence = min(
-                            final_confidence + optimized.quality_improvement, 1.0
-                        )
-
-                        quality_metadata.update(
-                            {
-                                "quality_optimized": True,
-                                "quality_improvement": optimized.quality_improvement,
-                                "quality_changes_made": optimized.changes_made,
-                                "optimization_confidence": optimized.confidence,
-                            }
-                        )
-
-                        logger.info(
-                            f"✨ 回答已優化，品質提升：{optimized.quality_improvement:.2f}"
-                        )
-                    else:
-                        quality_metadata["quality_optimized"] = False
-                        quality_metadata["optimization_reason"] = (
-                            "優化效果不顕著或信心度低"
-                        )
-
-            except Exception as e:
-                logger.warning(f"🚨 品質檢核失敗：{e}")
-                quality_metadata["quality_check_error"] = str(e)
-
-        # 合併品質元數據
-        result_metadata.update(quality_metadata)
-
         return EvaluationResult(
-            final_answer=final_answer,
+            final_answer=output.final_answer,
             sources=sources,
-            confidence=final_confidence,
+            confidence=output.confidence,
             status=status_enum,
             metadata=result_metadata,
         )

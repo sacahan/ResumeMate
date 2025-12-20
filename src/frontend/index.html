@@ -12,6 +12,8 @@
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap"
       rel="stylesheet"
     />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
+    <link rel="stylesheet" href="static/css/projects.css" />
     <style>
       body {
         font-family: "Inter", "Noto Sans TC", sans-serif;
@@ -34,9 +36,27 @@
       }
 
       .glass-effect {
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      }
+
+      .glass-card {
+        background: rgba(30, 41, 59, 0.5);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+        transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+      }
+
+      .glass-card:hover {
+        background: rgba(17, 24, 39, 0.8);
+        border-color: rgba(251, 146, 60, 0.4);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 0 15px rgba(251, 146, 60, 0.1);
+        transform: translateY(-12px) scale(1.02);
       }
 
       .text-gradient {
@@ -61,13 +81,14 @@
       .fade-in-section {
         opacity: 0;
         transform: translateY(20px);
-        transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        transition: opacity 0.8s cubic-bezier(0.23, 1, 0.32, 1), transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
       }
 
       .fade-in-section.is-visible {
         opacity: 1;
         transform: translateY(0);
       }
+
     </style>
     <script type="application/ld+json">
       {
@@ -768,244 +789,25 @@
           </p>
         </div>
 
-        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <!-- Portfolio Card 1 -->
-          <div
-            class="group relative overflow-hidden rounded-xl bg-gray-800 border border-gray-700 hover:border-orange-400 transition-all duration-300 transform hover:scale-105"
-          >
-            <div class="aspect-video overflow-hidden">
-              <img
-                src="./static/images/resume_mate.png"
-                alt="ResumeMate AI Assistant"
-                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                loading="lazy"
-              />
-            </div>
-            <div class="p-6">
-              <p class="text-2xl font-semibold text-white mb-3">
-                <span>ResumeMate</span>
-              </p>
-              <p class="text-gray-300 mb-4 leading-relaxed">
-                <span
-                  data-zh="透過 RAG 技術讓AI Agent根據個人履歷進行對話"
-                  data-en="Enabling AI agents to converse based on personal resumes using RAG technology"
-                  >透過 RAG 技術讓AI Agent根據個人履歷進行對話</span
-                >
-              </p>
-              <div class="flex flex-wrap gap-2 mb-5">
-                <span
-                  class="px-2 py-1 text-xs bg-orange-500 bg-opacity-20 text-orange-300 rounded-full"
-                  >OpenAI Agent</span
-                >
-                <span
-                  class="px-2 py-1 text-xs bg-orange-500 bg-opacity-20 text-orange-300 rounded-full"
-                  >RAG</span
-                >
-                <span
-                  class="px-2 py-1 text-xs bg-orange-500 bg-opacity-20 text-orange-300 rounded-full"
-                  >Gradio</span
-                >
-                <span
-                  class="px-2 py-1 text-xs bg-orange-500 bg-opacity-20 text-orange-300 rounded-full"
-                  >ChromaDB</span
-                >
-              </div>
-              <div class="flex gap-3">
-                <a
-                  href="https://huggingface.co/spaces/sacahan/resumemate-chat"
-                  class="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors duration-200"
-                  target="_blank"
-                >
-                  <svg
-                    class="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                    />
-                  </svg>
-                  <span data-zh="展示" data-en="Demo">展示</span>
-                </a>
-                <a
-                  href="https://github.com/sacahan/ResumeMate"
-                  class="flex items-center gap-2 px-4 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white rounded-lg transition-colors duration-200"
-                  target="_blank"
-                >
-                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path
-                      d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
-                    />
-                  </svg>
-                  <span data-zh="倉庫" data-en="Repo">倉庫</span>
-                </a>
+        <div class="relative group">
+          <!-- Swiper Container -->
+          <div id="portfolio-swiper" class="swiper portfolio-swiper">
+            <div id="portfolio-container" class="swiper-wrapper">
+              <!-- Cards will be injected by projects.js -->
+              <div class="swiper-slide flex justify-center items-center py-20">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-orange-500"></div>
               </div>
             </div>
+            <!-- Pagination -->
+            <div class="swiper-pagination"></div>
           </div>
 
-          <!-- Portfolio Card 2 -->
+          <!-- Navigation Buttons -->
           <div
-            class="group relative overflow-hidden rounded-xl bg-gray-800 border border-gray-700 hover:border-orange-400 transition-all duration-300 transform hover:scale-105"
-          >
-            <div class="aspect-video overflow-hidden">
-              <img
-                src="./static/images/trail_tag.png"
-                alt="TrailTag"
-                class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                loading="lazy"
-              />
-            </div>
-            <div class="p-6">
-              <p class="text-2xl font-semibold text-white mb-3">
-                <span>TrailTag</span>
-              </p>
-              <p class="text-gray-300 mb-4 leading-relaxed">
-                <span
-                  data-zh="AI即時分析並標記youtube影片提及的地點，並結合Chrome Extension實現互動化呈現"
-                  data-en="AI real-time analysis and tagging of locations mentioned in YouTube videos, integrated with a Chrome Extension for interactive presentation."
-                  >AI即時分析並標記youtube影片提及的地點，並結合Chrome
-                  Extension實現互動化呈現</span
-                >
-              </p>
-              <div class="flex flex-wrap gap-2 mb-4">
-                <span
-                  class="px-2 py-1 text-xs bg-orange-500 bg-opacity-20 text-orange-300 rounded-full"
-                  >CrewAI</span
-                >
-                <span
-                  class="px-2 py-1 text-xs bg-orange-500 bg-opacity-20 text-orange-300 rounded-full"
-                  >Gradio</span
-                >
-                <span
-                  class="px-2 py-1 text-xs bg-orange-500 bg-opacity-20 text-orange-300 rounded-full"
-                  >Chrome Extension</span
-                >
-                <span
-                  class="px-2 py-1 text-xs bg-orange-500 bg-opacity-20 text-orange-300 rounded-full"
-                  >Redis</span
-                >
-                <span
-                  class="px-2 py-1 text-xs bg-orange-500 bg-opacity-20 text-orange-300 rounded-full"
-                  >FastAPI</span
-                >
-              </div>
-              <div class="flex gap-3">
-                <a
-                  href="https://www.youtube.com/watch?v=DzmGJXYH4-g"
-                  class="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors duration-200"
-                  target="_blank"
-                >
-                  <svg
-                    class="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                    />
-                  </svg>
-                  <span data-zh="展示" data-en="Demo">展示</span>
-                </a>
-                <a
-                  href="https://github.com/sacahan/TrailTag"
-                  class="flex items-center gap-2 px-4 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white rounded-lg transition-colors duration-200"
-                  target="_blank"
-                >
-                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path
-                      d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
-                    />
-                  </svg>
-                  <span data-zh="倉庫" data-en="Repo">倉庫</span>
-                </a>
-              </div>
-            </div>
+            class="swiper-button-prev !text-orange-500 !-left-4 md:!-left-12 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           </div>
-
-          <!-- Portfolio Card 3 -->
           <div
-            class="group relative overflow-hidden rounded-xl bg-gray-800 border border-gray-700 hover:border-orange-400 transition-all duration-300 transform hover:scale-105"
-          >
-            <div class="aspect-video overflow-hidden">
-              <img
-                src="./static/images/csc_flow.png"
-                alt="Data Analytics Dashboard"
-                class="w-full h-full object-fill group-hover:scale-110 transition-transform duration-300"
-                loading="lazy"
-              />
-            </div>
-            <div class="p-6">
-              <p class="text-2xl font-semibold text-white mb-3">
-                <span>CSC Flow</span>
-              </p>
-              <p class="text-gray-300 mb-4 leading-relaxed">
-                <span
-                  data-zh="專為運動中心設計的人流監控與分析系統，收集並顯示各運動中心的即時人流數據，提供健身房和游泳池等區域的使用趨勢分析"
-                  data-en="A people flow monitoring and analytics system designed for sports centers, collecting and displaying real-time traffic data for each center, providing usage trend analysis for areas such as gyms and swimming pools."
-                  >專為運動中心設計的人流監控與分析系統，收集並顯示各運動中心的即時人流數據，提供健身房和游泳池等區域的使用趨勢分析</span
-                >
-              </p>
-              <div class="flex flex-wrap gap-2 mb-4">
-                <span
-                  class="px-2 py-1 text-xs bg-orange-500 bg-opacity-20 text-orange-300 rounded-full"
-                  >React</span
-                >
-                <span
-                  class="px-2 py-1 text-xs bg-orange-500 bg-opacity-20 text-orange-300 rounded-full"
-                  >Python</span
-                >
-                <span
-                  class="px-2 py-1 text-xs bg-orange-500 bg-opacity-20 text-orange-300 rounded-full"
-                  >PostgreSQL</span
-                >
-                <span
-                  class="px-2 py-1 text-xs bg-orange-500 bg-opacity-20 text-orange-300 rounded-full"
-                  >Redis</span
-                >
-              </div>
-              <div class="flex gap-3">
-                <a
-                  href="https://flow.brianhan.cc/"
-                  class="flex items-center gap-2 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors duration-200"
-                  target="_blank"
-                >
-                  <svg
-                    class="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                    />
-                  </svg>
-                  <span data-zh="展示" data-en="Demo">展示</span>
-                </a>
-                <a
-                  href="https://github.com/sacahan/CSCFlow"
-                  class="flex items-center gap-2 px-4 py-2 border border-gray-600 hover:border-gray-500 text-gray-300 hover:text-white rounded-lg transition-colors duration-200"
-                  target="_blank"
-                >
-                  <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                    <path
-                      d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"
-                    />
-                  </svg>
-                  <span data-zh="倉庫" data-en="Repo">倉庫</span>
-                </a>
-              </div>
-            </div>
+            class="swiper-button-next !text-orange-500 !-right-4 md:!-right-12 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
           </div>
         </div>
       </div>
@@ -1055,7 +857,8 @@
               src="https://gradio.s3-us-west-2.amazonaws.com/5.44.1/gradio.js"
             ></script>
             <gradio-app
-              src="https://sacahan-resumemate-chat.hf.space"
+              id="resumemate-gradio-app"
+              src="http://sacahan-ubunto:8459"
               container="false"
               info="false"
               style="
@@ -1066,6 +869,21 @@
                 display: block;
               "
             ></gradio-app>
+            <script>
+              // 根據環境自動切換 Gradio 來源
+              (function () {
+                const gradioApp = document.getElementById('resumemate-gradio-app');
+                // 檢查是否為本地開發環境
+                const isLocal = window.location.hostname === 'localhost' ||
+                  window.location.hostname === '127.0.0.1' ||
+                  window.location.port === '5500';
+
+                if (!isLocal) {
+                  // 正式環境使用 Hugging Face Space
+                  gradioApp.setAttribute('src', 'https://resume.brianhan.cc');
+                }
+              })();
+            </script>
           </div>
         </div>
       </div>
@@ -1115,5 +933,8 @@
       });
     </script>
     <script src="static/js/main.js"></script>
+    <!-- Swiper JS -->
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <script src="static/js/projects.js"></script>
   </body>
 </html>
