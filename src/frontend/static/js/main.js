@@ -24,7 +24,6 @@ class ResumeMateFrontend {
    * 初始化所有前端互動功能，包括語言切換、平滑滾動、聊天範例、動畫效果。
    */
   init() {
-    this.setupLanguageToggle();
     this.setupSmoothScrolling();
     this.setupChatExamples();
     this.setupAnimations();
@@ -33,63 +32,6 @@ class ResumeMateFrontend {
     this.setupAccessibilityFeatures();
     this.setupProgressiveEnhancement();
     this.integrateMultilingualManager();
-  }
-
-  /**
-   * 設定語言切換按鈕的事件監聽器。
-   * 點擊後會呼叫 toggleLanguage 方法切換語言。
-   */
-  setupLanguageToggle() {
-    const langToggle = document.getElementById("lang-toggle");
-
-    if (langToggle) {
-      langToggle.addEventListener("click", () => {
-        this.toggleLanguage();
-      });
-    }
-  }
-
-  /**
-   * 切換目前語言，並更新相關 UI 元素與本地儲存。
-   * 會同步更新 HTML lang 屬性與所有多語言元素的內容。
-   */
-  toggleLanguage() {
-    this.currentLang = this.currentLang === "zh-TW" ? "en" : "zh-TW";
-
-    // 更新語言切換按鈕文字
-    const langToggle = document.getElementById("lang-toggle");
-    if (langToggle) {
-      langToggle.textContent = this.currentLang === "zh-TW" ? "EN" : "中";
-    }
-
-    // 更新所有具有 data-zh 與 data-en 屬性的元素文字
-    const elements = document.querySelectorAll("[data-zh][data-en]");
-    elements.forEach((element) => {
-      const text =
-        this.currentLang === "zh-TW"
-          ? element.getAttribute("data-zh")
-          : element.getAttribute("data-en");
-
-      if (text) {
-        element.textContent = text;
-      }
-    });
-
-    // 設定 HTML 文件的語言屬性
-    document.documentElement.lang = this.currentLang;
-
-    // 儲存語言設定到 localStorage
-    localStorage.setItem("preferred-language", this.currentLang);
-  }
-
-  /**
-   * 載入本地儲存的語言偏好設定，若與目前語言不同則切換語言。
-   */
-  loadLanguagePreference() {
-    const savedLang = localStorage.getItem("preferred-language");
-    if (savedLang && savedLang !== this.currentLang) {
-      this.toggleLanguage();
-    }
   }
 
   /**
@@ -390,6 +332,9 @@ class ResumeMateFrontend {
     buttons.forEach((button) => {
       button.addEventListener("click", (e) => {
         if (this.isReducedMotion) return;
+
+        // 排除語言切換按鈕，避免事件干擾
+        if (button.id === "lang-toggle") return;
 
         const rect = button.getBoundingClientRect();
         const size = Math.max(rect.width, rect.height);
@@ -765,23 +710,17 @@ class ResumeMateFrontend {
   enhanceLanguageToggle() {
     const langToggle = document.getElementById("lang-toggle");
     if (langToggle && window.multilingualManager) {
-      // 移除舊的事件監聽器，使用新的多語言管理器
-      const newToggle = langToggle.cloneNode(true);
-      langToggle.parentNode.replaceChild(newToggle, langToggle);
-
-      // 添加增強的事件監聽器
-      newToggle.addEventListener("click", () => {
-        window.multilingualManager.toggleLanguage();
-      });
+      // 語言切換事件已由 MultilingualManager 處理
+      // 這裡僅添加視覺增強（如工具提示）
 
       // 添加視覺反饋
-      newToggle.addEventListener("mouseenter", () => {
+      langToggle.addEventListener("mouseenter", () => {
         const currentInfo = window.multilingualManager.getCurrentLanguageInfo();
         const tooltip = this.createLanguageTooltip(currentInfo);
-        this.showTooltip(newToggle, tooltip);
+        this.showTooltip(langToggle, tooltip);
       });
 
-      newToggle.addEventListener("mouseleave", () => {
+      langToggle.addEventListener("mouseleave", () => {
         this.hideTooltip();
       });
     }
@@ -909,16 +848,10 @@ class ResumeMateFrontend {
   }
 }
 
-// 當 DOM 內容載入完成後，初始化 ResumeMateFrontend 並執行語言與聊天服務狀態檢查。
+// 當 DOM 內容載入完成後，初始化 ResumeMateFrontend 並執行相關檢查。
 document.addEventListener("DOMContentLoaded", () => {
   const app = new ResumeMateFrontend();
 
-  // 載入語言設定
-  app.loadLanguagePreference();
-
-  // 檢查聊天服務狀態
+  // 檢查聊天服務狀態 (可選)
   // app.updateChatStatus();
-
-  // 定期檢查服務狀態（可選）
-  // setInterval(() => app.updateChatStatus(), 30000);
 });

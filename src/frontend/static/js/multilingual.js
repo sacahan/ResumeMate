@@ -286,10 +286,10 @@ class MultilingualManager {
    * @param {Object} langData - 語言資料
    */
   updateDOMContent(langData) {
-    // 更新導航元素
+    // 1. 更新導航元素
     this.updateNavigation(langData.navigation);
 
-    // 更新主要內容區塊
+    // 2. 更新主要內容區塊
     this.updateHeroSection(langData.hero);
     this.updateAboutSection(langData.about);
     this.updateExperienceSection(langData.experience);
@@ -298,10 +298,25 @@ class MultilingualManager {
     this.updateAIQASection(langData.ai_qa);
     this.updateFooter(langData.footer);
 
-    // 更新UI元素
+    // 3. 更新UI元素
     this.updateUIElements(langData.ui);
 
-    // 更新無障礙標籤
+    // 4. 更新具備 data-zh 與 data-en 屬性的通用元素 (相容性支援)
+    const elements = document.querySelectorAll("[data-zh][data-en]");
+    elements.forEach((element) => {
+      const text =
+        this.currentLanguage === "zh-TW"
+          ? element.getAttribute("data-zh")
+          : element.getAttribute("data-en");
+
+      if (text) {
+        // 如果是 a 標籤且包含 icon，我們可能只想更新文字部分
+        // 但大多數情況下直接覆寫即可，因為 icon 通常在 data-zh/en 中也有包含或不需要
+        element.textContent = text;
+      }
+    });
+
+    // 5. 更新無障礙標籤
     this.updateAriaLabels(langData.aria_labels);
   }
 
@@ -653,6 +668,14 @@ class MultilingualManager {
    * 🔄 切換語言（在支援的語言間循環）
    */
   async toggleLanguage() {
+    // 🛡️ 防止快速多次點擊造成衝突 (Debounce)
+    const now = Date.now();
+    if (this._lastToggleTime && now - this._lastToggleTime < 500) {
+      console.warn("⏳ 切換頻率過快，已忽略");
+      return;
+    }
+    this._lastToggleTime = now;
+
     const currentIndex = this.supportedLanguages.findIndex(
       (lang) => lang.code === this.currentLanguage,
     );
