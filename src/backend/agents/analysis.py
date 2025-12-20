@@ -114,7 +114,6 @@ DEFAULT_INSTRUCTIONS = """# 韓世翔 AI 履歷助理 - 問題分析代理
 問題過於模糊且檢索結果不足
 → decision = "clarify"
 ```
->>>>>>> d5244f5 (feat: Add responsive enhancement JavaScript for advanced features)
 
 ## 檢索優化策略
 
@@ -292,15 +291,14 @@ class AnalysisAgent:
         self._initialize_sdk_agent()
 
     def _create_litellm_model_and_settings(self):
-        """為 GitHub Copilot 創建 LiteLLM 模型實例和 ModelSettings
+        """創建 GitHub Copilot 模型實例和 ModelSettings
 
         Returns:
             Tuple[LitellmModel, ModelSettings]: (模型實例, 設置)
 
         Note:
-            GITHUB_COPILOT_TOKEN 環境變數是可選的。
-            若不提供，LiteLLM 會自動使用 OAuth Device Flow 進行認證。
-            首次使用時會提示設備代碼，之後 Token 會自動快取。
+            直接使用 GitHub Copilot API。
+            需要配置 COPILOT_GITHUB_TOKEN 環境變數。
         """
         try:
             from agents.extensions.models.litellm_model import LitellmModel
@@ -308,12 +306,16 @@ class AnalysisAgent:
             logger.error("LiteLLM 未安裝，請運行: pip install litellm>=1.0.0")
             raise
 
-        # 從環境變數讀取 Token (可選)
+        # 從環境變數讀取配置
         api_key = os.getenv("GITHUB_COPILOT_TOKEN")
-        model = os.getenv("AGENT_MODEL", "gpt-5-mini")
+        if not api_key:
+            logger.error("❌ 未設定 GITHUB_COPILOT_TOKEN 環境變數")
+            raise ValueError("GITHUB_COPILOT_TOKEN is required")
+
+        model = os.getenv("AGENT_MODEL", "gpt-4o-mini")
+        logger.info("📡 使用直接的 GitHub Copilot 認證")
 
         # 建立 LiteLLM 模型實例
-        # 若 api_key 為 None，LiteLLM 會自動使用 OAuth Device Flow
         llm_model = LitellmModel(
             model=f"github_copilot/{model}",
             api_key=api_key,
@@ -321,15 +323,16 @@ class AnalysisAgent:
 
         # 建立 ModelSettings，配置 GitHub Copilot 所需的 Headers
         model_settings = ModelSettings(
+            include_usage=True,
             extra_headers={
                 "editor-version": "vscode/1.85.1",  # Editor version
                 "editor-plugin-version": "copilot/1.155.0",  # Plugin version
                 "Copilot-Integration-Id": "vscode-chat",  # Integration ID
                 "user-agent": "GithubCopilot/1.155.0",  # User agent
-            }
+            },
         )
 
-        logger.info(f"✅ GitHub Copilot LiteLLM 模型已建立: {model}")
+        logger.info(f"✅ GitHub Copilot 模型已建立: {model}")
         return llm_model, model_settings
 
     def _initialize_sdk_agent(self):

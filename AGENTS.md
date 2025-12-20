@@ -1,42 +1,214 @@
-# Repository Guidelines
+# AGENTS.md
 
-## Project Structure & Modules
+本檔案提供給 AI 編碼助手（如 Gemini、Claude、Cursor 等）在專案中工作時的完整指南，包含專案架構、開發規範與最佳實踐。
 
-- `src/backend`: Core Python logic (agents, data, tools).
-- `src/frontend`: Static assets for the public site.
-- `tests`: Unit, integration, performance, and UX tests.
-- `scripts`: Deployment helpers (`deploy_backend.sh`, `deploy_frontend.sh`).
-- Top level: `app.py` (Gradio app), `pyproject.toml`, `.env.example`, `requirements.txt`.
+## 專案概述
 
-## Build, Test, and Dev Commands
+ResumeMate 是一個 AI 驅動的履歷代理平台，結合靜態履歷展示與 AI 互動問答功能。系統採用 RAG（Retrieval Augmented Generation）技術實現個人化履歷對話，支援中英文雙語介面。
 
-- Create venv: `python -m venv .venv && source .venv/bin/activate`.
-- Install deps: `pip install -r requirements.txt`.
-- Run app: `python app.py` (starts Gradio on port 7860).
-- Tests: `pytest` or `pytest tests/unit -q` (configured via `[tool.pytest.ini_options]`).
-- Lint/format (Python): `ruff --fix . && ruff format .`.
-- Format (JS/TS only): `prettier --write "**/*.{js,jsx,ts,tsx,css,json,yaml,yml}"`.
-- Optional: `pre-commit install && pre-commit run -a` before committing.
+## 專案結構
 
-## Coding Style & Naming
+```
+ResumeMate/
+├── app.py                      # Gradio 主應用程式入口
+├── src/
+│   ├── backend/                # 後端核心邏輯
+│   │   ├── agents/             # AI 代理模組
+│   │   │   ├── analysis.py     # 分析代理 - 問題分析與資訊檢索
+│   │   │   └── evaluate.py     # 評估代理 - 回應評估與品質控制
+│   │   ├── tools/              # 工具模組
+│   │   │   ├── rag.py          # RAG 向量資料庫工具
+│   │   │   ├── contact.py      # 聯絡資訊收集工具
+│   │   │   └── answer_quality.py  # 回答品質分析工具
+│   │   ├── models.py           # Pydantic 資料模型
+│   │   └── processor.py        # 核心處理器 - 協調代理互動
+│   └── frontend/               # 前端靜態資源
+│       ├── index.html          # 靜態履歷頁面
+│       ├── data/               # JSON 資料檔案
+│       │   ├── resume-zh.json  # 中文履歷資料
+│       │   └── resume-en.json  # 英文履歷資料
+│       └── static/             # 靜態資源 (JS/CSS)
+├── tests/                      # 測試目錄
+│   ├── unit/                   # 單元測試
+│   ├── integration/            # 整合測試
+│   ├── performance/            # 效能測試
+│   └── ux/                     # UX 測試
+├── scripts/                    # 部署腳本
+│   ├── deploy_backend.sh       # 後端部署 (HuggingFace Spaces)
+│   ├── deploy_frontend.sh      # 前端部署 (GitHub Pages)
+│   └── build_and_deploy.sh     # 完整建置與部署
+├── chroma_db/                  # ChromaDB 向量資料庫
+└── docs/                       # 專案文件
+```
 
-- Python: Black-compatible, line length 88 (`[tool.black]`). Imports via isort profile "black".
-- Linting: Ruff enforced in pre-commit; keep zero warnings.
-- Names: `snake_case` for functions/variables, `PascalCase` for classes, module files `lower_snake.py`. Tests `test_*.py` mirroring module paths.
-- JS/TS assets: Prettier defaults; avoid formatting HTML from pre-commit (already excluded).
+## 開發環境設定
 
-## Testing Guidelines
+### 前置需求
 
-- Framework: `pytest` with asyncio auto mode. Place tests under `tests/` (unit, integration, performance, ux).
-- Name tests `test_<unit>.py` and functions `test_<behavior>()`.
-- Add tests with new features and bug fixes; mock external APIs. Run `pytest -q` locally and ensure it passes.
+- Python 3.10 以上版本
+- Git
+- OpenAI API 金鑰
 
-## Commit & Pull Requests
+### 環境建置指令
 
-- Commits: Follow Conventional Commits used here (e.g., `feat: ...`, `fix(processor): ...`). Prefer small, focused commits with imperative subjects.
-- PRs: Include clear description, linked issues, steps to verify, and screenshots/GIFs for UI-affecting changes. Ensure tests pass and pre-commit hooks are clean.
+```bash
+# 建立並啟用虛擬環境
+python -m venv .venv && source .venv/bin/activate
 
-## Security & Config
+# 安裝依賴套件
+pip install -r requirements.txt
 
-- Copy `.env.example` to `.env`; set `OPENAI_API_KEY` and any deploy tokens locally. Never commit secrets.
-- Python 3.10+ required. Avoid breaking changes to public interfaces without a migration note in the PR.
+# 或使用 uv（推薦）
+uv sync
+```
+
+### 執行應用程式
+
+```bash
+# 啟動 Gradio 介面（預設連接埠 7860）
+python app.py
+
+# 或使用 uv
+uv run app.py
+```
+
+## 測試指令
+
+```bash
+# 執行所有測試
+pytest
+
+# 僅執行單元測試
+pytest tests/unit -q
+
+# 僅執行整合測試
+pytest tests/integration
+
+# 詳細輸出
+pytest -v
+```
+
+## 程式碼品質
+
+### 程式碼格式化與檢查
+
+```bash
+# Python 格式化與 lint（使用 Ruff）
+ruff --fix . && ruff format .
+
+# JavaScript/TypeScript 格式化
+prettier --write "**/*.{js,jsx,ts,tsx,css,json,yaml,yml}"
+
+# 執行 pre-commit hooks
+pre-commit install
+pre-commit run -a
+```
+
+### 程式碼風格規範
+
+- **Python**：Black 相容風格，行長度 88 字元
+- **Import 排序**：使用 isort，採用 "black" profile
+- **Lint 檢查**：Ruff 強制執行，維持零警告
+- **命名規範**：
+  - 函數/變數：`snake_case`
+  - 類別：`PascalCase`
+  - 模組檔案：`lower_snake.py`
+  - 測試檔案：`test_*.py`
+
+## 測試指南
+
+- **框架**：pytest + pytest-asyncio（auto 模式）
+- **測試路徑**：`tests/`（unit, integration, performance, ux）
+- **命名規範**：
+  - 測試檔案：`test_<模組名>.py`
+  - 測試函數：`test_<行為描述>()`
+- **最佳實踐**：
+  - 新功能與修復須附帶測試
+  - 外部 API 使用 mock
+  - 本地執行 `pytest -q` 確保通過
+
+## 提交與 Pull Request 規範
+
+### Commit 規範
+
+遵循 Conventional Commits 格式，使用正體中文：
+
+```
+<type>(<scope>): <description>
+
+# 範例
+feat(agents): 新增問答評估功能
+fix(processor): 修復回應解析錯誤
+docs(readme): 更新安裝說明
+```
+
+**類型**：`feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
+
+### Pull Request 規範
+
+- 清晰的描述與問題連結
+- 提供驗證步驟
+- UI 變更須附上截圖/GIF
+- 確保測試通過且 pre-commit 無錯誤
+
+## 部署流程
+
+```bash
+# 後端部署至 HuggingFace Spaces
+./scripts/deploy_backend.sh
+
+# 前端部署至 GitHub Pages
+./scripts/deploy_frontend.sh
+
+# 完整建置與部署
+./scripts/build_and_deploy.sh
+```
+
+## 安全與設定
+
+- 複製 `.env.example` 至 `.env` 並設定 `OPENAI_API_KEY`
+- **絕對不要** 將金鑰或敏感資訊提交至版本控制
+- Python 3.10+ 為必要環境
+- 公開 API 變更需於 PR 中說明遷移方式
+
+## 核心技術棧
+
+- **Python 3.10+**：async/await 非同步模式
+- **OpenAI Agents SDK**：AI 代理實作
+- **Gradio 5.x**：Web 介面框架
+- **ChromaDB**：向量儲存與檢索
+- **Pydantic 2.x**：資料驗證
+- **LangChain**：AI 工作流程編排
+
+## AI 代理工作流程
+
+1. **問題處理**：使用者輸入結構化為 `Question` 模型
+2. **分析階段**：`AnalysisAgent` 處理問題並檢索相關履歷內容
+   - 使用 `get_contact_info` 處理聯絡資訊查詢
+   - 使用 `rag_search_tool` 進行一般履歷內容檢索
+3. **評估階段**：`EvaluateAgent` 評估分析結果並決定系統行動
+   - 支援多種決策狀態：ok, needs_edit, needs_clarification, escalate_to_human
+4. **回應格式化**：系統返回 `SystemResponse`，包含答案、信心度與行動建議
+
+## 開發工作流程規則
+
+### Python 環境管理
+
+優先使用 `uv` 進行 Python 套件管理：
+
+```bash
+uv run    # 執行 Python 程式
+uv init   # 建立虛擬環境
+uv add    # 新增依賴套件
+```
+
+### 文件維護
+
+- 重構完成後檢視 README.md 是否需要更新
+- 重大變更須同步更新相關文件
+
+### 雙語支援
+
+- 系統支援正體中文與英文
+- 所有回應基於 ChromaDB 中的履歷內容
+- 回應包含信心度分數以供品質評估
