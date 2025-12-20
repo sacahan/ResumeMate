@@ -4,18 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "src/frontend/**/*.html"
-      - "src/frontend/**/*.css"
-      - "src/frontend/**/*.js"
-      - "src/frontend/**/*.json"
-      - "src/frontend/**/*.png"
-      - "src/frontend/**/*.jpg"
-      - "src/frontend/**/*.jpeg"
-      - "src/frontend/**/*.gif"
-      - "src/frontend/**/*.svg"
-      - "src/frontend/**/*.ico"
-      - "src/frontend/**/robots.txt"
-      - "src/frontend/**/llms.txt"
+      - "src/frontend/**"
       - ".github/workflows/deploy-pages.yml"
   workflow_dispatch:
 

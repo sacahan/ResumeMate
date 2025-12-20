@@ -175,7 +175,7 @@ class MultilingualManager {
    * @returns {Promise<Object>} 語言資料
    */
   async fetchLanguageData(langCode) {
-    const url = `/src/frontend/data/languages/${langCode}.json`;
+    const url = `data/languages/${langCode}.json`;
 
     try {
       const response = await fetch(url);
