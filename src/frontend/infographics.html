@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Infographics Gallery - brianhan.cc</title>
+    <link rel="icon" type="image/png" href="static/favicon.png" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="static/css/infographics.css" />
+    <style>
+      body {
+        font-family: "Inter", "Noto Sans TC", sans-serif;
+        color: #d1d5db;
+        background: linear-gradient(-45deg, #282a50, #4c408e, #282a50, #1f2937);
+        background-size: 400% 400%;
+        animation: gradient 25s ease infinite;
+        min-height: 100vh;
+      }
+
+      @keyframes gradient {
+        0% {
+          background-position: 0% 50%;
+        }
+        50% {
+          background-position: 100% 50%;
+        }
+        100% {
+          background-position: 0% 50%;
+        }
+      }
+
+      .glass-effect {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      }
+
+      .text-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #1f2937;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #4b5563;
+        border-radius: 4px;
+      }
+
+      .fade-in-section {
+        opacity: 0;
+        transform: translateY(20px);
+        transition:
+          opacity 0.8s cubic-bezier(0.23, 1, 0.32, 1),
+          transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+      }
+
+      .fade-in-section.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    </style>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "CollectionPage",
+        "name": "Infographics Gallery",
+        "description": "A collection of infographics created or curated by Brian Han",
+        "author": {
+          "@type": "Person",
+          "name": "Brian Han",
+          "url": "https://www.brianhan.cc/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full z-50 glass-effect">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="relative flex items-center justify-between h-16">
+          <a
+            href="index.html"
+            class="text-3xl font-bold text-gradient"
+            style="
+              background: linear-gradient(90deg, #e68c06 0%, #d29f47 100%);
+              -webkit-background-clip: text;
+              -webkit-text-fill-color: transparent;
+              background-clip: text;
+            "
+          >
+            Brian's Portfolio
+          </a>
+          <div
+            class="hidden md:flex space-x-8 absolute left-1/2 transform -translate-x-1/2"
+          >
+            <a
+              href="index.html#about"
+              class="hover:text-blue-400 transition-colors"
+              data-zh="關於我"
+              data-en="About Me"
+              >關於我</a
+            >
+            <a
+              href="index.html#experience"
+              class="hover:text-blue-400 transition-colors"
+              data-zh="經歷"
+              data-en="Experience"
+              >經歷</a
+            >
+            <a
+              href="index.html#skills"
+              class="hover:text-blue-400 transition-colors"
+              data-zh="技能"
+              data-en="Skills"
+              >技能</a
+            >
+            <a
+              href="index.html#portfolio"
+              class="hover:text-blue-400 transition-colors"
+              data-zh="作品"
+              data-en="Portfolio"
+              >作品</a
+            >
+            <a
+              href="infographics.html"
+              class="text-orange-400 transition-colors"
+              data-zh="圖表"
+              data-en="Infographics"
+              >圖表</a
+            >
+          </div>
+          <button
+            id="lang-toggle"
+            class="px-3 py-1 glass-effect rounded-md text-sm hover:bg-white hover:bg-opacity-20 transition-colors"
+          >
+            EN
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-24 pb-16">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Page Header -->
+        <section class="mb-12 fade-in-section">
+          <h1
+            class="text-3xl md:text-4xl font-bold text-white mb-4 border-l-4 border-orange-400 pl-4 flex items-center gap-3"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              class="h-8 w-8"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
+            </svg>
+            <span data-zh="圖表蒐集" data-en="Infographics Gallery"
+              >圖表蒐集</span
+            >
+          </h1>
+          <p
+            class="text-xl text-gray-300 ml-4"
+            data-zh="我蒐集或創造的資訊圖表，涵蓋技術、數據視覺化等主題"
+            data-en="A collection of infographics I've curated or created, covering technology, data visualization, and more"
+          >
+            我蒐集或創造的資訊圖表，涵蓋技術、數據視覺化等主題
+          </p>
+        </section>
+
+        <!-- Gallery Container -->
+        <section id="infographics-container" class="fade-in-section">
+          <!-- Filter tags and gallery will be injected by infographics.js -->
+          <div class="infographic-loading">
+            <div class="spinner"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-12 border-t border-gray-700">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <a href="index.html" class="text-orange-400 hover:underline">
+          <span data-zh="返回首頁" data-en="Back to Home">返回首頁</span>
+        </a>
+        <p class="text-sm text-gray-500 mt-2">
+          © 2025 Brian Han.
+          <span data-zh="保留所有權利。" data-en="All rights reserved."
+            >保留所有權利。</span
+          >
+        </p>
+      </div>
+    </footer>
+
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        // Intersection Observer for fade-in sections
+        const sections = document.querySelectorAll(".fade-in-section");
+        const observer = new IntersectionObserver(
+          (entries) => {
+            entries.forEach((entry) => {
+              if (entry.isIntersecting) {
+                entry.target.classList.add("is-visible");
+              }
+            });
+          },
+          {
+            threshold: 0.1,
+          },
+        );
+
+        sections.forEach((section) => {
+          observer.observe(section);
+        });
+      });
+    </script>
+    <!-- Multilingual Manager -->
+    <script src="static/js/multilingual.js"></script>
+    <script src="static/js/main.js"></script>
+    <!-- Infographics Gallery -->
+    <script src="static/js/infographics.js"></script>
+  </body>
+</html>

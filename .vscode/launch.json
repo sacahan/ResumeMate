@@ -18,6 +18,19 @@
       "console": "integratedTerminal",
       "envFile": "${workspaceFolder}/.env",
       "python": "${workspaceFolder}/.venv/bin/python"
+    },
+    {
+      "name": "Infographics Admin",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "src.backend.infographics.admin_app",
+      "console": "integratedTerminal",
+      "envFile": "${workspaceFolder}/.env",
+      "python": "${workspaceFolder}/.venv/bin/python",
+      "env": {
+        "INFOGRAPHICS_ADMIN_USER": "admin",
+        "INFOGRAPHICS_ADMIN_PASS": "changeme"
+      }
     }
   ]
 }
