@@ -55,6 +55,9 @@ INFOGRAPHICS_IMAGES_DIR="${PROJECT_DIR}/infographics"
 SSH_DIR="${HOME}/.ssh"
 GIT_CONFIG="${HOME}/.gitconfig"
 
+# Git 倉庫目錄 (Git 自動提交需要)
+GIT_DIR="${PROJECT_DIR}/.git"
+
 # 檢查 .env.docker 是否存在
 check_env_file() {
 	if [ ! -f "$ENV_FILE" ]; then
@@ -106,8 +109,9 @@ start_container() {
 		-v "${LITELLM_TOKEN_DIR}:/root/.config/litellm/github_copilot" \
 		-v "${FRONTEND_DATA_DIR}:/app/src/frontend/data" \
 		-v "${INFOGRAPHICS_IMAGES_DIR}:/app/src/frontend/static/images/infographics" \
+		-v "${GIT_DIR}:/app/.git" \
 		-v "${SSH_DIR}:/root/.ssh:ro" \
-		-v "${GIT_CONFIG}:/root/.gitconfig:ro" \
+		-v "${GIT_CONFIG}:/root/.gitconfig" \
 		-e TZ=Asia/Taipei \
 		--restart unless-stopped \
 		"$IMAGE_NAME"
@@ -370,6 +374,7 @@ show_info() {
 	echo -e "  向量資料庫: ${CHROMA_DB_PATH}"
 	echo -e "  前端資料: ${FRONTEND_DATA_DIR}"
 	echo -e "  Infographics 圖片: ${INFOGRAPHICS_IMAGES_DIR}"
+	echo -e "  Git 倉庫: ${GIT_DIR}"
 	echo -e "  SSH 金鑰: ${SSH_DIR} (唯讀)"
 	echo ""
 	echo -e "${BLUE}常用命令：${NC}"

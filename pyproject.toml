@@ -13,8 +13,6 @@ dependencies = [
     "pytest>=8.4.1",
     "pytest-asyncio>=1.1.0",
     "openai-agents==0.4.1",
-    "sentence-transformers>=5.1.0",
-    "torch>=2.8.0",
     "litellm>=1.79.3",
     "pillow>=10.0.0",
 ]

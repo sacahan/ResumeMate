@@ -39,7 +39,7 @@ class RAGConfig:
     """RAG 工具配置類 - 性能優化版"""
 
     # 🎯 向量化提供者配置
-    embedding_provider: str = "local"  # local | openai
+    embedding_provider: str = "openai"  # openai | local (需安裝 torch)
     embedding_model: str = "text-embedding-3-small"  # OpenAI 模型名稱
     local_model_name: str = "all-MiniLM-L6-v2"  # 本地模型名稱
     device: str = "cpu"  # cpu | cuda | mps

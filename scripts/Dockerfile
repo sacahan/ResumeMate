@@ -21,6 +21,9 @@ COPY src/frontend ./src/frontend
 # Create directories
 RUN mkdir -p /app/logs /app/chroma_db /root/.ssh
 
+# Configure Git to trust /app directory (for Git operations inside container)
+RUN git config --global --add safe.directory /app
+
 # Environment variables
 ENV GRADIO_SERVER_NAME=0.0.0.0
 ENV GRADIO_SERVER_PORT=7860
