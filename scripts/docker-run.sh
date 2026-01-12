@@ -45,19 +45,6 @@ CHROMA_DB_PATH="${PROJECT_DIR}/chroma_db"
 # GitHub Copilot Access Token
 LITELLM_TOKEN_DIR="${PROJECT_DIR}/github_copilot"
 
-# 前端資料目錄 (用於頁面編輯)
-FRONTEND_DATA_DIR="${PROJECT_DIR}/data"
-
-# Infographics 圖片目錄 (用於圖片持久化)
-INFOGRAPHICS_IMAGES_DIR="${PROJECT_DIR}/infographics"
-
-# SSH 目錄 (Git 自動提交需要)
-SSH_DIR="${HOME}/.ssh"
-GIT_CONFIG="${HOME}/.gitconfig"
-
-# Git 倉庫目錄 (Git 自動提交需要)
-GIT_DIR="${PROJECT_DIR}/.git"
-
 # 檢查 .env.docker 是否存在
 check_env_file() {
 	if [ ! -f "$ENV_FILE" ]; then
@@ -107,11 +94,6 @@ start_container() {
 		-v "${CHROMA_DB_PATH}:/app/chroma_db" \
 		-v "${LOGS_DIR}:/app/logs" \
 		-v "${LITELLM_TOKEN_DIR}:/root/.config/litellm/github_copilot" \
-		-v "${FRONTEND_DATA_DIR}:/app/src/frontend/data" \
-		-v "${INFOGRAPHICS_IMAGES_DIR}:/app/src/frontend/static/images/infographics" \
-		-v "${GIT_DIR}:/app/.git" \
-		-v "${SSH_DIR}:/root/.ssh:ro" \
-		-v "${GIT_CONFIG}:/root/.gitconfig" \
 		-e TZ=Asia/Taipei \
 		--restart unless-stopped \
 		"$IMAGE_NAME"
