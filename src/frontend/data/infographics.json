@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-01-12",
+  "lastUpdated": "2026-01-13",
   "images": [
     {
       "id": "img_34e25d144ddf",
@@ -20,11 +20,12 @@
       "id": "img_8717b6d693ae",
       "url": "static/images/infographics/img_8717b6d693ae.png",
       "thumbnail": "static/images/infographics/thumbnails/img_8717b6d693ae_thumb.webp",
-      "title": "分散式架構Design Pattern",
-      "title_zh": "分散式架構Design Pattern",
-      "title_en": "Design Pattern",
+      "title": "分散式架構 Design Pattern",
+      "title_zh": "分散式架構 Design Pattern",
+      "title_en": "Distributed Architecture Design Patterns",
       "tags": [
-        "Design Pattern"
+        "Design Pattern",
+        "Architecture"
       ],
       "created_at": "2026-01-11 14:22:32.018850",
       "source": ""
