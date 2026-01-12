@@ -1,7 +1,21 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-01-11",
+  "lastUpdated": "2026-01-12",
   "images": [
+    {
+      "id": "img_34e25d144ddf",
+      "url": "static/images/infographics/img_34e25d144ddf.png",
+      "thumbnail": "static/images/infographics/thumbnails/img_34e25d144ddf_thumb.webp",
+      "title": "老舊系統的 LLMOPs 解方",
+      "title_zh": "老舊系統的 LLMOPs 解方",
+      "title_en": "LLMOps Solutions for Legacy Systems",
+      "tags": [
+        "AI",
+        "Legacy Systems"
+      ],
+      "created_at": "2026-01-12 23:59:50.773501",
+      "source": ""
+    },
     {
       "id": "img_8717b6d693ae",
       "url": "static/images/infographics/img_8717b6d693ae.png",
