@@ -3,8 +3,12 @@
 Usage:
     python -m src.backend.infographics.admin_app
 
-Or with custom credentials:
-    INFOGRAPHICS_ADMIN_USER=admin INFOGRAPHICS_ADMIN_PASS=secret python -m src.backend.infographics.admin_app
+Environment variables:
+    INFOGRAPHICS_ADMIN_USER: Admin username (default: admin)
+    INFOGRAPHICS_ADMIN_PASS: Admin password (default: changeme)
+    INFOGRAPHICS_ADMIN_HOST: Server host (default: 0.0.0.0)
+    INFOGRAPHICS_ADMIN_PORT: Server port (default: 7861)
+    INFOGRAPHICS_ADMIN_SHARE: Enable Gradio share (default: false)
 """
 
 import logging
@@ -15,16 +19,30 @@ from pathlib import Path
 # Add src directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
 
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv(override=True)
+
+# ruff: noqa: E402
+# Note: These imports must be after load_dotenv() to ensure environment variables are loaded
 import gradio as gr
 
 from src.backend.infographics import (
+    GitManager,
     ImageProcessor,
     InfographicItem,
     InfographicsDataManager,
     ThumbnailConfig,
 )
+from src.backend.logging_config import configure_logging
 
-logging.basicConfig(level=logging.INFO)
+# Configure logging using project standard
+configure_logging(
+    console_level=os.getenv("LOG_CONSOLE_LEVEL", "INFO"),
+    file_level=os.getenv("LOG_FILE_LEVEL", "DEBUG"),
+    log_file=os.getenv("LOG_FILE"),
+)
 logger = logging.getLogger(__name__)
 
 # Configuration
@@ -36,12 +54,18 @@ DATA_FILE = BASE_DIR / "src" / "frontend" / "data" / "infographics.json"
 ADMIN_USER = os.getenv("INFOGRAPHICS_ADMIN_USER", "admin")
 ADMIN_PASS = os.getenv("INFOGRAPHICS_ADMIN_PASS", "changeme")
 
+# Admin server settings from environment
+ADMIN_HOST = os.getenv("INFOGRAPHICS_ADMIN_HOST", "0.0.0.0")
+ADMIN_PORT = int(os.getenv("INFOGRAPHICS_ADMIN_PORT", "7861"))
+ADMIN_SHARE = os.getenv("INFOGRAPHICS_ADMIN_SHARE", "false").lower() == "true"
+
 # Initialize managers
 data_manager = InfographicsDataManager(DATA_FILE)
 image_processor = ImageProcessor(
     images_dir=IMAGES_DIR,
     config=ThumbnailConfig(max_width=400, max_height=300, quality=85, format="WEBP"),
 )
+git_manager = GitManager(repo_path=BASE_DIR)
 
 
 def get_gallery_data() -> list[tuple[str, str]]:
@@ -107,7 +131,26 @@ def upload_image(
 
         # Save to data file
         if data_manager.add_item(item):
-            return f"✅ 圖片上傳成功！ID: {item.id}", get_gallery_data()
+            status_msg = f"✅ 圖片上傳成功！ID: {item.id}"
+
+            # Git commit and push
+            files_to_commit = [
+                git_manager.get_relative_path(DATA_FILE),
+                git_manager.get_relative_path(IMAGES_DIR / Path(item.url).name),
+                git_manager.get_relative_path(
+                    IMAGES_DIR / "thumbnails" / Path(item.thumbnail).name
+                ),
+            ]
+            git_success, git_msg = git_manager.commit_changes(
+                files=files_to_commit,
+                action="新增圖片",
+                item_id=item.id,
+                title=item.title_zh or item.title_en,
+            )
+            if git_manager.auto_commit:
+                status_msg += f"\n📝 Git: {git_msg}"
+
+            return status_msg, get_gallery_data()
         else:
             return "❌ 儲存資料失敗", get_gallery_data()
 
@@ -147,7 +190,20 @@ def update_item(
         )
 
         if data_manager.update_item(updated_item):
-            return f"✅ 更新成功！ID: {item_id}", get_gallery_data()
+            status_msg = f"✅ 更新成功！ID: {item_id}"
+
+            # Git commit and push
+            files_to_commit = [git_manager.get_relative_path(DATA_FILE)]
+            git_success, git_msg = git_manager.commit_changes(
+                files=files_to_commit,
+                action="更新圖片",
+                item_id=item_id,
+                title=title_zh or title_en,
+            )
+            if git_manager.auto_commit:
+                status_msg += f"\n📝 Git: {git_msg}"
+
+            return status_msg, get_gallery_data()
         else:
             return "❌ 更新失敗", get_gallery_data()
 
@@ -166,12 +222,36 @@ def delete_item(item_id: str) -> tuple[str, list]:
         return f"❌ 找不到 ID: {item_id}", get_gallery_data()
 
     try:
+        # Get file paths before deletion for git commit
+        image_path = git_manager.get_relative_path(IMAGES_DIR / Path(item.url).name)
+        thumbnail_path = git_manager.get_relative_path(
+            IMAGES_DIR / "thumbnails" / Path(item.thumbnail).name
+        )
+        item_title = item.title_zh or item.title_en
+
         # Delete files
         image_processor.delete_image(item)
 
         # Delete from data
         if data_manager.delete_item(item_id):
-            return f"✅ 刪除成功！ID: {item_id}", get_gallery_data()
+            status_msg = f"✅ 刪除成功！ID: {item_id}"
+
+            # Git commit and push
+            files_to_commit = [
+                git_manager.get_relative_path(DATA_FILE),
+                image_path,
+                thumbnail_path,
+            ]
+            git_success, git_msg = git_manager.commit_changes(
+                files=files_to_commit,
+                action="刪除圖片",
+                item_id=item_id,
+                title=item_title,
+            )
+            if git_manager.auto_commit:
+                status_msg += f"\n📝 Git: {git_msg}"
+
+            return status_msg, get_gallery_data()
         else:
             return "❌ 刪除失敗", get_gallery_data()
 
@@ -358,16 +438,21 @@ def create_admin_interface():
 def main():
     """Main entry point for the admin interface."""
     logger.info("Starting Infographics Admin Interface")
+    logger.info(f"Server: http://{ADMIN_HOST}:{ADMIN_PORT}")
+    logger.info(f"Share mode: {ADMIN_SHARE}")
     logger.info(f"Images directory: {IMAGES_DIR}")
     logger.info(f"Data file: {DATA_FILE}")
+
+    # Log Git auto-commit status and SSH configuration
+    logger.info("\n" + git_manager.get_status_report())
 
     app = create_admin_interface()
 
     # Launch with authentication
     app.launch(
-        server_name="0.0.0.0",
-        server_port=7861,
-        share=False,
+        server_name=ADMIN_HOST,
+        server_port=ADMIN_PORT,
+        share=ADMIN_SHARE,
         auth=(ADMIN_USER, ADMIN_PASS),
         auth_message="請輸入管理員帳號密碼",
     )

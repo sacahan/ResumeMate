@@ -1,9 +1,5 @@
 """Unit tests for the infographics module."""
 
-import json
-import tempfile
-from pathlib import Path
-
 import pytest
 
 from src.backend.infographics import (

@@ -39,7 +39,9 @@ class InfographicsDataManager:
         try:
             data.lastUpdated = datetime.now().strftime("%Y-%m-%d")
             with open(self.data_file, "w", encoding="utf-8") as f:
-                json.dump(data.model_dump(), f, ensure_ascii=False, indent=2, default=str)
+                json.dump(
+                    data.model_dump(), f, ensure_ascii=False, indent=2, default=str
+                )
             logger.info(f"Saved data to: {self.data_file}")
             return True
         except Exception as e:

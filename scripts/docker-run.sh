@@ -34,6 +34,7 @@ ENV_FILE="${PROJECT_DIR}/.env.docker"
 IMAGE_NAME="sacahan/resumemate-backend:latest"
 CONTAINER_NAME="resumemate-backend"
 HOST_PORT="${HOST_PORT:-8459}"
+ADMIN_PORT="${ADMIN_PORT:-7870}"
 
 # 日誌目錄
 LOGS_DIR="${PROJECT_DIR}/logs"
@@ -43,6 +44,13 @@ CHROMA_DB_PATH="${PROJECT_DIR}/chroma_db"
 
 # GitHub Copilot Access Token
 LITELLM_TOKEN_DIR="${PROJECT_DIR}/github_copilot"
+
+# 前端資源目錄 (用於 Admin 圖片持久化)
+FRONTEND_DIR="${PROJECT_DIR}/../src/frontend"
+
+# SSH 目錄 (Git 自動提交需要)
+SSH_DIR="${HOME}/.ssh"
+GIT_CONFIG="${HOME}/.gitconfig"
 
 # 檢查 .env.docker 是否存在
 check_env_file() {
@@ -88,10 +96,14 @@ start_container() {
 	docker run -d \
 		--name "$CONTAINER_NAME" \
 		-p "${HOST_PORT}:7860" \
+		-p "${ADMIN_PORT}:7870" \
 		--env-file "$ENV_FILE" \
 		-v "${CHROMA_DB_PATH}:/app/chroma_db" \
 		-v "${LOGS_DIR}:/app/logs" \
 		-v "${LITELLM_TOKEN_DIR}:/root/.config/litellm/github_copilot" \
+		-v "${FRONTEND_DIR}:/app/src/frontend" \
+		-v "${SSH_DIR}:/root/.ssh:ro" \
+		-v "${GIT_CONFIG}:/root/.gitconfig:ro" \
 		-e TZ=Asia/Taipei \
 		--restart unless-stopped \
 		"$IMAGE_NAME"
@@ -247,7 +259,8 @@ ResumeMate Backend Docker 執行腳本
      ./docker-run.sh down
 
 🔗 服務端點:
-  Gradio UI:  http://localhost:7860
+  主應用 (Gradio UI):  http://localhost:8459
+  Admin 管理介面:      http://localhost:7870
 
 📝 環境配置:
   配置文件: .env.docker
@@ -261,12 +274,15 @@ EOF
 
 # 顯示服務信息
 show_info() {
-	echo -e "${BLUE}📊 ResumeMate Backend 服務信息：${NC}"
-	echo -e "  Gradio UI:  http://localhost:${HOST_PORT}"
+	echo -e "${BLUE}📊 ResumeMate 服務信息：${NC}"
+	echo -e "  主應用 (Gradio UI):  http://localhost:${HOST_PORT}"
+	echo -e "  Admin 管理介面:      http://localhost:${ADMIN_PORT}"
 	echo ""
 	echo -e "${BLUE}📁 本地掛載目錄：${NC}"
 	echo -e "  日誌: ${LOGS_DIR}"
 	echo -e "  向量資料庫: ${CHROMA_DB_PATH}"
+	echo -e "  前端資源: ${FRONTEND_DIR}"
+	echo -e "  SSH 金鑰: ${SSH_DIR} (唯讀)"
 	echo ""
 	echo -e "${BLUE}常用命令：${NC}"
 	echo -e "  查看日誌: ${GREEN}./docker-run.sh logs${NC}"
