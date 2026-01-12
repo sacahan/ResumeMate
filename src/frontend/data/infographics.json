@@ -3,6 +3,19 @@
   "lastUpdated": "2026-01-13",
   "images": [
     {
+      "id": "img_a58e1ce43a61",
+      "url": "static/images/infographics/img_a58e1ce43a61.png",
+      "thumbnail": "static/images/infographics/thumbnails/img_a58e1ce43a61_thumb.webp",
+      "title": "Tai-Builder Core 系統架構",
+      "title_zh": "Tai-Builder Core 系統架構",
+      "title_en": "Tai-Builder Core System Architecture",
+      "tags": [
+        "Architecture"
+      ],
+      "created_at": "2026-01-13 00:07:47.289092",
+      "source": ""
+    },
+    {
       "id": "img_41af5589390e",
       "url": "static/images/infographics/img_41af5589390e.jpg",
       "thumbnail": "static/images/infographics/thumbnails/img_41af5589390e_thumb.webp",
