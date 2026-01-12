@@ -3,6 +3,20 @@
   "lastUpdated": "2026-01-13",
   "images": [
     {
+      "id": "img_41af5589390e",
+      "url": "static/images/infographics/img_41af5589390e.jpg",
+      "thumbnail": "static/images/infographics/thumbnails/img_41af5589390e_thumb.webp",
+      "title": "Vibe Coding 的不同認知",
+      "title_zh": "Vibe Coding 的不同認知",
+      "title_en": "Different Interpretations of Vibe Coding",
+      "tags": [
+        "AI",
+        "Vibe Coding"
+      ],
+      "created_at": "2026-01-13 00:06:11.534634",
+      "source": ""
+    },
+    {
       "id": "img_1ab4bc1f229f",
       "url": "static/images/infographics/img_1ab4bc1f229f.png",
       "thumbnail": "static/images/infographics/thumbnails/img_1ab4bc1f229f_thumb.webp",
