@@ -18,10 +18,6 @@ COPY app.py ./
 COPY src/backend ./src/backend
 COPY src/frontend ./src/frontend
 
-# Copy startup script
-COPY scripts/start.sh ./
-RUN chmod +x start.sh
-
 # Create directories
 RUN mkdir -p /app/logs /app/chroma_db /root/.ssh
 
@@ -34,5 +30,5 @@ ENV INFOGRAPHICS_ADMIN_PORT=7870
 # Expose both ports (main app and admin)
 EXPOSE 7860 7870
 
-# Start both services
-CMD ["./start.sh"]
+# Start both services using shell script
+CMD ["/bin/bash", "-c", "python -m src.backend.infographics.admin_app & sleep 2 && python app.py"]

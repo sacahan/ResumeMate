@@ -45,8 +45,11 @@ CHROMA_DB_PATH="${PROJECT_DIR}/chroma_db"
 # GitHub Copilot Access Token
 LITELLM_TOKEN_DIR="${PROJECT_DIR}/github_copilot"
 
-# 前端資源目錄 (用於 Admin 圖片持久化)
-FRONTEND_DIR="${PROJECT_DIR}/../src/frontend"
+# 前端資料目錄 (用於頁面編輯)
+FRONTEND_DATA_DIR="${PROJECT_DIR}/data"
+
+# Infographics 圖片目錄 (用於圖片持久化)
+INFOGRAPHICS_IMAGES_DIR="${PROJECT_DIR}/infographics"
 
 # SSH 目錄 (Git 自動提交需要)
 SSH_DIR="${HOME}/.ssh"
@@ -101,7 +104,8 @@ start_container() {
 		-v "${CHROMA_DB_PATH}:/app/chroma_db" \
 		-v "${LOGS_DIR}:/app/logs" \
 		-v "${LITELLM_TOKEN_DIR}:/root/.config/litellm/github_copilot" \
-		-v "${FRONTEND_DIR}:/app/src/frontend" \
+		-v "${FRONTEND_DATA_DIR}:/app/src/frontend/data" \
+		-v "${INFOGRAPHICS_IMAGES_DIR}:/app/src/frontend/static/images/infographics" \
 		-v "${SSH_DIR}:/root/.ssh:ro" \
 		-v "${GIT_CONFIG}:/root/.gitconfig:ro" \
 		-e TZ=Asia/Taipei \
@@ -202,6 +206,88 @@ remove_container() {
 	fi
 }
 
+# 本地啟動服務（用於開發測試，無容器）
+start_local() {
+	echo -e "${BLUE}============================================${NC}"
+	echo -e "${BLUE}   ResumeMate 本地服務啟動中...${NC}"
+	echo -e "${BLUE}============================================${NC}"
+	echo ""
+
+	# 驗證環境
+	if ! command -v python &>/dev/null; then
+		echo -e "${RED}✗ 未找到 Python，請先安裝 Python 3.10+${NC}"
+		exit 1
+	fi
+
+	# 顯示環境資訊
+	echo -e "${BLUE}📋 服務配置：${NC}"
+	echo -e "  主應用連接埠: ${GRADIO_SERVER_PORT:-7860}"
+	echo -e "  Admin 連接埠: ${INFOGRAPHICS_ADMIN_PORT:-7870}"
+	echo -e "  Git 自動提交: ${INFOGRAPHICS_GIT_AUTO_COMMIT:-false}"
+	echo -e "  Git 自動推送: ${INFOGRAPHICS_GIT_AUTO_PUSH:-false}"
+	echo ""
+
+	# PID 檔案
+	local ADMIN_PID_FILE="/tmp/admin_app.pid"
+
+	# 清理函數 - 處理信號時終止所有子程序
+	cleanup() {
+		echo -e "\n${YELLOW}收到終止信號，正在關閉服務...${NC}"
+
+		# 終止 admin_app
+		if [ -f "$ADMIN_PID_FILE" ]; then
+			local ADMIN_PID
+			ADMIN_PID=$(cat "$ADMIN_PID_FILE")
+			if kill -0 "$ADMIN_PID" 2>/dev/null; then
+				echo -e "${BLUE}停止 Infographics Admin (PID: $ADMIN_PID)...${NC}"
+				kill "$ADMIN_PID" 2>/dev/null || true
+			fi
+			rm -f "$ADMIN_PID_FILE"
+		fi
+
+		# 終止所有子程序
+		jobs -p | xargs -r kill 2>/dev/null || true
+
+		echo -e "${GREEN}服務已關閉${NC}"
+		exit 0
+	}
+
+	# 註冊信號處理
+	trap cleanup SIGTERM SIGINT SIGQUIT
+
+	# 進入專案根目錄
+	cd "$(dirname "$PROJECT_DIR")" || exit 1
+
+	# 啟動 Infographics Admin（背景）
+	echo -e "${BLUE}🚀 啟動 Infographics Admin...${NC}"
+	python -m src.backend.infographics.admin_app &
+	local ADMIN_PID=$!
+	echo "$ADMIN_PID" >"$ADMIN_PID_FILE"
+	echo -e "${GREEN}✓ Infographics Admin 已啟動 (PID: $ADMIN_PID)${NC}"
+
+	# 等待 Admin 啟動
+	sleep 2
+
+	# 檢查 Admin 是否正常運行
+	if ! kill -0 "$ADMIN_PID" 2>/dev/null; then
+		echo -e "${RED}✗ Infographics Admin 啟動失敗${NC}"
+		exit 1
+	fi
+
+	echo ""
+	echo -e "${BLUE}🚀 啟動主應用...${NC}"
+	echo -e "${GREEN}============================================${NC}"
+	echo ""
+
+	# 啟動主應用（前台）
+	# 這會阻塞直到主應用退出
+	python app.py
+
+	# 如果主應用退出，清理並退出
+	cleanup
+}
+
+
 # 清理資源
 clean_up() {
 	echo -e "${YELLOW}⚠️  此操作將刪除所有容器、鏡像和卷...${NC}"
@@ -234,15 +320,16 @@ ResumeMate Backend Docker 執行腳本
 
 📋 命令:
 
-  up         啟動容器
-  down       停止並移除容器
-  restart    重啟容器
-  pull       拉取鏡像
-  logs       查看日誌
-  shell      進入容器 shell
-  info       服務信息
-  clean      清理資源
-  help       顯示此幫助信息
+  up           啟動容器（Docker 中執行兩個應用）
+  down         停止並移除容器
+  restart      重啟容器
+  pull         拉取鏡像
+  logs         查看容器日誌
+  shell        進入容器 shell
+  info         服務信息
+  start-local  本地啟動服務（無容器，用於開發測試）
+  clean        清理資源
+  help         顯示此幫助信息
 
 🚀 快速開始:
 
@@ -263,7 +350,7 @@ ResumeMate Backend Docker 執行腳本
   Admin 管理介面:      http://localhost:7870
 
 📝 環境配置:
-  配置文件: .env.docker
+  配置文件: .env.docker (Docker) 或 .env (本地)
   日誌目錄: logs/
   向量資料庫: chroma_db/
 
@@ -281,7 +368,8 @@ show_info() {
 	echo -e "${BLUE}📁 本地掛載目錄：${NC}"
 	echo -e "  日誌: ${LOGS_DIR}"
 	echo -e "  向量資料庫: ${CHROMA_DB_PATH}"
-	echo -e "  前端資源: ${FRONTEND_DIR}"
+	echo -e "  前端資料: ${FRONTEND_DATA_DIR}"
+	echo -e "  Infographics 圖片: ${INFOGRAPHICS_IMAGES_DIR}"
 	echo -e "  SSH 金鑰: ${SSH_DIR} (唯讀)"
 	echo ""
 	echo -e "${BLUE}常用命令：${NC}"
@@ -319,6 +407,9 @@ main() {
 	info)
 		show_info
 		;;
+	start-local)
+		start_local
+		;;
 	help|-h|--help)
 		show_help
 		;;
@@ -328,15 +419,16 @@ main() {
 		echo -e "${BLUE}使用 '${GREEN}./docker-run.sh help${BLUE}' 查看完整幫助信息${NC}"
 		echo ""
 		echo "快速命令列表:"
-		echo "  up      - 啟動服務"
-		echo "  down    - 停止並移除服務"
-		echo "  restart - 重啟服務"
-		echo "  pull    - 拉取鏡像"
-		echo "  logs    - 查看日誌"
-		echo "  shell   - 進入容器"
-		echo "  info    - 顯示信息"
-		echo "  clean   - 清理資源"
-		echo "  help    - 顯示幫助"
+		echo "  up           - 啟動服務"
+		echo "  down         - 停止並移除服務"
+		echo "  restart      - 重啟服務"
+		echo "  pull         - 拉取鏡像"
+		echo "  logs         - 查看日誌"
+		echo "  shell        - 進入容器"
+		echo "  start-local  - 本地啟動服務（無容器）"
+		echo "  info         - 顯示信息"
+		echo "  clean        - 清理資源"
+		echo "  help         - 顯示幫助"
 		exit 1
 		;;
 	esac
