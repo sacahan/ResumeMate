@@ -3,6 +3,20 @@
   "lastUpdated": "2026-01-13",
   "images": [
     {
+      "id": "img_1ab4bc1f229f",
+      "url": "static/images/infographics/img_1ab4bc1f229f.png",
+      "thumbnail": "static/images/infographics/thumbnails/img_1ab4bc1f229f_thumb.webp",
+      "title": "具備多技能的單智能體失效時機",
+      "title_zh": "具備多技能的單智能體失效時機",
+      "title_en": "Limitations and Failure Points of a Multi-Skilled Single Agent",
+      "tags": [
+        "AI Agent",
+        "Multi Skills"
+      ],
+      "created_at": "2026-01-13 00:03:11.100088",
+      "source": ""
+    },
+    {
       "id": "img_34e25d144ddf",
       "url": "static/images/infographics/img_34e25d144ddf.png",
       "thumbnail": "static/images/infographics/thumbnails/img_34e25d144ddf_thumb.webp",
