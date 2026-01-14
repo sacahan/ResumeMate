@@ -1,146 +1,12 @@
 /**
  * Portfolio Projects Loader
- * Fetches data from GitHub API and populates the portfolio swiper.
+ * Fetches data from projects.json (primary) or GitHub API (fallback).
  */
 
 document.addEventListener("DOMContentLoaded", () => {
   const GITHUB_USERNAME = "sacahan";
-  const API_URL = `https://api.github.com/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=100`;
-
-  // Static project data for existing projects or overrides
-  const STATIC_PROJECTS = {
-    ResumeMate: {
-      cover: "static/images/resume_mate_cover.png",
-      tags: ["OpenAI Agent", "RAG", "Gradio", "ChromaDB"],
-      demoUrl: "https://www.brianhan.cc/",
-      githubUrl: "https://github.com/sacahan/ResumeMate",
-      zh: {
-        title: "ResumeMate",
-        desc: "ResumeMate 是一個基於 AI 的簡歷代理平台，協助使用者優化職涯發展與履歷撰寫。",
-      },
-      en: {
-        title: "ResumeMate",
-        desc: "ResumeMate is an AI-powered resume agent platform helping users optimize career growth and resume writing.",
-      },
-    },
-    TrailTag: {
-      cover: "static/images/trail_tag_cover.png",
-      tags: ["CrewAI", "Gradio", "Chrome Extension", "Redis", "FastAPI"],
-      demoUrl: "https://www.youtube.com/watch?v=DzmGJXYH4-g",
-      githubUrl: "https://github.com/sacahan/TrailTag",
-      zh: {
-        title: "TrailTag",
-        desc: "AI 驅動的工具，可自動偵測 YouTube 影片中提到的位置並即時標記座標與 Chrome 擴充功能整合。",
-      },
-      en: {
-        title: "TrailTag",
-        desc: "AI-powered tool that detects locations in YouTube videos and tags coordinates in real-time with Chrome Extension.",
-      },
-    },
-    CSCFlow: {
-      cover: "static/images/csc_flow_cover.png",
-      tags: ["Python", "Typescript", "HTML", "Shell", "Docker"],
-      demoUrl: "https://flow.brianhan.cc/",
-      githubUrl: "https://github.com/sacahan/cscflow",
-      zh: {
-        title: "CSCFlow",
-        desc: "針對台灣公共運動中心的即時人流監控與分析系統，提供歷史與當下流量視覺化。",
-      },
-      en: {
-        title: "CSCFlow",
-        desc: "Real-time traffic monitoring and analytics system for public sports centers in Taiwan with visualization.",
-      },
-    },
-    CasualTrader: {
-      cover: "static/images/casual_trader_cover.png",
-      tags: ["Python", "OpenAI SDK", "MCP", "Trading"],
-      demoUrl: "https://trader.brianhan.cc/",
-      githubUrl: "https://github.com/sacahan/CasualTrader",
-      zh: {
-        title: "CasualTrader",
-        desc: "台股 AI 交易模擬平台，結合 OpenAI Agent SDK 與 MCP 核心，實現從研發到執行的全自動化。",
-      },
-      en: {
-        title: "CasualTrader",
-        desc: "AI trading simulation platform for Taiwan stocks with OpenAI Agent SDK & MCP, automating research to execution.",
-      },
-    },
-    CasualMarket: {
-      cover: "static/images/casual_market_cover.png",
-      tags: ["TypeScript", "MCP Server", "Finance API", "Taiwan Stock"],
-      demoUrl: "https://trader.brianhan.cc/",
-      githubUrl: "https://github.com/sacahan/CasualMarket",
-      zh: {
-        title: "CasualMarket",
-        desc: "功能完整的台股交易 Model Context Protocol (MCP) Server，提供即時股價、財務分析與 K 線視覺化接口。",
-      },
-      en: {
-        title: "CasualMarket",
-        desc: "Comprehensive Taiwan Stock Model Context Protocol (MCP) Server for real-time prices and financial analysis.",
-      },
-    },
-    SpecPilot: {
-      cover: "static/images/spec_pilot_cover.png",
-      tags: [
-        "TypeScript",
-        "LLM",
-        "Spec-Driven Development",
-        "MCP",
-        "Redis",
-        "FastAPI",
-        "SDD",
-      ],
-      githubUrl: "https://github.com/sacahan/SpecPilot",
-      zh: {
-        title: "SpecPilot",
-        desc: "專案規範管理 MCP 伺服器，將自然語言需求轉化為結構化規格並追蹤進度，提升開發協作效率。",
-      },
-      en: {
-        title: "SpecPilot",
-        desc: "MCP server for project specification management, converting natural language into structured requirements.",
-      },
-    },
-    YTSearch: {
-      cover: "static/images/yt_search_cover.png",
-      tags: ["Python", "FastAPI", "Web Scraping", "MCP"],
-      githubUrl: "https://github.com/sacahan/YTSearch",
-      zh: {
-        title: "YTSearch",
-        desc: "高效且零成本的 YouTube 影片搜尋 API，支援 MCP 協定，為 AI 助手提供強大的影片與頻道檢索能力。",
-      },
-      en: {
-        title: "YTSearch",
-        desc: "Zero-cost YouTube video search API with MCP support, enhancing AI assistants with video and channel retrieval.",
-      },
-    },
-    MarkdownVault: {
-      cover: "static/images/markdown_vault_cover.png",
-      tags: ["Python", "ChromaDB", "RAG", "Markdown"],
-      githubUrl: "https://github.com/sacahan/MarkdownVault",
-      zh: {
-        title: "MarkdownVault",
-        desc: "將 Markdown 知識庫轉換為向量並存儲於本地 Chroma 資料庫，支援語意搜尋與 RAG 提示詞整合。",
-      },
-      en: {
-        title: "MarkdownVault",
-        desc: "Converts Markdown to vectors in local Chroma database, supporting semantic search and RAG prompts.",
-      },
-    },
-    MediaGrabber: {
-      cover: "static/images/media_grabber_cover.png",
-      tags: ["Python", "yt-dlp", "FFmpeg", "Downloader", "GUI"],
-      demoUrl: "https://media.brianhan.cc/",
-      githubUrl: "https://github.com/sacahan/MediaGrabber",
-      zh: {
-        title: "MediaGrabber",
-        desc: "支援 YouTube、Facebook 與 Instagram 的簡約高效媒體下載器，支援多種解析度與格式選擇。",
-      },
-      en: {
-        title: "MediaGrabber",
-        desc: "Simple and elegant media downloader for Youtube, Facebook, and Instagram with multiple format support.",
-      },
-    },
-  };
+  const GITHUB_API_URL = `https://api.github.com/users/${GITHUB_USERNAME}/repos?sort=updated&per_page=100`;
+  const PROJECTS_JSON_URL = "./data/projects.json";
 
   // Default covers with premium mesh-like gradients
   const DEFAULT_COVERS = [
@@ -152,31 +18,78 @@ document.addEventListener("DOMContentLoaded", () => {
     "radial-gradient(at 0% 0%, #164e63 0%, transparent 50%), radial-gradient(at 100% 0%, #06b6d4 0%, transparent 50%), radial-gradient(at 50% 100%, #083344 0%, transparent 50%), #0f172a",
   ];
 
-  async function fetchGitHubRepos() {
+  /**
+   * Fetch projects from projects.json
+   */
+  async function fetchProjectsJSON() {
     try {
-      const response = await fetch(API_URL);
-      if (!response.ok) throw new Error("Failed to fetch GitHub data");
-      const repos = await response.json();
+      const response = await fetch(PROJECTS_JSON_URL);
+      if (!response.ok) throw new Error("Failed to fetch projects.json");
+      const data = await response.json();
 
-      // Show all public repos that are NOT forks,
-      // OR specific forks that are mentioned in STATIC_PROJECTS
-      return repos.filter((repo) => !repo.fork || STATIC_PROJECTS[repo.name]);
-    } catch (error) {
-      console.error("Error fetching repos:", error);
-      // Fallback to static list if API fails
-      return Object.keys(STATIC_PROJECTS).map((name) => ({
-        name,
-        description: STATIC_PROJECTS[name].en.desc,
-        html_url: `https://github.com/sacahan/${name}`,
-        homepage: "",
-        topics: [],
-        language: "AI",
+      // Convert ProjectItem format to repo format
+      return (data.projects || []).map(proj => ({
+        name: proj.id,
+        description: proj.desc_en || "",
+        html_url: proj.githubUrl || `https://github.com/sacahan/${proj.id}`,
+        homepage: proj.demoUrl || "",
+        topics: proj.tags || [],
+        // Custom fields for projects.json data
+        _customData: {
+          cover: proj.cover,
+          zh: {
+            title: proj.title_zh,
+            desc: proj.desc_zh
+          },
+          en: {
+            title: proj.title_en,
+            desc: proj.desc_en
+          },
+          demoUrl: proj.demoUrl,
+          githubUrl: proj.githubUrl,
+          tags: proj.tags
+        }
       }));
+    } catch (error) {
+      console.error("Error fetching projects.json:", error);
+      return [];
     }
   }
 
+  /**
+   * Fallback: Fetch from GitHub API
+   */
+  async function fetchGitHubRepos() {
+    try {
+      const response = await fetch(GITHUB_API_URL);
+      if (!response.ok) throw new Error("Failed to fetch GitHub data");
+      const repos = await response.json();
+      return repos.filter((repo) => !repo.fork);
+    } catch (error) {
+      console.error("Error fetching repos from GitHub:", error);
+      return [];
+    }
+  }
+
+  /**
+   * Get project data with projects.json as primary source
+   */
+  async function fetchProjects() {
+    const projectsJsonData = await fetchProjectsJSON();
+
+    // If projects.json has data, use it exclusively
+    if (projectsJsonData.length > 0) {
+      return projectsJsonData;
+    }
+
+    // Fallback to GitHub API if projects.json is empty
+    console.log("projects.json is empty, falling back to GitHub API");
+    return fetchGitHubRepos();
+  }
+
   function createProjectCard(repo, index) {
-    const staticData = STATIC_PROJECTS[repo.name] || {};
+    const customData = repo._customData || {};
+
     // Check current language from MultilingualManager if available
     const currentLang =
       window.multilingualManager?.currentLanguage ||
@@ -185,19 +98,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const isZH = currentLang.startsWith("zh");
 
     const title =
-      (isZH ? staticData.zh?.title : staticData.en?.title) || repo.name;
+      (isZH ? customData.zh?.title : customData.en?.title) || repo.name;
     const desc =
-      (isZH ? staticData.zh?.desc : staticData.en?.desc) ||
+      (isZH ? customData.zh?.desc : customData.en?.desc) ||
       repo.description ||
       "Project description soon...";
-    const coverStyle = staticData.cover
-      ? `background-image: url('${staticData.cover}')`
+
+    const coverStyle = customData.cover
+      ? `background-image: url('${customData.cover}')`
       : `background: ${DEFAULT_COVERS[index % DEFAULT_COVERS.length]}`;
 
-    // Determine demo and GitHub URLs from static data or repo data
-    const demoUrl = staticData.demoUrl || repo.homepage || null;
-    const githubUrl =
-      staticData.githubUrl !== undefined ? staticData.githubUrl : repo.html_url;
+    // Use URLs from projects.json or GitHub
+    const demoUrl = customData.demoUrl || repo.homepage || null;
+    const githubUrl = customData.githubUrl || repo.html_url;
 
     const demoLink = demoUrl
       ? `
@@ -215,10 +128,7 @@ document.addEventListener("DOMContentLoaded", () => {
             </a>`
       : "";
 
-    const tagsHtml = (
-      staticData.tags ||
-      (repo.topics?.length ? repo.topics : [repo.language || "Project"])
-    )
+    const tagsHtml = (customData.tags || repo.topics || [repo.language || "Project"])
       .slice(0, 5)
       .map(
         (tag) =>
@@ -269,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
-    const repos = await fetchGitHubRepos();
+    const repos = await fetchProjects();
     container.innerHTML = "";
 
     repos.forEach((repo, index) => {

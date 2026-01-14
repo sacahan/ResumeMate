@@ -975,3 +975,110 @@ button:active,
     content: " | XL";
   }
 }
+
+/* ===========================================
+   🍔 漢堡菜單 - 行動裝置導航
+=========================================== */
+
+/* 漢堡按鈕樣式 */
+#hamburger-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#hamburger-btn:focus {
+  outline: none;
+}
+
+/* 漢堡按鈕中的線條 */
+.hamburger-line {
+  width: 24px;
+  height: 2px;
+  background-color: currentColor;
+  border-radius: 2px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transform-origin: center;
+}
+
+/* 漢堡按鈕打開時的動畫 */
+#hamburger-btn.active .hamburger-line:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+
+#hamburger-btn.active .hamburger-line:nth-child(2) {
+  opacity: 0;
+}
+
+#hamburger-btn.active .hamburger-line:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
+/* 行動菜單抽屜 */
+.mobile-menu-drawer {
+  animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  max-height: calc(100vh - 64px);
+  overflow-y: auto;
+}
+
+.mobile-menu-drawer.hidden {
+  animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* 行動菜單中的連結 */
+.mobile-menu-drawer a {
+  transition: all 0.2s ease;
+}
+
+.mobile-menu-drawer a:active {
+  transform: scale(0.98);
+}
+
+/* 在 md 以上螢幕隱藏漢堡按鈕 */
+@media (min-width: 768px) {
+  #hamburger-btn {
+    display: none !important;
+  }
+
+  .mobile-menu-drawer {
+    display: none !important;
+  }
+}
+
+/* 防止滾動當菜單打開 */
+body.menu-open {
+  overflow: hidden;
+}

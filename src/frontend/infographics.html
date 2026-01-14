@@ -115,11 +115,37 @@
           <a href="index.html#chat" class="hover:text-blue-400 transition-colors" data-zh="AI 問答" data-en="AI Q&A">AI
             問答</a>
         </div>
+<!-- Mobile Hamburger Menu Button -->
+<button id="hamburger-btn" class="md:hidden flex flex-col gap-1 relative" aria-label="Toggle menu"
+  aria-expanded="false">
+  <span class="hamburger-line"></span>
+  <span class="hamburger-line"></span>
+  <span class="hamburger-line"></span>
+</button>
+
         <button id="lang-toggle"
           class="px-3 py-1 glass-effect rounded-md text-sm hover:bg-white hover:bg-opacity-20 transition-colors">
           EN
         </button>
-        </div>
+      </div>
+<!-- Mobile Menu Drawer -->
+<div id="mobile-menu"
+  class="hidden md:hidden fixed top-16 left-0 right-0 glass-effect border-t border-white/10 shadow-lg mobile-menu-drawer">
+  <div class="max-w-6xl mx-auto px-4 py-4 space-y-3">
+    <a href="index.html#about" class="block py-2 px-4 rounded hover:bg-white/10 transition-colors" data-zh="關於我"
+      data-en="About Me">關於我</a>
+    <a href="index.html#experience" class="block py-2 px-4 rounded hover:bg-white/10 transition-colors" data-zh="經歷"
+      data-en="Experience">經歷</a>
+    <a href="index.html#skills" class="block py-2 px-4 rounded hover:bg-white/10 transition-colors" data-zh="技能"
+      data-en="Skills">技能</a>
+    <a href="index.html#portfolio" class="block py-2 px-4 rounded hover:bg-white/10 transition-colors" data-zh="作品"
+      data-en="Portfolio">作品</a>
+    <a href="infographics.html" class="block py-2 px-4 rounded bg-white/10 transition-colors text-orange-400"
+      data-zh="資訊圖表" data-en="Infographics">資訊圖表</a>
+    <a href="index.html#chat" class="block py-2 px-4 rounded hover:bg-white/10 transition-colors" data-zh="AI 問答"
+      data-en="AI Q&A">AI 問答</a>
+  </div>
+</div>
         </div>
         </nav>
 
@@ -191,6 +217,8 @@
   <!-- Multilingual Manager -->
   <script src="static/js/multilingual.js"></script>
   <script src="static/js/main.js"></script>
+  <!-- Hamburger Menu Handler -->
+  <script src="static/js/hamburger.js"></script>
   <!-- Infographics Gallery -->
   <script src="static/js/infographics.js"></script>
   </body>

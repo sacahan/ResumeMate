@@ -1,0 +1,114 @@
+{
+  "version": "1.0.0",
+  "lastUpdated": "2026-01-14",
+  "projects": [
+    {
+      "id": "ResumeMate",
+      "cover": "static/images/resume_mate_cover.png",
+      "tags": ["OpenAI Agent", "RAG", "Gradio", "ChromaDB"],
+      "demoUrl": "https://www.brianhan.cc/",
+      "githubUrl": "https://github.com/sacahan/ResumeMate",
+      "title_zh": "ResumeMate",
+      "title_en": "ResumeMate",
+      "desc_zh": "ResumeMate 是一個基於 AI 的簡歷代理平台，協助使用者優化職涯發展與履歷撰寫。",
+      "desc_en": "ResumeMate is an AI-powered resume agent platform helping users optimize career growth and resume writing.",
+      "created_at": "2026-01-14T00:00:00"
+    },
+    {
+      "id": "TrailTag",
+      "cover": "static/images/trail_tag_cover.png",
+      "tags": ["CrewAI", "Gradio", "Chrome Extension", "Redis", "FastAPI"],
+      "demoUrl": "https://www.youtube.com/watch?v=DzmGJXYH4-g",
+      "githubUrl": "https://github.com/sacahan/TrailTag",
+      "title_zh": "TrailTag",
+      "title_en": "TrailTag",
+      "desc_zh": "AI 驅動的工具，可自動偵測 YouTube 影片中提到的位置並即時標記座標與 Chrome 擴充功能整合。",
+      "desc_en": "AI-powered tool that detects locations in YouTube videos and tags coordinates in real-time with Chrome Extension.",
+      "created_at": "2026-01-14T00:00:00"
+    },
+    {
+      "id": "CSCFlow",
+      "cover": "static/images/csc_flow_cover.png",
+      "tags": ["Python", "Typescript", "HTML", "Shell", "Docker"],
+      "demoUrl": "https://flow.brianhan.cc/",
+      "githubUrl": "https://github.com/sacahan/cscflow",
+      "title_zh": "CSCFlow",
+      "title_en": "CSCFlow",
+      "desc_zh": "針對台灣公共運動中心的即時人流監控與分析系統，提供歷史與當下流量視覺化。",
+      "desc_en": "Real-time traffic monitoring and analytics system for public sports centers in Taiwan with visualization.",
+      "created_at": "2026-01-14T00:00:00"
+    },
+    {
+      "id": "CasualTrader",
+      "cover": "static/images/casual_trader_cover.png",
+      "tags": ["Python", "OpenAI SDK", "MCP", "Trading"],
+      "demoUrl": "https://trader.brianhan.cc/",
+      "githubUrl": "https://github.com/sacahan/CasualTrader",
+      "title_zh": "CasualTrader",
+      "title_en": "CasualTrader",
+      "desc_zh": "台股 AI 交易模擬平台，結合 OpenAI Agent SDK 與 MCP 核心，實現從研發到執行的全自動化。",
+      "desc_en": "AI trading simulation platform for Taiwan stocks with OpenAI Agent SDK & MCP, automating research to execution.",
+      "created_at": "2026-01-14T00:00:00"
+    },
+    {
+      "id": "CasualMarket",
+      "cover": "static/images/casual_market_cover.png",
+      "tags": ["TypeScript", "MCP Server", "Finance API", "Taiwan Stock"],
+      "demoUrl": "https://trader.brianhan.cc/",
+      "githubUrl": "https://github.com/sacahan/CasualMarket",
+      "title_zh": "CasualMarket",
+      "title_en": "CasualMarket",
+      "desc_zh": "功能完整的台股交易 Model Context Protocol (MCP) Server，提供即時股價、財務分析與 K 線視覺化接口。",
+      "desc_en": "Comprehensive Taiwan Stock Model Context Protocol (MCP) Server for real-time prices and financial analysis.",
+      "created_at": "2026-01-14T00:00:00"
+    },
+    {
+      "id": "SpecPilot",
+      "cover": "static/images/spec_pilot_cover.png",
+      "tags": ["TypeScript", "LLM", "Spec-Driven Development", "MCP", "Redis", "FastAPI", "SDD"],
+      "demoUrl": "",
+      "githubUrl": "https://github.com/sacahan/SpecPilot",
+      "title_zh": "SpecPilot",
+      "title_en": "SpecPilot",
+      "desc_zh": "專案規範管理 MCP 伺服器，將自然語言需求轉化為結構化規格並追蹤進度，提升開發協作效率。",
+      "desc_en": "MCP server for project specification management, converting natural language into structured requirements.",
+      "created_at": "2026-01-14T00:00:00"
+    },
+    {
+      "id": "YTSearch",
+      "cover": "static/images/yt_search_cover.png",
+      "tags": ["Python", "FastAPI", "Web Scraping", "MCP"],
+      "demoUrl": "",
+      "githubUrl": "https://github.com/sacahan/YTSearch",
+      "title_zh": "YTSearch",
+      "title_en": "YTSearch",
+      "desc_zh": "高效且零成本的 YouTube 影片搜尋 API，支援 MCP 協定，為 AI 助手提供強大的影片與頻道檢索能力。",
+      "desc_en": "Zero-cost YouTube video search API with MCP support, enhancing AI assistants with video and channel retrieval.",
+      "created_at": "2026-01-14T00:00:00"
+    },
+    {
+      "id": "MarkdownVault",
+      "cover": "static/images/markdown_vault_cover.png",
+      "tags": ["Python", "ChromaDB", "RAG", "Markdown"],
+      "demoUrl": "",
+      "githubUrl": "https://github.com/sacahan/MarkdownVault",
+      "title_zh": "MarkdownVault",
+      "title_en": "MarkdownVault",
+      "desc_zh": "將 Markdown 知識庫轉換為向量並存儲於本地 Chroma 資料庫，支援語意搜尋與 RAG 提示詞整合。",
+      "desc_en": "Converts Markdown to vectors in local Chroma database, supporting semantic search and RAG prompts.",
+      "created_at": "2026-01-14T00:00:00"
+    },
+    {
+      "id": "MediaGrabber",
+      "cover": "static/images/media_grabber_cover.png",
+      "tags": ["Python", "yt-dlp", "FFmpeg", "Downloader", "GUI"],
+      "demoUrl": "https://media.brianhan.cc/",
+      "githubUrl": "https://github.com/sacahan/MediaGrabber",
+      "title_zh": "MediaGrabber",
+      "title_en": "MediaGrabber",
+      "desc_zh": "支援 YouTube、Facebook 與 Instagram 的簡約高效媒體下載器，支援多種解析度與格式選擇。",
+      "desc_en": "Simple and elegant media downloader for Youtube, Facebook, and Instagram with multiple format support.",
+      "created_at": "2026-01-14T00:00:00"
+    }
+  ]
+}

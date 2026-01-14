@@ -62,3 +62,33 @@ class TitleTagSuggestion(BaseModel):
         default_factory=list,
         description="1-3 suggested tags for categorization, prioritizing existing tags",
     )
+
+
+class ProjectItem(BaseModel):
+    """Single project item model for portfolio management."""
+
+    id: str = Field(..., description="Unique identifier for the project")
+    cover: str = Field(..., description="URL path to the project cover image")
+    tags: list[str] = Field(default_factory=list, description="List of technology tags")
+    demoUrl: str = Field(default="", description="URL to the project demo")
+    githubUrl: str = Field(default="", description="URL to the GitHub repository")
+    title_zh: str = Field(..., description="Chinese project title")
+    title_en: str = Field(..., description="English project title")
+    desc_zh: str = Field(default="", description="Chinese project description")
+    desc_en: str = Field(default="", description="English project description")
+    created_at: datetime = Field(
+        default_factory=datetime.now, description="Creation timestamp"
+    )
+
+
+class ProjectsData(BaseModel):
+    """Container for all projects data."""
+
+    version: str = Field(default="1.0.0", description="Data schema version")
+    lastUpdated: str = Field(
+        default_factory=lambda: datetime.now().strftime("%Y-%m-%d"),
+        description="Last update date",
+    )
+    projects: list[ProjectItem] = Field(
+        default_factory=list, description="List of project items"
+    )
