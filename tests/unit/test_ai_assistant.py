@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.backend.infographics import InfographicAssistantAgent
+from src.backend.cms import InfographicAssistantAgent
 
 
 class TestInfographicAssistantAgent:

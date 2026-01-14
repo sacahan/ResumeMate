@@ -1,7 +1,7 @@
 """Gradio-based admin interface for managing infographics.
 
 Usage:
-    python -m src.backend.infographics.admin_app
+    python -m src.backend.cms.admin_app
 
 Environment variables:
     INFOGRAPHICS_ADMIN_USER: Admin username (default: admin)
@@ -30,7 +30,7 @@ load_dotenv(override=True)
 # Note: These imports must be after load_dotenv() to ensure environment variables are loaded
 import gradio as gr
 
-from src.backend.infographics import (
+from src.backend.cms import (
     GitManager,
     ImageProcessor,
     InfographicItem,
@@ -38,9 +38,9 @@ from src.backend.infographics import (
     InfographicAssistantAgent,
     ThumbnailConfig,
 )
-from src.backend.infographics.project_manager import ProjectDataManager
-from src.backend.infographics.language_manager import LanguageDataManager
-from src.backend.infographics.models import ProjectItem
+from src.backend.cms.project_manager import ProjectDataManager
+from src.backend.cms.language_manager import LanguageDataManager
+from src.backend.cms.models import ProjectItem
 from src.backend.logging_config import configure_logging
 
 # Configure logging using project standard
@@ -529,14 +529,96 @@ def create_admin_interface():
     """
 
     with gr.Blocks(
-        title="Infographics Admin",
+        title="內容管理",
         css=custom_css,
         theme=gr.themes.Soft(primary_hue="orange"),
-    ) as app:
-        gr.Markdown("# 📊 圖表管理後台")
-        gr.Markdown("管理 infographics.html 頁面顯示的圖表內容")
+    ) as demo:
+        gr.Markdown("# 📊 管理後台")
+        gr.Markdown("管理頁面顯示的文章/圖表內容")
 
         with gr.Tabs():
+            # Languages Tab
+            with gr.Tab("🌐 章節管理"):
+                with gr.Row():
+                    block_selector = gr.Dropdown(
+                        label="語言區塊",
+                        choices=get_language_blocks(),
+                        interactive=True,
+                    )
+                    load_block_btn = gr.Button("載入內容")
+
+                with gr.Row():
+                    with gr.Column():
+                        zh_tw_editor = gr.TextArea(
+                            label="中文 (繁體)",
+                            lines=15,
+                            placeholder="JSON 格式內容",
+                            max_lines=30,
+                        )
+
+                    with gr.Column():
+                        en_editor = gr.TextArea(
+                            label="English",
+                            lines=15,
+                            placeholder="JSON format content",
+                            max_lines=30,
+                        )
+
+                with gr.Row():
+                    lang_save_btn = gr.Button("保存並同步", variant="primary")
+                    lang_status = gr.Textbox(label="狀態", interactive=False)
+
+                gr.Markdown("💡 **提示**: 編輯中文內容時，結構變更會自動同步到英文版本")
+
+            # Projects Tab
+            with gr.Tab("🎨 我的專案"):
+                with gr.Row():
+                    with gr.Column(scale=2):
+                        projects_gallery = gr.Gallery(
+                            label="專案列表（點擊選擇）",
+                            value=get_projects_gallery,
+                            columns=3,
+                            rows=2,
+                            height="600px",
+                            object_fit="contain",
+                            allow_preview=True,
+                        )
+
+                    with gr.Column(scale=1):
+                        project_id = gr.Textbox(
+                            label="專案 ID",
+                            placeholder="自動生成或選擇現有專案",
+                            interactive=False,
+                        )
+                        project_title_zh = gr.Textbox(
+                            label="中文標題*", placeholder="輸入中文標題"
+                        )
+                        project_title_en = gr.Textbox(
+                            label="英文標題*", placeholder="Enter title"
+                        )
+                        project_desc_zh = gr.TextArea(label="中文描述", lines=3)
+                        project_desc_en = gr.TextArea(
+                            label="English Description", lines=3
+                        )
+                        project_tags = gr.Textbox(
+                            label="標籤（逗號分隔）",
+                            placeholder="React, Python, AI",
+                        )
+                        project_demo_url = gr.Textbox(
+                            label="演示 URL", placeholder="https://..."
+                        )
+                        project_github_url = gr.Textbox(
+                            label="GitHub URL", placeholder="https://..."
+                        )
+
+                        with gr.Row():
+                            project_load_btn = gr.Button("載入詳情")
+                            project_save_btn = gr.Button("儲存", variant="primary")
+                            project_delete_btn = gr.Button("刪除", variant="stop")
+                            project_new_btn = gr.Button("新增", variant="secondary")
+
+                        project_status = gr.Textbox(label="狀態", interactive=False)
+
             # Upload Tab
             with gr.Tab("📤 上傳圖片"):
                 with gr.Row():
@@ -629,95 +711,11 @@ def create_admin_interface():
 - **最後更新**: {data.lastUpdated}
 
 ### 標籤分布
-{chr(10).join([f'- **{tag}**: {len(data_manager.get_items_by_tag(tag))} 張' for tag in tags[:15]])}
+{chr(10).join([f"- **{tag}**: {len(data_manager.get_items_by_tag(tag))} 張" for tag in tags[:15]])}
 """
 
                 refresh_stats_btn.click(fn=get_stats, outputs=stats_display)
-                app.load(fn=get_stats, outputs=stats_display)
-
-            # Projects Tab
-            with gr.Tab("🎨 專案管理"):
-                with gr.Row():
-                    with gr.Column(scale=2):
-                        projects_gallery = gr.Gallery(
-                            label="專案列表（點擊選擇）",
-                            value=get_projects_gallery,
-                            columns=3,
-                            rows=2,
-                            height="600px",
-                            object_fit="contain",
-                            allow_preview=True,
-                        )
-
-                    with gr.Column(scale=1):
-                        project_id = gr.Textbox(
-                            label="專案 ID",
-                            placeholder="自動生成或選擇現有專案",
-                            interactive=False,
-                        )
-                        project_title_zh = gr.Textbox(
-                            label="中文標題*", placeholder="輸入中文標題"
-                        )
-                        project_title_en = gr.Textbox(
-                            label="英文標題*", placeholder="Enter title"
-                        )
-                        project_desc_zh = gr.TextArea(label="中文描述", lines=3)
-                        project_desc_en = gr.TextArea(
-                            label="English Description", lines=3
-                        )
-                        project_tags = gr.Textbox(
-                            label="標籤（逗號分隔）",
-                            placeholder="React, Python, AI",
-                        )
-                        project_demo_url = gr.Textbox(
-                            label="演示 URL", placeholder="https://..."
-                        )
-                        project_github_url = gr.Textbox(
-                            label="GitHub URL", placeholder="https://..."
-                        )
-
-                        with gr.Row():
-                            project_load_btn = gr.Button("載入詳情")
-                            project_save_btn = gr.Button("儲存", variant="primary")
-                            project_delete_btn = gr.Button("刪除", variant="stop")
-                            project_new_btn = gr.Button("新增", variant="secondary")
-
-                        project_status = gr.Textbox(label="狀態", interactive=False)
-
-            # Languages Tab
-            with gr.Tab("🌐 多語言管理"):
-                with gr.Row():
-                    block_selector = gr.Dropdown(
-                        label="語言區塊",
-                        choices=get_language_blocks(),
-                        interactive=True,
-                    )
-                    load_block_btn = gr.Button("載入內容")
-
-                with gr.Row():
-                    with gr.Column():
-                        zh_tw_editor = gr.TextArea(
-                            label="中文 (繁體)",
-                            lines=15,
-                            placeholder="JSON 格式內容",
-                            max_lines=30,
-                        )
-
-                    with gr.Column():
-                        en_editor = gr.TextArea(
-                            label="English",
-                            lines=15,
-                            placeholder="JSON format content",
-                            max_lines=30,
-                        )
-
-                with gr.Row():
-                    lang_save_btn = gr.Button("保存並同步", variant="primary")
-                    lang_status = gr.Textbox(label="狀態", interactive=False)
-
-                gr.Markdown(
-                    "💡 **提示**: 編輯中文內容時，結構變更會自動同步到英文版本"
-                )
+                demo.load(fn=get_stats, outputs=stats_display)
 
         # Event handlers
         ai_assist_btn.click(
@@ -845,7 +843,7 @@ def create_admin_interface():
             outputs=lang_status,
         )
 
-    return app
+    return demo
 
 
 def main():
@@ -859,10 +857,10 @@ def main():
     # Log Git auto-commit status and SSH configuration
     logger.info("\n" + git_manager.get_status_report())
 
-    app = create_admin_interface()
+    demo = create_admin_interface()
 
     # Launch with authentication
-    app.launch(
+    demo.launch(
         server_name=ADMIN_HOST,
         server_port=ADMIN_PORT,
         share=ADMIN_SHARE,

@@ -32,6 +32,7 @@ class ResumeMateFrontend {
     this.setupAccessibilityFeatures();
     this.setupProgressiveEnhancement();
     this.integrateMultilingualManager();
+    this.setupLanguageMenuToggle();
   }
 
   /**
@@ -724,6 +725,21 @@ class ResumeMateFrontend {
         this.hideTooltip();
       });
     }
+  }
+
+  /**
+   * 🤝 讓手機選單可以觸發語言切換
+   */
+  setupLanguageMenuToggle() {
+    const desktopLangToggle = document.getElementById("lang-toggle");
+    const mobileLangToggle = document.querySelector(".mobile-lang-toggle");
+    if (!desktopLangToggle || !mobileLangToggle) {
+      return;
+    }
+
+    mobileLangToggle.addEventListener("click", () => {
+      desktopLangToggle.click();
+    });
   }
 
   /**

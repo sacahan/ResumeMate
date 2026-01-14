@@ -4,7 +4,7 @@ This module provides Git integration for the infographics admin interface,
 enabling automatic commit and push of changes to trigger GitHub Pages deployment.
 
 Usage:
-    from src.backend.infographics.git_manager import GitManager
+    from src.backend.cms.git_manager import GitManager
 
     git_manager = GitManager()
     git_manager.check_ssh_config()  # Check SSH setup on startup

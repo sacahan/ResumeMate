@@ -35,4 +35,4 @@ HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
 EXPOSE 7870
 
 # Start application (code will be mounted via volume)
-CMD ["python", "-m", "src.backend.infographics.admin_app"]
+CMD ["python", "-m", "src.backend.cms.admin_app"]

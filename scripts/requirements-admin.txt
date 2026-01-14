@@ -1,5 +1,5 @@
 # Admin Application (Infographics Management) Dependencies
-# Used by: src/backend/infographics/admin_app.py
+# Used by: src/backend/cms/admin_app.py
 
 # Core Framework
 gradio>=5.44.1,<6.0.0

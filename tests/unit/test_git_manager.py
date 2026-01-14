@@ -8,7 +8,7 @@ import subprocess
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-from src.backend.infographics.git_manager import GitManager
+from src.backend.cms.git_manager import GitManager
 
 
 class TestGitManagerInit:

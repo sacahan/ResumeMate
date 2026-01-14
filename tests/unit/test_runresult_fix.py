@@ -3,7 +3,7 @@
 
 import asyncio
 from unittest.mock import MagicMock, patch
-from src.backend.infographics import InfographicAssistantAgent
+from src.backend.cms import InfographicAssistantAgent
 
 
 async def test_runresult_handling():

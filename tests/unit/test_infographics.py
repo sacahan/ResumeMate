@@ -2,7 +2,7 @@
 
 import pytest
 
-from src.backend.infographics import (
+from src.backend.cms import (
     ImageProcessor,
     InfographicItem,
     InfographicsData,

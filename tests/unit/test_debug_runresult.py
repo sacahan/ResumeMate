@@ -4,7 +4,7 @@
 import asyncio
 import logging
 from unittest.mock import MagicMock, patch
-from src.backend.infographics import InfographicAssistantAgent
+from src.backend.cms import InfographicAssistantAgent
 
 # Enable debug logging
 logging.basicConfig(level=logging.DEBUG)

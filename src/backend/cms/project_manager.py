@@ -15,7 +15,11 @@ logger = logging.getLogger(__name__)
 class ProjectDataManager:
     """Manager for project data persistence and CRUD operations."""
 
-    def __init__(self, projects_file: Optional[Path] = None, git_manager: Optional[GitManager] = None):
+    def __init__(
+        self,
+        projects_file: Optional[Path] = None,
+        git_manager: Optional[GitManager] = None,
+    ):
         """Initialize the project data manager.
 
         Args:
@@ -63,9 +67,7 @@ class ProjectDataManager:
             try:
                 rel_path = self.git_manager.get_relative_path(self.projects_file)
                 self.git_manager.commit_changes(
-                    files=[rel_path],
-                    action="更新專案",
-                    item_id="projects.json"
+                    files=[rel_path], action="更新專案", item_id="projects.json"
                 )
                 logger.info("Projects data committed to git")
             except Exception as e:

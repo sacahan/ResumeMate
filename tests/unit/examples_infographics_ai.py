@@ -1,7 +1,7 @@
 """Usage examples for the Infographic AI Assistant."""
 
 import asyncio
-from src.backend.infographics import InfographicAssistantAgent
+from src.backend.cms import InfographicAssistantAgent
 
 
 async def example_basic_usage():

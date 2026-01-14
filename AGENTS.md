@@ -20,6 +20,13 @@ ResumeMate/
 │   │   │   ├── rag.py          # RAG 向量資料庫工具
 │   │   │   ├── contact.py      # 聯絡資訊收集工具
 │   │   │   └── answer_quality.py  # 回答品質分析工具
+│   │   ├── cms/                # 內容管理系統模組
+│   │   │   ├── admin_app.py    # 管理後台 Gradio 介面
+│   │   │   ├── ai_assistant.py # AI 助手（圖表元數據建議）
+│   │   │   ├── data_manager.py # 資料管理器
+│   │   │   ├── git_manager.py  # Git 版本控制整合
+│   │   │   ├── project_manager.py  # 專案資料管理
+│   │   │   └── language_manager.py # 多語言內容管理
 │   │   ├── models.py           # Pydantic 資料模型
 │   │   └── processor.py        # 核心處理器 - 協調代理互動
 │   └── frontend/               # 前端靜態資源
@@ -133,7 +140,7 @@ pre-commit run -a
 
 遵循 Conventional Commits 格式，使用正體中文：
 
-```
+```text
 <type>(<scope>): <description>
 
 # 範例

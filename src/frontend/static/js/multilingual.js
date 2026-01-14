@@ -339,6 +339,12 @@ class MultilingualManager {
     updateElement('a[href="#portfolio"]', "portfolio");
     updateElement('a[href="#chat"]', "ai_qa");
     updateElement("#lang-toggle", "language_toggle");
+
+    if (navData.language_toggle) {
+      document.querySelectorAll(".mobile-lang-toggle").forEach((button) => {
+        button.textContent = navData.language_toggle;
+      });
+    }
   }
 
   /**

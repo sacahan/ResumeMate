@@ -8,7 +8,7 @@ from pathlib import Path
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from src.backend.infographics import InfographicAssistantAgent
+from src.backend.cms import InfographicAssistantAgent
 
 
 async def test_complete_workflow():

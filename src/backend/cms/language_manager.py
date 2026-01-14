@@ -14,7 +14,10 @@ class LanguageDataManager:
     """Manager for language content persistence with auto-sync between zh-TW and en."""
 
     def __init__(
-        self, zh_tw_file: Optional[Path] = None, en_file: Optional[Path] = None, git_manager: Optional[GitManager] = None
+        self,
+        zh_tw_file: Optional[Path] = None,
+        en_file: Optional[Path] = None,
+        git_manager: Optional[GitManager] = None,
     ):
         """Initialize the language data manager.
 
@@ -78,9 +81,7 @@ class LanguageDataManager:
                     lang = "zh-TW" if "zh-TW" in str(file_path) else "en"
                     rel_path = self.git_manager.get_relative_path(file_path)
                     self.git_manager.commit_changes(
-                        files=[rel_path],
-                        action="更新多語言",
-                        item_id=lang
+                        files=[rel_path], action="更新多語言", item_id=lang
                     )
                     logger.info(f"Language data ({lang}) committed to git")
                 except Exception as e:
