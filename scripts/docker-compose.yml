@@ -1,0 +1,69 @@
+version: "3.8"
+
+services:
+  # Main Application (Gradio AI Q&A)
+  main:
+    build:
+      context: ..
+      dockerfile: scripts/Dockerfile.main
+    container_name: resumemate-main
+    ports:
+      - "${HOST_PORT:-8459}:7860"
+    env_file:
+      - .env.main
+    environment:
+      - TZ=Asia/Taipei
+    volumes:
+      - ../chroma_db:/app/chroma_db
+      - ../logs:/app/logs
+      - ../github_copilot:/root/.config/litellm/github_copilot
+    networks:
+      - sacahan-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7860/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Admin Application (Infographics Management)
+  admin:
+    build:
+      context: ..
+      dockerfile: scripts/Dockerfile.admin
+    container_name: resumemate-admin
+    ports:
+      - "${ADMIN_PORT:-7870}:7870"
+    env_file:
+      - .env.admin
+    environment:
+      - TZ=Asia/Taipei
+    volumes:
+      # Code and data (volume mount for development)
+      - ../src/backend:/app/src/backend
+      - ../src/frontend/data:/app/src/frontend/data
+      - ../src/frontend/static/images/infographics:/app/src/frontend/static/images/infographics
+      # Git repository for auto-commit
+      - ../.git:/app/.git
+      # SSH keys (read-only)
+      - ~/.ssh:/root/.ssh:ro
+      # Logs
+      - ../logs:/app/logs
+      # LiteLLM token
+      - ../github_copilot:/root/.config/litellm/github_copilot
+    networks:
+      - sacahan-network
+    restart: unless-stopped
+    depends_on:
+      - main
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7870/login"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  sacahan-network:
+    driver: bridge

@@ -1,0 +1,16 @@
+# Admin Application (Infographics Management) Dependencies
+# Used by: src/backend/infographics/admin_app.py
+
+# Core Framework
+gradio>=5.44.1,<6.0.0
+
+# Image Processing
+Pillow>=10.0.0
+
+# LLM & AI Assistance
+openai>=1.0.0
+litellm>=1.79.3
+
+# Data & Config
+pydantic>=2.10,<2.12
+python-dotenv>=1.0.0

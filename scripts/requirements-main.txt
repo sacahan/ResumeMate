@@ -1,0 +1,18 @@
+# Main Application (Gradio AI Q&A) Dependencies
+# Used by: app.py
+
+# Core Framework
+gradio>=5.44.1,<6.0.0
+
+# Vector Database & RAG
+chromadb>=0.4.0
+
+# LLM & Agents
+openai>=1.0.0
+openai-agents==0.4.1
+litellm>=1.79.3
+langchain>=0.1.0
+
+# Data & Config
+pydantic>=2.10,<2.12
+python-dotenv>=1.0.0

@@ -309,6 +309,20 @@ def on_gallery_select(evt: gr.SelectData) -> str:
     return ""
 
 
+def clear_upload_fields(image_file) -> tuple[str, str, str, str]:
+    """Clear upload fields when image is cleared.
+
+    Args:
+        image_file: The uploaded image file (None when cleared)
+
+    Returns:
+        Tuple of empty strings for all upload fields
+    """
+    if image_file is None:
+        return "", "", "", ""
+    return gr.skip(), gr.skip(), gr.skip(), gr.skip()
+
+
 def create_admin_interface():
     """Create the Gradio admin interface."""
 
@@ -318,6 +332,14 @@ def create_admin_interface():
     }
     .gallery-item {
         cursor: pointer;
+    }
+    .gallery-container {
+        max-height: 700px !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 8px;
     }
     """
 
@@ -377,9 +399,11 @@ def create_admin_interface():
                             label="圖片列表（點擊選擇）",
                             value=get_gallery_data,
                             columns=3,
-                            height=400,
+                            rows=2,
+                            height="700px",
                             object_fit="contain",
                             allow_preview=True,
+                            elem_classes="gallery-container",
                         )
 
                     with gr.Column(scale=1):
@@ -431,6 +455,12 @@ def create_admin_interface():
             fn=ai_assist_metadata,
             inputs=upload_title_zh,
             outputs=[upload_title_en, upload_tags],
+        )
+
+        upload_image_input.change(
+            fn=clear_upload_fields,
+            inputs=upload_image_input,
+            outputs=[upload_title_zh, upload_title_en, upload_tags, upload_source],
         )
 
         upload_btn.click(

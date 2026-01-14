@@ -177,31 +177,22 @@ class InfographicAssistantAgent:
                 input=f"中文標題：{title_zh.strip()}",
             )
 
-            # Extract the structured output
-            if hasattr(result, "output"):
-                output = result.output
-            else:
-                output = result
+            # Log result details for debugging
+            logger.debug(f"Result type: {type(result).__name__}")
+            logger.debug(f"Result has final_output: {hasattr(result, 'final_output')}")
 
-            if isinstance(output, str):
-                # Handle case where output might be a string
-                logger.warning(f"Unexpected string output: {output}")
-                # Try to parse it as JSON
-                import json
+            # Extract final_output from RunResult
+            output = result.final_output
 
-                try:
-                    output = json.loads(output)
-                except json.JSONDecodeError:
-                    raise ValueError(f"Invalid output format: {output}")
-
-            # Validate and convert to TitleTagSuggestion
+            # Convert to TitleTagSuggestion if needed
             if isinstance(output, TitleTagSuggestion):
                 suggestion = output
             elif isinstance(output, dict):
                 suggestion = TitleTagSuggestion(**output)
             else:
                 raise ValueError(
-                    f"Unexpected output type: {type(output)}, expected dict or TitleTagSuggestion"
+                    f"Unexpected output type: {type(output).__name__}, "
+                    f"expected dict or TitleTagSuggestion. Got: {output}"
                 )
 
             # Validate tag count

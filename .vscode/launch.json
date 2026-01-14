@@ -2,7 +2,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Debug Backend module",
+      "name": "Debug Backend",
       "type": "debugpy",
       "request": "launch",
       "module": "app",
@@ -11,7 +11,7 @@
       "python": "${workspaceFolder}/.venv/bin/python"
     },
     {
-      "name": "Debug RAG tool",
+      "name": "Debug AI Q&A",
       "type": "debugpy",
       "request": "launch",
       "program": "${workspaceFolder}/src/backend/tools/rag.py",
@@ -20,7 +20,7 @@
       "python": "${workspaceFolder}/.venv/bin/python"
     },
     {
-      "name": "Infographics Admin",
+      "name": "Content Admin",
       "type": "debugpy",
       "request": "launch",
       "module": "src.backend.infographics.admin_app",

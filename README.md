@@ -50,6 +50,113 @@ Please refer to the [Development Setup Guide](DEVELOPMENT.md) to set up your dev
 
 3. Edit the `.env` file and add your OpenAI API key
 
+## Docker Deployment
+
+### Quick Start with Docker
+
+ResumeMate supports containerized deployment using Docker Compose with separate services for the main application and admin interface.
+
+#### Prerequisites
+
+- Docker and Docker Compose installed
+- 2GB+ available disk space
+- OpenAI API key
+
+#### Setup
+
+1. Copy environment configuration files:
+
+   ```bash
+   cd scripts
+   cp .env.main.example .env.main
+   cp .env.admin.example .env.admin
+   ```
+
+2. Edit the environment files with your OpenAI API key:
+
+   ```bash
+   # Edit .env.main for the main application
+   nano .env.main
+
+   # Edit .env.admin for the admin interface (if needed)
+   nano .env.admin
+   ```
+
+3. Build and start services:
+
+   ```bash
+   # Build Docker images
+   ./docker-run.sh build
+
+   # Start both services
+   ./docker-run.sh up
+   ```
+
+#### Available Commands
+
+| Command | Description |
+| --- | --- |
+| `./docker-run.sh up` | Start all services |
+| `./docker-run.sh down` | Stop all services |
+| `./docker-run.sh main` | Start only main application |
+| `./docker-run.sh admin` | Start only admin interface |
+| `./docker-run.sh restart [service]` | Restart services |
+| `./docker-run.sh build [service]` | Build Docker images |
+| `./docker-run.sh logs [service]` | View logs |
+| `./docker-run.sh status` | Check service status |
+| `./docker-run.sh shell [service]` | Enter container shell |
+| `./docker-run.sh sync-deps` | Sync requirements versions |
+| `./docker-run.sh clean` | Clean up resources |
+
+#### Service Endpoints
+
+- **Main Application**: [http://localhost:8459](http://localhost:8459)
+- **Admin Interface**: [http://localhost:7870](http://localhost:7870)
+
+#### Volume Mounts
+
+- `logs/` - Shared log files
+- `chroma_db/` - Vector database persistence
+- `src/frontend/data/` - Frontend data files (admin mount)
+- `src/frontend/static/images/infographics/` - Infographics images (admin mount)
+
+#### Environment Configuration
+
+**Main Application (.env.main):**
+
+- `GRADIO_SERVER_PORT` - Main app port (default: 7860)
+- `AGENT_MODEL` - LLM model to use (default: gpt-4o)
+- `EMBEDDING_MODEL` - Embedding model (default: text-embedding-3-small)
+- `CHROMA_DB_PATH` - Vector database path
+- `GITHUB_COPILOT_TOKEN` - GitHub Copilot API token
+- `OPENAI_API_KEY` - OpenAI API key
+
+**Admin Interface (.env.admin):**
+
+- `INFOGRAPHICS_ADMIN_PORT` - Admin port (default: 7870)
+- `INFOGRAPHICS_ADMIN_USER` - Admin username
+- `INFOGRAPHICS_ADMIN_PASS` - Admin password
+- `INFOGRAPHICS_GIT_AUTO_COMMIT` - Enable auto Git commit
+- `INFOGRAPHICS_GIT_AUTO_PUSH` - Enable auto Git push
+
+#### Building Custom Images
+
+To build and push custom Docker images:
+
+```bash
+cd scripts
+./build-backend.sh
+
+# Or with specific options:
+./build-backend.sh --service main --platform arm64 --action build-push
+```
+
+Supported options:
+
+- `--service`: main, admin, or all
+- `--platform`: arm64, amd64, or all
+- `--action`: build, push, or build-push
+
 ## Project Structure
 
 See the [Development Setup Guide](DEVELOPMENT.md) for details about the project structure.
