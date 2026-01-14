@@ -3,6 +3,21 @@
   "lastUpdated": "2026-01-14",
   "images": [
     {
+      "id": "img_7b4c2dd75432",
+      "url": "static/images/infographics/img_7b4c2dd75432.png",
+      "thumbnail": "static/images/infographics/thumbnails/img_7b4c2dd75432_thumb.webp",
+      "title": "建立 AI Agent 系統的 12 要素",
+      "title_zh": "建立 AI Agent 系統的 12 要素",
+      "title_en": "The 12 Factors for Building an AI Agent System",
+      "tags": [
+        "AI Agent",
+        "Architecture",
+        "AI"
+      ],
+      "created_at": "2026-01-14 11:53:40.175059",
+      "source": ""
+    },
+    {
       "id": "img_c8586e430492",
       "url": "static/images/infographics/img_c8586e430492.png",
       "thumbnail": "static/images/infographics/thumbnails/img_c8586e430492_thumb.webp",
