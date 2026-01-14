@@ -14,6 +14,7 @@ Environment variables:
 import logging
 import os
 import sys
+import asyncio
 from pathlib import Path
 
 # Add src directory to path
@@ -33,6 +34,7 @@ from src.backend.infographics import (
     ImageProcessor,
     InfographicItem,
     InfographicsDataManager,
+    InfographicAssistantAgent,
     ThumbnailConfig,
 )
 from src.backend.logging_config import configure_logging
@@ -103,6 +105,42 @@ def get_item_details(item_id: str) -> tuple[str, str, str, str, str]:
         item.source,
         item.id,
     )
+
+
+def ai_assist_metadata(title_zh: str) -> tuple[str, str]:
+    """Get AI suggestions for English title and tags.
+
+    Args:
+        title_zh: Chinese title to process
+
+    Returns:
+        Tuple of (suggested_title_en, suggested_tags_str)
+    """
+    if not title_zh or not title_zh.strip():
+        return "", ""
+
+    try:
+        existing_tags = data_manager.get_all_tags()
+        agent = InfographicAssistantAgent(existing_tags=existing_tags)
+
+        # Run async function in sync context
+        result = asyncio.run(agent.suggest_metadata(title_zh.strip()))
+
+        if result:
+            title_en = result.title_en
+            tags_str = ", ".join(result.suggested_tags)
+            logger.info(
+                f"AI assistance success for '{title_zh}': "
+                f"en='{title_en}', tags='{tags_str}'"
+            )
+            return title_en, tags_str
+        else:
+            logger.warning(f"AI assistance returned None for '{title_zh}'")
+            return "", ""
+
+    except Exception as e:
+        logger.error(f"AI assistance failed for '{title_zh}': {str(e)}")
+        return "", ""
 
 
 def upload_image(
@@ -305,6 +343,7 @@ def create_admin_interface():
                             label="中文標題",
                             placeholder="輸入中文標題",
                         )
+                        ai_assist_btn = gr.Button("🤖 AI 輔助", variant="secondary")
                         upload_title_en = gr.Textbox(
                             label="英文標題",
                             placeholder="Enter English title",
@@ -388,6 +427,12 @@ def create_admin_interface():
                 app.load(fn=get_stats, outputs=stats_display)
 
         # Event handlers
+        ai_assist_btn.click(
+            fn=ai_assist_metadata,
+            inputs=upload_title_zh,
+            outputs=[upload_title_en, upload_tags],
+        )
+
         upload_btn.click(
             fn=upload_image,
             inputs=[

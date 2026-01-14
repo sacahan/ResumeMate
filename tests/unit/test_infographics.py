@@ -8,6 +8,7 @@ from src.backend.infographics import (
     InfographicsData,
     InfographicsDataManager,
     ThumbnailConfig,
+    TitleTagSuggestion,
 )
 
 
@@ -213,3 +214,55 @@ class TestImageProcessor:
         """Test that directories are created on initialization."""
         assert processor.images_dir.exists()
         assert processor.thumbnails_dir.exists()
+
+
+class TestTitleTagSuggestion:
+    """Tests for the TitleTagSuggestion model."""
+
+    def test_title_tag_suggestion_creation(self):
+        """Test creating a TitleTagSuggestion."""
+        suggestion = TitleTagSuggestion(
+            title_en="Introducing Jenkins to Enable CI/CD Automation",
+            suggested_tags=["CICD", "Architecture"],
+        )
+
+        assert suggestion.title_en == "Introducing Jenkins to Enable CI/CD Automation"
+        assert len(suggestion.suggested_tags) == 2
+        assert "CICD" in suggestion.suggested_tags
+
+    def test_title_tag_suggestion_defaults(self):
+        """Test TitleTagSuggestion with default empty tags."""
+        suggestion = TitleTagSuggestion(
+            title_en="Test Title",
+        )
+
+        assert suggestion.title_en == "Test Title"
+        assert suggestion.suggested_tags == []
+
+    def test_title_tag_suggestion_validation(self):
+        """Test TitleTagSuggestion field validation."""
+        # Valid case
+        suggestion = TitleTagSuggestion(
+            title_en="Test",
+            suggested_tags=["Tag1", "Tag2"],
+        )
+        assert len(suggestion.suggested_tags) <= 3
+
+    def test_title_tag_suggestion_single_tag(self):
+        """Test TitleTagSuggestion with single tag."""
+        suggestion = TitleTagSuggestion(
+            title_en="Test Title",
+            suggested_tags=["SingleTag"],
+        )
+
+        assert len(suggestion.suggested_tags) == 1
+        assert suggestion.suggested_tags[0] == "SingleTag"
+
+    def test_title_tag_suggestion_max_tags(self):
+        """Test TitleTagSuggestion with maximum tags."""
+        suggestion = TitleTagSuggestion(
+            title_en="Test Title",
+            suggested_tags=["Tag1", "Tag2", "Tag3"],
+        )
+
+        assert len(suggestion.suggested_tags) == 3

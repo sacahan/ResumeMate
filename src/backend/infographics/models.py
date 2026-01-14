@@ -50,3 +50,15 @@ class ThumbnailConfig(BaseModel):
     max_height: int = Field(default=300, ge=100, le=900)
     quality: int = Field(default=85, ge=1, le=100)
     format: Literal["JPEG", "PNG", "WEBP"] = Field(default="WEBP")
+
+
+class TitleTagSuggestion(BaseModel):
+    """AI-generated title and tag suggestions for infographics."""
+
+    title_en: str = Field(
+        ..., description="Suggested English title translated from Chinese"
+    )
+    suggested_tags: list[str] = Field(
+        default_factory=list,
+        description="1-3 suggested tags for categorization, prioritizing existing tags",
+    )
