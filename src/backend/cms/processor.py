@@ -90,26 +90,40 @@ class ImageProcessor:
         source: str = "",
     ) -> InfographicItem:
         """
-        Process an uploaded image: copy to images dir and create thumbnail.
+        Process an uploaded image: convert to WebP and create thumbnail.
+
+        Original images are converted to WebP format (quality=90) to reduce
+        file size by 60-80% while maintaining high quality. Original files
+        are not preserved.
 
         Returns an InfographicItem with all metadata.
         """
         source_path = Path(source_path)
         img_id = self.generate_id(source_path)
 
-        # Determine target filename
-        ext = source_path.suffix.lower()
-        target_name = f"{img_id}{ext}"
+        # Target filename always uses WebP extension
+        target_name = f"{img_id}.webp"
         target_path = self.images_dir / target_name
 
-        # Copy original if not already in images dir
-        if source_path.parent != self.images_dir:
-            import shutil
+        # Convert original image to WebP format
+        try:
+            with Image.open(source_path) as img:
+                # Convert to RGB if necessary (WebP supports RGBA too)
+                if img.mode not in ("RGB", "RGBA"):
+                    img = img.convert("RGB")
 
-            shutil.copy2(source_path, target_path)
-            logger.info(f"Copied image to: {target_path}")
-        else:
-            target_path = source_path
+                # Save as WebP with high quality settings
+                save_params = {
+                    "quality": self.config.original_quality,
+                    "method": 6,  # Best compression method
+                    "optimize": True,
+                }
+                img.save(target_path, format="WEBP", **save_params)
+                logger.info(f"Converted image to WebP: {target_path}")
+
+        except Exception as e:
+            logger.error(f"Failed to convert image to WebP: {e}")
+            raise
 
         # Create thumbnail
         thumb_path = self.create_thumbnail(target_path)

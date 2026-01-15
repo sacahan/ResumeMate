@@ -44,12 +44,24 @@ class ImageUploadResult(BaseModel):
 
 
 class ThumbnailConfig(BaseModel):
-    """Configuration for thumbnail generation."""
+    """Configuration for image processing and thumbnail generation."""
 
+    # Thumbnail settings
     max_width: int = Field(default=400, ge=100, le=1200)
     max_height: int = Field(default=300, ge=100, le=900)
     quality: int = Field(default=85, ge=1, le=100)
     format: Literal["JPEG", "PNG", "WEBP"] = Field(default="WEBP")
+
+    # Original image conversion settings
+    original_quality: int = Field(
+        default=90,
+        ge=1,
+        le=100,
+        description="Quality for original image WebP conversion",
+    )
+    original_format: Literal["WEBP"] = Field(
+        default="WEBP", description="Output format for original images"
+    )
 
 
 class TitleTagSuggestion(BaseModel):

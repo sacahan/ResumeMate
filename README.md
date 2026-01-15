@@ -133,11 +133,11 @@ ResumeMate supports containerized deployment using Docker Compose with separate 
 
 **Admin Interface (.env.admin):**
 
-- `INFOGRAPHICS_ADMIN_PORT` - Admin port (default: 7870)
-- `INFOGRAPHICS_ADMIN_USER` - Admin username
-- `INFOGRAPHICS_ADMIN_PASS` - Admin password
-- `INFOGRAPHICS_GIT_AUTO_COMMIT` - Enable auto Git commit
-- `INFOGRAPHICS_GIT_AUTO_PUSH` - Enable auto Git push
+- `CMS_ADMIN_PORT` - Admin port (default: 7870)
+- `CMS_ADMIN_USER` - Admin username
+- `CMS_ADMIN_PASS` - Admin password
+- `CMS_GIT_AUTO_COMMIT` - Enable auto Git commit
+- `CMS_GIT_AUTO_PUSH` - Enable auto Git push
 
 #### Building Custom Images
 

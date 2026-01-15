@@ -19,21 +19,21 @@ class TestGitManagerInit:
         with patch.dict(
             "os.environ",
             {
-                "INFOGRAPHICS_GIT_AUTO_COMMIT": "false",
-                "INFOGRAPHICS_GIT_AUTO_PUSH": "false",
+                "CMS_GIT_AUTO_COMMIT": "false",
+                "CMS_GIT_AUTO_PUSH": "false",
             },
             clear=False,
         ):
             manager = GitManager()
             assert manager.auto_commit is False
             assert manager.auto_push is False
-            assert manager.commit_prefix == "[infographics]"
+            assert manager.commit_prefix == "[cms]"
 
     def test_enabled_auto_commit(self):
         """Test auto_commit enabled via environment variable."""
         with patch.dict(
             "os.environ",
-            {"INFOGRAPHICS_GIT_AUTO_COMMIT": "true"},
+            {"CMS_GIT_AUTO_COMMIT": "true"},
             clear=False,
         ):
             manager = GitManager()
@@ -43,7 +43,7 @@ class TestGitManagerInit:
         """Test auto_push enabled via environment variable."""
         with patch.dict(
             "os.environ",
-            {"INFOGRAPHICS_GIT_AUTO_PUSH": "true"},
+            {"CMS_GIT_AUTO_PUSH": "true"},
             clear=False,
         ):
             manager = GitManager()
@@ -53,7 +53,7 @@ class TestGitManagerInit:
         """Test custom commit prefix via environment variable."""
         with patch.dict(
             "os.environ",
-            {"INFOGRAPHICS_GIT_COMMIT_PREFIX": "[custom]"},
+            {"CMS_GIT_COMMIT_PREFIX": "[custom]"},
             clear=False,
         ):
             manager = GitManager()

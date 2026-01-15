@@ -4,11 +4,11 @@ Usage:
     python -m src.backend.cms.admin_app
 
 Environment variables:
-    INFOGRAPHICS_ADMIN_USER: Admin username (default: admin)
-    INFOGRAPHICS_ADMIN_PASS: Admin password (default: changeme)
-    INFOGRAPHICS_ADMIN_HOST: Server host (default: 0.0.0.0)
-    INFOGRAPHICS_ADMIN_PORT: Server port (default: 7861)
-    INFOGRAPHICS_ADMIN_SHARE: Enable Gradio share (default: false)
+    CMS_ADMIN_USER: Admin username (default: admin)
+    CMS_ADMIN_PASS: Admin password (default: changeme)
+    CMS_ADMIN_HOST: Server host (default: 0.0.0.0)
+    CMS_ADMIN_PORT: Server port (default: 7861)
+    CMS_ADMIN_SHARE: Enable Gradio share (default: false)
 """
 
 import logging
@@ -57,13 +57,13 @@ IMAGES_DIR = BASE_DIR / "src" / "frontend" / "static" / "images" / "infographics
 DATA_FILE = BASE_DIR / "src" / "frontend" / "data" / "infographics.json"
 
 # Admin credentials from environment
-ADMIN_USER = os.getenv("INFOGRAPHICS_ADMIN_USER", "admin")
-ADMIN_PASS = os.getenv("INFOGRAPHICS_ADMIN_PASS", "changeme")
+ADMIN_USER = os.getenv("CMS_ADMIN_USER", "admin")
+ADMIN_PASS = os.getenv("CMS_ADMIN_PASS", "changeme")
 
 # Admin server settings from environment
-ADMIN_HOST = os.getenv("INFOGRAPHICS_ADMIN_HOST", "0.0.0.0")
-ADMIN_PORT = int(os.getenv("INFOGRAPHICS_ADMIN_PORT", "7861"))
-ADMIN_SHARE = os.getenv("INFOGRAPHICS_ADMIN_SHARE", "false").lower() == "true"
+ADMIN_HOST = os.getenv("CMS_ADMIN_HOST", "0.0.0.0")
+ADMIN_PORT = int(os.getenv("CMS_ADMIN_PORT", "7861"))
+ADMIN_SHARE = os.getenv("CMS_ADMIN_SHARE", "false").lower() == "true"
 
 # Initialize managers
 data_manager = InfographicsDataManager(DATA_FILE)

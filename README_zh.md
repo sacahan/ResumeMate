@@ -133,11 +133,11 @@ ResumeMate 支援透過 Docker Compose 容器化部署，包括主應用程式�
 
 **管理介面 (.env.admin)：**
 
-- `INFOGRAPHICS_ADMIN_PORT` - 管理連接埠（預設：7870）
-- `INFOGRAPHICS_ADMIN_USER` - 管理員使用者名稱
-- `INFOGRAPHICS_ADMIN_PASS` - 管理員密碼
-- `INFOGRAPHICS_GIT_AUTO_COMMIT` - 啟用自動 Git 提交
-- `INFOGRAPHICS_GIT_AUTO_PUSH` - 啟用自動 Git 推送
+- `CMS_ADMIN_PORT` - 管理連接埠（預設：7870）
+- `CMS_ADMIN_USER` - 管理員使用者名稱
+- `CMS_ADMIN_PASS` - 管理員密碼
+- `CMS_GIT_AUTO_COMMIT` - 啟用自動 Git 提交
+- `CMS_GIT_AUTO_PUSH` - 啟用自動 Git 推送
 
 #### 建置自訂映像
 

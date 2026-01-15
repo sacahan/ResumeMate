@@ -4,7 +4,7 @@
   "images": [
     {
       "id": "img_c1946856092c",
-      "url": "static/images/infographics/img_c1946856092c.png",
+      "url": "static/images/infographics/img_c1946856092c.webp",
       "thumbnail": "static/images/infographics/thumbnails/img_c1946856092c_thumb.webp",
       "title": "Vibe Coding 開發心法",
       "title_zh": "Vibe Coding 開發心法",
@@ -18,7 +18,7 @@
     },
     {
       "id": "img_7b4c2dd75432",
-      "url": "static/images/infographics/img_7b4c2dd75432.png",
+      "url": "static/images/infographics/img_7b4c2dd75432.webp",
       "thumbnail": "static/images/infographics/thumbnails/img_7b4c2dd75432_thumb.webp",
       "title": "建立 AI Agent 系統的 12 要素",
       "title_zh": "建立 AI Agent 系統的 12 要素",
@@ -32,7 +32,7 @@
     },
     {
       "id": "img_c8586e430492",
-      "url": "static/images/infographics/img_c8586e430492.png",
+      "url": "static/images/infographics/img_c8586e430492.webp",
       "thumbnail": "static/images/infographics/thumbnails/img_c8586e430492_thumb.webp",
       "title": "AI 的槓桿效應",
       "title_zh": "AI 的槓桿效應",
@@ -46,7 +46,7 @@
     },
     {
       "id": "img_cc63f272b59a",
-      "url": "static/images/infographics/img_cc63f272b59a.png",
+      "url": "static/images/infographics/img_cc63f272b59a.webp",
       "thumbnail": "static/images/infographics/thumbnails/img_cc63f272b59a_thumb.webp",
       "title": "導入Jenkins協助CI/CD自動化",
       "title_zh": "導入Jenkins協助CI/CD自動化",
@@ -60,7 +60,7 @@
     },
     {
       "id": "img_a58e1ce43a61",
-      "url": "static/images/infographics/img_a58e1ce43a61.png",
+      "url": "static/images/infographics/img_a58e1ce43a61.webp",
       "thumbnail": "static/images/infographics/thumbnails/img_a58e1ce43a61_thumb.webp",
       "title": "Tai-Builder Core 系統架構",
       "title_zh": "Tai-Builder Core 系統架構",
@@ -73,7 +73,7 @@
     },
     {
       "id": "img_41af5589390e",
-      "url": "static/images/infographics/img_41af5589390e.jpg",
+      "url": "static/images/infographics/img_41af5589390e.webp",
       "thumbnail": "static/images/infographics/thumbnails/img_41af5589390e_thumb.webp",
       "title": "Vibe Coding 的不同認知",
       "title_zh": "Vibe Coding 的不同認知",
@@ -87,7 +87,7 @@
     },
     {
       "id": "img_1ab4bc1f229f",
-      "url": "static/images/infographics/img_1ab4bc1f229f.png",
+      "url": "static/images/infographics/img_1ab4bc1f229f.webp",
       "thumbnail": "static/images/infographics/thumbnails/img_1ab4bc1f229f_thumb.webp",
       "title": "具備多技能的單智能體失效時機",
       "title_zh": "具備多技能的單智能體失效時機",
@@ -100,7 +100,7 @@
     },
     {
       "id": "img_34e25d144ddf",
-      "url": "static/images/infographics/img_34e25d144ddf.png",
+      "url": "static/images/infographics/img_34e25d144ddf.webp",
       "thumbnail": "static/images/infographics/thumbnails/img_34e25d144ddf_thumb.webp",
       "title": "老舊系統的 LLMOPs 解方",
       "title_zh": "老舊系統的 LLMOPs 解方",
@@ -114,7 +114,7 @@
     },
     {
       "id": "img_8717b6d693ae",
-      "url": "static/images/infographics/img_8717b6d693ae.png",
+      "url": "static/images/infographics/img_8717b6d693ae.webp",
       "thumbnail": "static/images/infographics/thumbnails/img_8717b6d693ae_thumb.webp",
       "title": "分散式架構 Design Pattern",
       "title_zh": "分散式架構 Design Pattern",

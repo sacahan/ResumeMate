@@ -28,8 +28,8 @@
       "envFile": "${workspaceFolder}/.env",
       "python": "${workspaceFolder}/.venv/bin/python",
       "env": {
-        "INFOGRAPHICS_ADMIN_USER": "admin",
-        "INFOGRAPHICS_ADMIN_PASS": "changeme"
+        "CMS_ADMIN_USER": "admin",
+        "CMS_ADMIN_PASS": "changeme"
       }
     }
   ]

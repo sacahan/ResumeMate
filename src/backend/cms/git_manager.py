@@ -1,6 +1,6 @@
-"""Git operations manager for infographics admin.
+"""Git operations manager for CMS admin.
 
-This module provides Git integration for the infographics admin interface,
+This module provides Git integration for the CMS admin interface,
 enabling automatic commit and push of changes to trigger GitHub Pages deployment.
 
 Usage:
@@ -11,9 +11,9 @@ Usage:
     git_manager.commit_changes(files, action="新增圖片", item_id="img_xxx")
 
 Environment variables:
-    INFOGRAPHICS_GIT_AUTO_COMMIT: Enable auto commit (default: false)
-    INFOGRAPHICS_GIT_AUTO_PUSH: Enable auto push (default: false)
-    INFOGRAPHICS_GIT_COMMIT_PREFIX: Commit message prefix (default: [infographics])
+    CMS_GIT_AUTO_COMMIT: Enable auto commit (default: false)
+    CMS_GIT_AUTO_PUSH: Enable auto push (default: false)
+    CMS_GIT_COMMIT_PREFIX: Commit message prefix (default: [cms])
 """
 
 import logging
@@ -46,15 +46,9 @@ class GitManager:
             repo_path: Path to repository root. Defaults to project root.
         """
         self.repo_path = repo_path or Path(__file__).parent.parent.parent.parent
-        self.auto_commit = (
-            os.getenv("INFOGRAPHICS_GIT_AUTO_COMMIT", "false").lower() == "true"
-        )
-        self.auto_push = (
-            os.getenv("INFOGRAPHICS_GIT_AUTO_PUSH", "false").lower() == "true"
-        )
-        self.commit_prefix = os.getenv(
-            "INFOGRAPHICS_GIT_COMMIT_PREFIX", "[infographics]"
-        )
+        self.auto_commit = os.getenv("CMS_GIT_AUTO_COMMIT", "false").lower() == "true"
+        self.auto_push = os.getenv("CMS_GIT_AUTO_PUSH", "false").lower() == "true"
+        self.commit_prefix = os.getenv("CMS_GIT_COMMIT_PREFIX", "[cms]")
 
     def _run_git_command(self, *args: str, timeout: int = 30) -> tuple[bool, str]:
         """Execute a git command and return success status and output.
