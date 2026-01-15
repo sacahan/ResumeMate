@@ -23,7 +23,7 @@
       "name": "Content Admin",
       "type": "debugpy",
       "request": "launch",
-      "module": "src.backend.infographics.admin_app",
+      "module": "src.backend.cms.admin_app",
       "console": "integratedTerminal",
       "envFile": "${workspaceFolder}/.env",
       "python": "${workspaceFolder}/.venv/bin/python",
