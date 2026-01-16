@@ -27,15 +27,7 @@ NC='\033[0m' # No Color
 
 # 配置
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-if [[ -d "$SCRIPT_DIR/src" ]]; then
-    # 正式環境：腳本、Dockerfile、程式碼都在同一個目錄
-    PROJECT_DIR="$SCRIPT_DIR"
-elif [[ -d "$SCRIPT_DIR/../src" ]]; then
-    # 專案內部：腳本位於 scripts/，程式碼在上層
-    PROJECT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-else
-    PROJECT_DIR="$SCRIPT_DIR"
-fi
+PROJECT_DIR="$SCRIPT_DIR"
 
 ENV_FILE="$PROJECT_DIR/.env.docker"
 if [[ ! -f "$ENV_FILE" && -f "$SCRIPT_DIR/.env.docker" ]]; then
