@@ -767,6 +767,12 @@ def main():
 
     app = create_gradio_interface()
 
+    server_name = os.getenv("GRADIO_SERVER_NAME", "0.0.0.0")
+    try:
+        server_port = int(os.getenv("GRADIO_SERVER_PORT", "7860"))
+    except ValueError:
+        server_port = 7860
+
     # 確定是否使用共享模式
     use_share = os.getenv("GRADIO_SHARE", "").lower() in ("true", "1", "yes")
 
@@ -778,33 +784,39 @@ def main():
         # 使用 Gradio 的共享連結（允許外部訪問）
         logger.info("使用 Gradio 共享模式，生成公開連結...")
         app.launch(
-            server_name="0.0.0.0",
-            server_port=7860,
+            server_name=server_name,
+            server_port=server_port,
             share=True,
             debug=True,
             quiet=False,
         )
     else:
-        # 先嘗試在所有網絡介面上啟動（允許同網絡內訪問）
-        try:
-            logger.info("在所有網絡介面啟動應用 (0.0.0.0:7860)...")
-            app.launch(
-                server_name="0.0.0.0",
-                server_port=7860,
-                share=False,
-                debug=True,
-                quiet=False,
-            )
-        except ValueError as e:
-            # 如果失敗，回退到本地模式並啟用共享
-            logger.warning(f"無法在所有介面上啟動：{e}。自動啟用共享連結...")
-            app.launch(
-                server_name="0.0.0.0",
-                server_port=7860,
-                share=True,
-                debug=True,
-                quiet=False,
-            )
+        # 嘗試在指定埠啟動，如果失敗則讓 Gradio 自動找可用埠
+        max_port_attempts = 10
+        for port_offset in range(max_port_attempts):
+            try_port = server_port + port_offset
+            try:
+                logger.info(f"在所有網絡介面啟動應用 ({server_name}:{try_port})...")
+                app.launch(
+                    server_name=server_name,
+                    server_port=try_port,
+                    share=False,
+                    debug=True,
+                    quiet=False,
+                )
+                break  # 成功啟動，跳出迴圈
+            except OSError:
+                if port_offset < max_port_attempts - 1:
+                    logger.warning(f"埠 {try_port} 被佔用，嘗試下一個埠...")
+                else:
+                    # 所有埠都失敗，啟用共享模式
+                    logger.warning("無法找到可用埠，啟用共享連結...")
+                    app.launch(
+                        server_name=server_name,
+                        share=True,
+                        debug=True,
+                        quiet=False,
+                    )
 
 
 if __name__ == "__main__":

@@ -54,90 +54,66 @@ ResumeMate 是一個 AI 驅動的履歷代理人平台，結合靜態履歷展�
 
 ### 使用 Docker 快速開始
 
-ResumeMate 支援透過 Docker Compose 容器化部署，包括主應用程式和管理介面的分離服務。
+ResumeMate 支援透過 Docker 容器化部署主應用程式。
 
 #### 必要條件
 
-- 已安裝 Docker 和 Docker Compose
+- 已安裝 Docker
 - 2GB+ 可用磁碟空間
 - OpenAI API 金鑰
 
 #### 設定
 
-1. 複製環境設定檔案：
+1. 在根目錄複製環境設定檔案：
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. 編輯 `.env` 檔案並添加您的 OpenAI API 金鑰。
+
+3. 建置並啟動容器：
 
    ```bash
    cd scripts
-   cp .env.main.example .env.main
-   cp .env.admin.example .env.admin
-   ```
 
-2. 編輯環境檔案並添加您的 OpenAI API 金鑰：
-
-   ```bash
-   # 編輯主應用程式的 .env.main
-   nano .env.main
-
-   # 編輯管理介面的 .env.admin（如需要）
-   nano .env.admin
-   ```
-
-3. 建置並啟動服務：
-
-   ```bash
    # 建置 Docker 映像
-   ./docker-run.sh build
+   ./build-backend.sh
 
-   # 啟動所有服務
-   ./docker-run.sh up
+   # 啟動容器
+   ./docker-run.sh run
    ```
 
 #### 可用指令
 
 | 指令 | 說明 |
 | --- | --- |
-| `./docker-run.sh up` | 啟動所有服務 |
-| `./docker-run.sh down` | 停止所有服務 |
-| `./docker-run.sh main` | 僅啟動主應用程式 |
-| `./docker-run.sh admin` | 僅啟動管理介面 |
-| `./docker-run.sh restart [service]` | 重啟服務 |
-| `./docker-run.sh build [service]` | 建置 Docker 映像 |
-| `./docker-run.sh logs [service]` | 檢視日誌 |
-| `./docker-run.sh status` | 檢查服務狀態 |
-| `./docker-run.sh shell [service]` | 進入容器殼層 |
-| `./docker-run.sh sync-deps` | 同步需求版本 |
+| `./build-backend.sh` | 建置 Docker 映像 |
+| `./docker-run.sh run` | 啟動容器 |
+| `./docker-run.sh stop` | 停止容器 |
+| `./docker-run.sh logs` | 查看日誌 |
+| `./docker-run.sh shell` | 進入容器 |
+| `./docker-run.sh status` | 查看容器狀態 |
 | `./docker-run.sh clean` | 清理資源 |
 
 #### 服務端點
 
 - **主應用程式**: [http://localhost:8459](http://localhost:8459)
-- **管理介面**: [http://localhost:7870](http://localhost:7870)
 
 #### Volume 掛載
 
 - `logs/` - 共享日誌檔案
 - `chroma_db/` - 向量資料庫持久化
-- `src/frontend/data/` - 前端資料檔案（管理員掛載）
-- `src/frontend/static/images/infographics/` - 資訊圖表圖片（管理員掛載）
 
 #### 環境變數設定
 
-**主應用程式 (.env.main)：**
+使用根目錄的 `.env` 檔案，關鍵變數：
 
 - `GRADIO_SERVER_PORT` - 主應用程式連接埠（預設：7860）
 - `AGENT_MODEL` - 使用的 LLM 模型（預設：gpt-4o）
 - `EMBEDDING_MODEL` - 嵌入模型（預設：text-embedding-3-small）
 - `CHROMA_DB_PATH` - 向量資料庫路徑
 - `GITHUB_COPILOT_TOKEN` - GitHub Copilot API 令牌
-- `OPENAI_API_KEY` - OpenAI API 金鑰
-
-**管理介面 (.env.admin)：**
-
-- `CMS_ADMIN_PORT` - 管理連接埠（預設：7870）
-- `CMS_ADMIN_USER` - 管理員使用者名稱
-- `CMS_ADMIN_PASS` - 管理員密碼
-- `CMS_GIT_AUTO_COMMIT` - 啟用自動 Git 提交
-- `CMS_GIT_AUTO_PUSH` - 啟用自動 Git 推送
 
 #### 建置自訂映像
 
@@ -148,14 +124,27 @@ cd scripts
 ./build-backend.sh
 
 # 或使用特定選項：
-./build-backend.sh --service main --platform arm64 --action build-push
+./build-backend.sh --platform arm64 --action build-push
 ```
 
 支援的選項：
 
-- `--service`: main、admin 或 all
 - `--platform`: arm64、amd64 或 all
 - `--action`: build、push 或 build-push
+
+### CMS 管理介面 (本地 Python)
+
+CMS 管理介面建議在本地 Python 環境中運行：
+
+```bash
+cd scripts
+./run-cms.sh
+
+# 訪問 CMS
+http://127.0.0.1:7861
+
+# 預設帳號: admin / changeme
+```
 
 ## 專案結構
 

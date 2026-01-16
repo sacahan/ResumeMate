@@ -54,92 +54,97 @@ Please refer to the [Development Setup Guide](DEVELOPMENT.md) to set up your dev
 
 ### Quick Start with Docker
 
-ResumeMate supports containerized deployment using Docker Compose with separate services for the main application and admin interface.
+ResumeMate supports containerized deployment of the main application via Docker.
 
 #### Prerequisites
 
-- Docker and Docker Compose installed
+- Docker installed
 - 2GB+ available disk space
 - OpenAI API key
 
 #### Setup
 
-1. Copy environment configuration files:
+1. Copy environment configuration file in the root directory:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit the `.env` file with your OpenAI API key
+
+3. Build and start the container:
 
    ```bash
    cd scripts
-   cp .env.main.example .env.main
-   cp .env.admin.example .env.admin
-   ```
 
-2. Edit the environment files with your OpenAI API key:
+   # Build Docker image
+   ./build-backend.sh
 
-   ```bash
-   # Edit .env.main for the main application
-   nano .env.main
-
-   # Edit .env.admin for the admin interface (if needed)
-   nano .env.admin
-   ```
-
-3. Build and start services:
-
-   ```bash
-   # Build Docker images
-   ./docker-run.sh build
-
-   # Start both services
-   ./docker-run.sh up
+   # Start container
+   ./docker-run.sh run
    ```
 
 #### Available Commands
 
 | Command | Description |
 | --- | --- |
-| `./docker-run.sh up` | Start all services |
-| `./docker-run.sh down` | Stop all services |
-| `./docker-run.sh main` | Start only main application |
-| `./docker-run.sh admin` | Start only admin interface |
-| `./docker-run.sh restart [service]` | Restart services |
-| `./docker-run.sh build [service]` | Build Docker images |
-| `./docker-run.sh logs [service]` | View logs |
-| `./docker-run.sh status` | Check service status |
-| `./docker-run.sh shell [service]` | Enter container shell |
-| `./docker-run.sh sync-deps` | Sync requirements versions |
+| `./build-backend.sh` | Build Docker image |
+| `./docker-run.sh run` | Start container |
+| `./docker-run.sh stop` | Stop container |
+| `./docker-run.sh logs` | View logs |
+| `./docker-run.sh shell` | Enter container |
+| `./docker-run.sh status` | Check container status |
 | `./docker-run.sh clean` | Clean up resources |
 
 #### Service Endpoints
 
 - **Main Application**: [http://localhost:8459](http://localhost:8459)
-- **Admin Interface**: [http://localhost:7870](http://localhost:7870)
 
 #### Volume Mounts
 
 - `logs/` - Shared log files
 - `chroma_db/` - Vector database persistence
-- `src/frontend/data/` - Frontend data files (admin mount)
-- `src/frontend/static/images/infographics/` - Infographics images (admin mount)
 
 #### Environment Configuration
 
-**Main Application (.env.main):**
+Use the root directory `.env` file with these key variables:
 
 - `GRADIO_SERVER_PORT` - Main app port (default: 7860)
 - `AGENT_MODEL` - LLM model to use (default: gpt-4o)
 - `EMBEDDING_MODEL` - Embedding model (default: text-embedding-3-small)
 - `CHROMA_DB_PATH` - Vector database path
 - `GITHUB_COPILOT_TOKEN` - GitHub Copilot API token
-- `OPENAI_API_KEY` - OpenAI API key
 
-**Admin Interface (.env.admin):**
+#### Build Custom Image
 
-- `CMS_ADMIN_PORT` - Admin port (default: 7870)
-- `CMS_ADMIN_USER` - Admin username
-- `CMS_ADMIN_PASS` - Admin password
-- `CMS_GIT_AUTO_COMMIT` - Enable auto Git commit
-- `CMS_GIT_AUTO_PUSH` - Enable auto Git push
+Build and push custom Docker images:
 
-#### Building Custom Images
+```bash
+cd scripts
+./build-backend.sh
+
+# Or with specific options:
+./build-backend.sh --platform arm64 --action build-push
+```
+
+Supported options:
+
+- `--platform`: arm64, amd64 or all
+- `--action`: build, push or build-push
+
+### CMS Admin Interface (Local Python)
+
+The CMS admin interface is recommended to run in a local Python environment:
+
+```bash
+cd scripts
+./run-cms.sh
+
+# Access CMS at:
+http://127.0.0.1:7861
+
+# Default credentials: admin / changeme
+```
 
 To build and push custom Docker images:
 

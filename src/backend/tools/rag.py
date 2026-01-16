@@ -87,14 +87,28 @@ class RAGConfig:
     @classmethod
     def from_env(cls) -> "RAGConfig":
         """從環境變數創建配置"""
+
+        def _strip_quotes(value: Optional[str]) -> Optional[str]:
+            if value is None:
+                return None
+            return value.strip().strip('"').strip("'")
+
         return cls(
-            embedding_provider=os.getenv("EMBEDDING_PROVIDER", cls.embedding_provider),
-            embedding_model=os.getenv("EMBEDDING_MODEL", cls.embedding_model),
-            local_model_name=os.getenv("LOCAL_MODEL_NAME", cls.local_model_name),
-            device=os.getenv("DEVICE", cls.device),
+            embedding_provider=_strip_quotes(
+                os.getenv("EMBEDDING_PROVIDER", cls.embedding_provider)
+            ),
+            embedding_model=_strip_quotes(
+                os.getenv("EMBEDDING_MODEL", cls.embedding_model)
+            ),
+            local_model_name=_strip_quotes(
+                os.getenv("LOCAL_MODEL_NAME", cls.local_model_name)
+            ),
+            device=_strip_quotes(os.getenv("DEVICE", cls.device)),
             batch_size=int(os.getenv("BATCH_SIZE", cls.batch_size)),
-            db_path=os.getenv("CHROMA_DB_PATH", cls.db_path),
-            collection_name=os.getenv("CHROMA_COLLECTION_NAME", cls.collection_name),
+            db_path=_strip_quotes(os.getenv("CHROMA_DB_PATH", cls.db_path)),
+            collection_name=_strip_quotes(
+                os.getenv("CHROMA_COLLECTION_NAME", cls.collection_name)
+            ),
         )
 
 

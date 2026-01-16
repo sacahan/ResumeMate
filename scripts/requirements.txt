@@ -16,3 +16,7 @@ langchain>=0.1.0
 # Data & Config
 pydantic>=2.10,<2.12
 python-dotenv>=1.0.0
+
+# Crypto (避免 pyjwt[crypto] 解析衝突)
+cryptography>=45.0.0,<46.0.0
+cffi>=1.15.1

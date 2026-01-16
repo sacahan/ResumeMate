@@ -40,10 +40,14 @@ ResumeMate/
 │   ├── integration/            # 整合測試
 │   ├── performance/            # 效能測試
 │   └── ux/                     # UX 測試
-├── scripts/                    # 部署腳本
-│   ├── deploy_backend.sh       # 後端部署 (HuggingFace Spaces)
-│   ├── deploy_frontend.sh      # 前端部署 (GitHub Pages)
-│   └── build_and_deploy.sh     # 完整建置與部署
+├── scripts/                    # 部署與執行腳本
+│   ├── Dockerfile             # Docker 映像定義
+│   ├── requirements.txt        # Docker 依賴套件
+│   ├── .env.docker            # Docker 環境變數範本
+│   ├── docker-run.sh          # Docker 容器管理腳本
+│   ├── build-backend.sh       # Docker 映像建置腳本
+│   ├── run-cms.sh             # CMS 本地啟動腳本
+│   └── deploy_frontend.sh     # 前端部署 (GitHub Pages)
 ├── chroma_db/                  # ChromaDB 向量資料庫
 └── docs/                       # 專案文件
 ```
@@ -158,17 +162,74 @@ docs(readme): 更新安裝說明
 - UI 變更須附上截圖/GIF
 - 確保測試通過且 pre-commit 無錯誤
 
-## 部署流程
+## 本地開發
+
+### CMS 管理介面 (本地 Python 啟動)
 
 ```bash
-# 後端部署至 HuggingFace Spaces
-./scripts/deploy_backend.sh
+# 直接啟動 CMS 管理後台
+./scripts/run-cms.sh
 
-# 前端部署至 GitHub Pages
+# 自訂配置
+./scripts/run-cms.sh --port 8000 --user myuser --password mypass
+
+# 訪問 CMS
+http://127.0.0.1:7861
+```
+
+### 主應用 (本地 Python 啟動)
+
+```bash
+# 啟動 Gradio 主應用
+python app.py
+
+# 或使用 uv
+uv run app.py
+```
+
+## 部署流程
+
+### Docker 部署（生產環境）
+
+#### 1. 建置 Docker 映像
+
+```bash
+# 基本建置 (arm64 + amd64)
+./scripts/build-backend.sh
+
+# 指定架構
+./scripts/build-backend.sh --platform arm64 --action build
+
+# 建置並推送至 Docker Hub
+./scripts/build-backend.sh --action build-push
+```
+
+#### 2. 執行 Docker 容器
+
+```bash
+# 啟動容器
+./scripts/docker-run.sh run
+
+# 查看容器狀態
+./scripts/docker-run.sh status
+
+# 查看容器日誌
+./scripts/docker-run.sh logs -f
+
+# 停止容器
+./scripts/docker-run.sh stop
+```
+
+**Docker 掛載設定**：
+
+- Host: `./chroma_db` → Container: `/app/chroma_db`
+- Host: `./logs` → Container: `/app/logs`
+- 使用根目錄 `.env` 檔案作為環境變數來源
+
+### 前端部署 (GitHub Pages)
+
+```bash
 ./scripts/deploy_frontend.sh
-
-# 完整建置與部署
-./scripts/build_and_deploy.sh
 ```
 
 ## 安全與設定
@@ -205,9 +266,15 @@ docs(readme): 更新安裝說明
 
 ```bash
 uv run    # 執行 Python 程式
-uv init   # 建立虛擬環境
+uv sync   # 同步虛擬環境
 uv add    # 新增依賴套件
 ```
+
+### 環境變數管理
+
+- **本地開發**：使用根目錄 `.env` 檔案（自動由 `python-dotenv` 載入）
+- **Docker 部署**：同樣使用根目錄 `.env` 檔案，通過 `--env-file` 參數傳遞
+- **Docker 環境參考**：可參考 `scripts/.env.docker` 了解容器內路徑設定
 
 ### 文件維護
 
