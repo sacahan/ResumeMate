@@ -3,6 +3,19 @@
   "lastUpdated": "2026-01-17",
   "images": [
     {
+      "id": "img_d755da9997d8",
+      "url": "static/images/infographics/img_d755da9997d8.webp",
+      "thumbnail": "static/images/infographics/thumbnails/img_d755da9997d8_thumb.webp",
+      "title": "對話工程指南",
+      "title_zh": "對話工程指南",
+      "title_en": "Guide to Conversational Engineering",
+      "tags": [
+        "Vibe Coding"
+      ],
+      "created_at": "2026-01-17 22:29:34.266186",
+      "source": ""
+    },
+    {
       "id": "img_f89156a8e570",
       "url": "static/images/infographics/img_f89156a8e570.webp",
       "thumbnail": "static/images/infographics/thumbnails/img_f89156a8e570_thumb.webp",
