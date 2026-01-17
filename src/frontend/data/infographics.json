@@ -3,6 +3,20 @@
   "lastUpdated": "2026-01-17",
   "images": [
     {
+      "id": "img_fbd26bee7b2c",
+      "url": "static/images/infographics/img_fbd26bee7b2c.webp",
+      "thumbnail": "static/images/infographics/thumbnails/img_fbd26bee7b2c_thumb.webp",
+      "title": "上下文工程指南",
+      "title_zh": "上下文工程指南",
+      "title_en": "Context Engineering Guide",
+      "tags": [
+        "AI",
+        "Vibe Coding"
+      ],
+      "created_at": "2026-01-17 22:30:45.926723",
+      "source": ""
+    },
+    {
       "id": "img_d755da9997d8",
       "url": "static/images/infographics/img_d755da9997d8.webp",
       "thumbnail": "static/images/infographics/thumbnails/img_d755da9997d8_thumb.webp",
