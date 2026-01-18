@@ -3,6 +3,20 @@
   "lastUpdated": "2026-01-18",
   "images": [
     {
+      "id": "img_a1fc8908820a",
+      "url": "static/images/infographics/img_a1fc8908820a.webp",
+      "thumbnail": "static/images/infographics/thumbnails/img_a1fc8908820a_thumb.webp",
+      "title": "重複輸入prompt能提升LLM的效能",
+      "title_zh": "重複輸入prompt能提升LLM的效能",
+      "title_en": "Re-entering Prompts Can Enhance the Performance of LLMs",
+      "tags": [
+        "AI",
+        "AI Agent"
+      ],
+      "created_at": "2026-01-18 22:55:55.710282",
+      "source": "https://arxiv.org/html/2512.14982v1?fbclid=IwY2xjawPZuO1leHRuA2FlbQIxMQBicmlkETFlZlhOT2tqZDNuS210U093c3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHmRWKXCV5-jqm_Kw3VpmTJwl3qUCOl4_h5kb9pmjsPvQpy1C9zQZYWdSkTc3_aem_wVBcto2MXLcXZWCyUEw6qQ"
+    },
+    {
       "id": "img_7514a6b5c76c",
       "url": "static/images/infographics/img_7514a6b5c76c.webp",
       "thumbnail": "static/images/infographics/thumbnails/img_7514a6b5c76c_thumb.webp",
