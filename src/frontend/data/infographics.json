@@ -1,7 +1,21 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-01-18",
+  "lastUpdated": "2026-01-20",
   "images": [
+    {
+      "id": "img_d3518fc90cbb",
+      "url": "static/images/infographics/img_d3518fc90cbb.webp",
+      "thumbnail": "static/images/infographics/thumbnails/img_d3518fc90cbb_thumb.webp",
+      "title": "Mac 終端機美化與生產力工具",
+      "title_zh": "Mac 終端機美化與生產力工具",
+      "title_en": "Mac Terminal Beautification and Productivity Tools",
+      "tags": [
+        "MacOS",
+        "Develop Tools"
+      ],
+      "created_at": "2026-01-20 23:09:08.519315",
+      "source": "https://www.youtube.com/watch?v=d4bTkiftBOk"
+    },
     {
       "id": "img_a1fc8908820a",
       "url": "static/images/infographics/img_a1fc8908820a.webp",
