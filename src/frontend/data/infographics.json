@@ -1,7 +1,21 @@
 {
   "version": "1.0.0",
-  "lastUpdated": "2026-01-20",
+  "lastUpdated": "2026-01-28",
   "images": [
+    {
+      "id": "img_9ed3b5b31ff3",
+      "url": "static/images/infographics/img_9ed3b5b31ff3.webp",
+      "thumbnail": "static/images/infographics/thumbnails/img_9ed3b5b31ff3_thumb.webp",
+      "title": "Web Push 流程詳解",
+      "title_zh": "Web Push 流程詳解",
+      "title_en": "Detailed Explanation of the Web Push Process",
+      "tags": [
+        "Workflow",
+        "Develop Tools"
+      ],
+      "created_at": "2026-01-28 14:28:03.324579",
+      "source": ""
+    },
     {
       "id": "img_d3518fc90cbb",
       "url": "static/images/infographics/img_d3518fc90cbb.webp",
