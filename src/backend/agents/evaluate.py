@@ -23,6 +23,10 @@ from backend.models import (
 
 load_dotenv(override=True)
 
+# 禁用 LiteLLM 自動使用本地 GitHub Copilot OAuth token
+# 強制使用 Proxy 的 API key 而不是本地憑證
+os.environ["LITELLM_LOCAL_MODEL_COST_MAP"] = "True"  # 禁用自動模型偵測
+
 logger = logging.getLogger(__name__)
 
 
@@ -242,8 +246,8 @@ class EvaluateAgent:
             Tuple[LitellmModel, ModelSettings]: (模型實例, 設置)
 
         Note:
-            直接使用 GitHub Copilot API。
-            需要配置 COPILOT_GITHUB_TOKEN 環境變數。
+            使用 LiteLLM Proxy,透過 openai/ 前綴繞過本地 GitHub Copilot 認證。
+            Proxy 會處理後端的 GitHub Copilot 認證。
         """
         try:
             from agents.extensions.models.litellm_model import LitellmModel
@@ -251,33 +255,40 @@ class EvaluateAgent:
             logger.error("LiteLLM 未安裝，請運行: pip install litellm>=1.0.0")
             raise
 
-        # 從環境變數讀取配置
-        api_key = os.getenv("GITHUB_COPILOT_TOKEN")
-        if not api_key:
-            logger.error("❌ 未設定 GITHUB_COPILOT_TOKEN 環境變數")
-            raise ValueError("GITHUB_COPILOT_TOKEN is required")
+        # 使用 LiteLLM Proxy 配置
+        api_key = os.getenv("LITELLM_PROXY_API_KEY")
+        api_base = os.getenv("LITELLM_PROXY_API_BASE")
 
-        model = os.getenv("AGENT_MODEL", "gpt-4o-mini")
-        logger.info("📡 使用直接的 GitHub Copilot 認證")
+        # 取得 Proxy 中設定的模型名稱 (例如 github_copilot/gpt-4o)
+        # 注意：這是 Proxy 端的 model alias,不是 LiteLLM client 端的 provider 前綴
+        proxy_model = os.getenv("LITELLM_PROXY_MODEL", "github_copilot/gpt-4o")
+
+        # 使用 openai/ 前綴來繞過 LiteLLM 的內建 GitHub Copilot 認證
+        # 這樣 LiteLLM 會將請求作為標準 OpenAI 格式發送到 Proxy
+        # Proxy 再根據 model name 路由到正確的後端 (GitHub Copilot)
+        model = f"openai/{proxy_model}"
+
+        if not api_key or not api_base:
+            logger.error("❌ 未設定 LITELLM_PROXY 相關環境變數")
+            raise ValueError(
+                "LITELLM_PROXY_API_KEY and LITELLM_PROXY_API_BASE are required"
+            )
+
+        logger.info(f"📡 使用 LiteLLM Proxy: {api_base}")
+        logger.info(f"📡 Proxy Model: {proxy_model} (透過 openai/ 前綴繞過本地認證)")
 
         # 建立 LiteLLM 模型實例
         llm_model = LitellmModel(
-            model=f"github_copilot/{model}",
+            model=model,
             api_key=api_key,
+            base_url=api_base,
         )
 
-        # 建立 ModelSettings，配置 GitHub Copilot 所需的 Headers
-        model_settings = ModelSettings(
-            include_usage=True,
-            extra_headers={
-                "editor-version": "vscode/1.85.1",
-                "editor-plugin-version": "copilot/1.155.0",
-                "Copilot-Integration-Id": "vscode-chat",
-                "user-agent": "GithubCopilot/1.155.0",
-            },
-        )
+        # 建立 ModelSettings
+        # Note: 這些 headers 會透過 Proxy 傳遞給 GitHub Copilot 後端
+        model_settings = ModelSettings(include_usage=True)
 
-        logger.info(f"✅ GitHub Copilot 模型已建立: {model}")
+        logger.info(f"✅ LiteLLM 模型已建立: {model}")
         return llm_model, model_settings
 
     def _initialize_sdk_agent(self):

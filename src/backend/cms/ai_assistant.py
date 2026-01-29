@@ -55,26 +55,24 @@ class InfographicAssistantAgent:
         Returns:
             Tuple of (LitellmModel, ModelSettings)
         """
-        api_key = api_key or os.getenv("GITHUB_COPILOT_TOKEN")
-        if not api_key:
-            raise ValueError("GITHUB_COPILOT_TOKEN environment variable is required")
 
-        model = model or os.getenv("AGENT_MODEL", "gpt-4o-mini")
+        # 使用 LiteLLM Proxy 配置
+        api_key = os.getenv("LITELLM_PROXY_API_KEY")
+        api_base = os.getenv("LITELLM_PROXY_API_BASE")
+        proxy_model = os.getenv("LITELLM_PROXY_MODEL", "github_copilot/gpt-4o")
+
+        # 使用 openai/ 前綴來繞過 LiteLLM 的內建 GitHub Copilot 認證
+        # 這樣 LiteLLM 會將請求作為標準 OpenAI 格式發送到 Proxy
+        # Proxy 再根據 model name 路由到正確的後端 (GitHub Copilot)
+        model = f"openai/{proxy_model}"
 
         llm_model = LitellmModel(
-            model=f"github_copilot/{model}",
+            model=model,
             api_key=api_key,
+            base_url=api_base,
         )
 
-        model_settings = ModelSettings(
-            max_completion_tokens=300,
-            extra_headers={
-                "editor-version": "vscode/1.85.1",
-                "editor-plugin-version": "copilot/1.155.0",
-                "Copilot-Integration-Id": "vscode-chat",
-                "user-agent": "GithubCopilot/1.155.0",
-            },
-        )
+        model_settings = ModelSettings(max_completion_tokens=300, include_usage=True)
 
         return llm_model, model_settings
 

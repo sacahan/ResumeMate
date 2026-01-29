@@ -776,7 +776,7 @@ def main():
     # 確定是否使用共享模式
     use_share = os.getenv("GRADIO_SHARE", "").lower() in ("true", "1", "yes")
 
-    model = os.getenv("AGENT_MODEL", "gpt-5-mini")
+    model = os.getenv("LITELLM_PROXY_MODEL", "github_copilot/gpt-4o")
     logger.info(f"使用的代理模型: {model}")
 
     # 啟動應用程式

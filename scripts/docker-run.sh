@@ -47,7 +47,6 @@ HOST_PORT="${HOST_PORT:-$CONTAINER_PORT}"
 # 掛載目錄
 CHROMA_DB_PATH="${PROJECT_DIR}/chroma_db"
 LOGS_DIR="${PROJECT_DIR}/logs"
-LITELLM_TOKEN_DIR="${PROJECT_DIR}/github_copilot"
 
 # 幫助信息
 show_help() {
@@ -99,7 +98,9 @@ ResumeMate Docker 管理工具
 💡 環境變數:
   使用根目錄 .env 檔案，包含：
   - GITHUB_COPILOT_TOKEN (必要)
-  - AGENT_MODEL
+  - LITELLM_PROXY_API_BASE
+  - LITELLM_PROXY_API_KEY
+  - LITELLM_PROXY_MODEL
   - EMBEDDING_PROVIDER 等
 
 EOF
@@ -156,8 +157,8 @@ main() {
                 -p "${HOST_PORT}:${CONTAINER_PORT}" \
                 -v "$CHROMA_DB_PATH:/app/chroma_db" \
                 -v "$LOGS_DIR:/app/logs" \
-                -v "$LITELLM_TOKEN_DIR:/root/.config/litellm/github_copilot" \
                 --env-file "$ENV_FILE" \
+                -e TZ=Asia/Taipei \
                 "$IMAGE_NAME"
 
             echo -e "${GREEN}✓ 容器已啟動${NC}"

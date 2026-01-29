@@ -167,8 +167,21 @@ docs(readme): 更新安裝說明
 ### CMS 管理介面 (本地 Python 啟動)
 
 ```bash
-# 直接啟動 CMS 管理後台
+# 互動式選單（推薦）
 ./scripts/run-cms.sh
+
+# 前景啟動 CMS 管理後台
+./scripts/run-cms.sh start
+
+# 背景啟動 CMS
+./scripts/run-cms.sh --background
+./scripts/run-cms.sh -b
+
+# 終止背景 CMS 程序
+./scripts/run-cms.sh kill
+
+# 查看 CMS 運行狀態
+./scripts/run-cms.sh status
 
 # 自訂配置
 ./scripts/run-cms.sh --port 8000 --user myuser --password mypass

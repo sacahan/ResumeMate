@@ -47,12 +47,12 @@ def _create_litellm_model_and_settings(self):
 
     # 從環境變數讀取 Token (可選)
     api_key = os.getenv("GITHUB_COPILOT_TOKEN")
-    model = os.getenv("AGENT_MODEL", "gpt-5-mini")
+    model = os.getenv("LITELLM_PROXY_MODEL", "github_copilot/gpt-4o")
 
     # 建立 LiteLLM 模型實例
     # 若 api_key 為 None，LiteLLM 會自動使用 OAuth Device Flow
     llm_model = LitellmModel(
-        model=f"github_copilot/{model}",
+        model=model,
         api_key=api_key,
     )
 
