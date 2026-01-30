@@ -28,6 +28,7 @@ NC='\033[0m' # No Color
 # 配置
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR"
+NETWORK_NAME="sacahan-network"
 
 ENV_FILE="$PROJECT_DIR/.env.docker"
 if [[ ! -f "$ENV_FILE" && -f "$SCRIPT_DIR/.env.docker" ]]; then
@@ -154,6 +155,7 @@ main() {
 
             docker run -d \
                 --name "$CONTAINER_NAME" \
+                --network "$NETWORK_NAME" \
                 -p "${HOST_PORT}:${CONTAINER_PORT}" \
                 -v "$CHROMA_DB_PATH:/app/chroma_db" \
                 -v "$LOGS_DIR:/app/logs" \
