@@ -12,7 +12,8 @@ import os
 from dotenv import load_dotenv
 
 from agents import Agent, AgentOutputSchema, ModelSettings, Runner
-from agents.extensions.models.litellm_model import LitellmModel
+from openai import AsyncOpenAI
+from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
 
 from .models import TitleTagSuggestion
 
@@ -35,7 +36,7 @@ class InfographicAssistantAgent:
         Args:
             existing_tags: List of existing tags to prioritize in suggestions
             model: LLM model name (default: from AGENT_MODEL env var)
-            api_key: GitHub Copilot API key (default: from GITHUB_COPILOT_TOKEN env var)
+            api_key: API key (default: from LITELLM_PROXY_API_KEY env var)
         """
         self.existing_tags = existing_tags or []
         self.llm_model, self.model_settings = self._create_litellm_model_and_settings(
@@ -45,31 +46,31 @@ class InfographicAssistantAgent:
 
     def _create_litellm_model_and_settings(
         self, model: str | None = None, api_key: str | None = None
-    ) -> tuple[LitellmModel, ModelSettings]:
-        """Create LiteLLM model instance and ModelSettings.
+    ) -> tuple[OpenAIChatCompletionsModel, ModelSettings]:
+        """Create OpenAI model instance and ModelSettings.
 
         Args:
-            model: Model name (default: gpt-4o-mini from env or fallback)
-            api_key: GitHub Copilot API key
+            model: Model name (default: from env)
+            api_key: API key (default: from env)
 
         Returns:
-            Tuple of (LitellmModel, ModelSettings)
+            Tuple of (OpenAIChatCompletionsModel, ModelSettings)
         """
-
         # 使用 LiteLLM Proxy 配置
-        api_key = os.getenv("LITELLM_PROXY_API_KEY")
+        api_key = api_key or os.getenv("LITELLM_PROXY_API_KEY")
         api_base = os.getenv("LITELLM_PROXY_API_BASE")
-        proxy_model = os.getenv("LITELLM_PROXY_MODEL", "github_copilot/gpt-4o")
+        proxy_model = model or os.getenv("LITELLM_PROXY_MODEL", "gpt-4o")
 
-        # 使用 openai/ 前綴來繞過 LiteLLM 的內建 GitHub Copilot 認證
-        # 這樣 LiteLLM 會將請求作為標準 OpenAI 格式發送到 Proxy
-        # Proxy 再根據 model name 路由到正確的後端 (GitHub Copilot)
-        model = f"openai/{proxy_model}"
-
-        llm_model = LitellmModel(
-            model=model,
-            api_key=api_key,
+        # 建立 AsyncOpenAI client 指向 LiteLLM Proxy
+        client = AsyncOpenAI(
             base_url=api_base,
+            api_key=api_key,
+        )
+
+        # 使用 OpenAIChatCompletionsModel（相容非 OpenAI 後端）
+        llm_model = OpenAIChatCompletionsModel(
+            model=proxy_model,
+            openai_client=client,
         )
 
         model_settings = ModelSettings(max_completion_tokens=300, include_usage=True)

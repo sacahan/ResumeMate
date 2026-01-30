@@ -33,10 +33,6 @@ from backend.models import (
 
 load_dotenv(override=True)
 
-# 禁用 LiteLLM 自動使用本地 GitHub Copilot OAuth token
-# 強制使用 Proxy 的 API key 而不是本地憑證
-os.environ["LITELLM_LOCAL_MODEL_COST_MAP"] = "True"  # 禁用自動模型偵測
-
 logger = logging.getLogger(__name__)
 
 DEFAULT_INSTRUCTIONS = """# 韓世翔 AI 履歷助理 - 問題分析代理
@@ -295,33 +291,21 @@ class AnalysisAgent:
         self._initialize_sdk_agent()
 
     def _create_litellm_model_and_settings(self):
-        """創建 GitHub Copilot 模型實例和 ModelSettings
+        """創建 OpenAI 模型實例和 ModelSettings
 
         Returns:
-            Tuple[LitellmModel, ModelSettings]: (模型實例, 設置)
+            Tuple[OpenAIChatCompletionsModel, ModelSettings]: (模型實例, 設置)
 
         Note:
-            使用 LiteLLM Proxy,透過 openai/ 前綴繞過本地 GitHub Copilot 認證。
-            Proxy 會處理後端的 GitHub Copilot 認證。
+            使用 OpenAI SDK 直接連接 LiteLLM Proxy，避免 LiteLLM 內部的認證邏輯。
         """
-        try:
-            from agents.extensions.models.litellm_model import LitellmModel
-        except ImportError:
-            logger.error("LiteLLM 未安裝，請運行: pip install litellm>=1.0.0")
-            raise
+        from openai import AsyncOpenAI
+        from agents.models.openai_chatcompletions import OpenAIChatCompletionsModel
 
         # 使用 LiteLLM Proxy 配置
         api_key = os.getenv("LITELLM_PROXY_API_KEY")
         api_base = os.getenv("LITELLM_PROXY_API_BASE")
-
-        # 取得 Proxy 中設定的模型名稱 (例如 github_copilot/gpt-4o)
-        # 注意：這是 Proxy 端的 model alias,不是 LiteLLM client 端的 provider 前綴
-        proxy_model = os.getenv("LITELLM_PROXY_MODEL", "github_copilot/gpt-4o")
-
-        # 使用 openai/ 前綴來繞過 LiteLLM 的內建 GitHub Copilot 認證
-        # 這樣 LiteLLM 會將請求作為標準 OpenAI 格式發送到 Proxy
-        # Proxy 再根據 model name 路由到正確的後端 (GitHub Copilot)
-        model = f"openai/{proxy_model}"
+        proxy_model = os.getenv("LITELLM_PROXY_MODEL", "gpt-4o")
 
         if not api_key or not api_base:
             logger.error("❌ 未設定 LITELLM_PROXY 相關環境變數")
@@ -330,20 +314,23 @@ class AnalysisAgent:
             )
 
         logger.info(f"📡 使用 LiteLLM Proxy: {api_base}")
-        logger.info(f"📡 Proxy Model: {proxy_model} (透過 openai/ 前綴繞過本地認證)")
+        logger.info(f"📡 Proxy Model: {proxy_model}")
 
-        # 建立 LiteLLM 模型實例
-        llm_model = LitellmModel(
-            model=model,
-            api_key=api_key,
+        # 建立 AsyncOpenAI client 指向 LiteLLM Proxy
+        client = AsyncOpenAI(
             base_url=api_base,
+            api_key=api_key,
         )
 
-        # 建立 ModelSettings
-        # Note: 這些 headers 會透過 Proxy 傳遞給 GitHub Copilot 後端
+        # 使用 OpenAIChatCompletionsModel（相容非 OpenAI 後端）
+        llm_model = OpenAIChatCompletionsModel(
+            model=proxy_model,
+            openai_client=client,
+        )
+
         model_settings = ModelSettings(include_usage=True)
 
-        logger.info(f"✅ LiteLLM 模型已建立: {model}")
+        logger.info(f"✅ OpenAI 模型已建立: {proxy_model}")
         return llm_model, model_settings
 
     def _initialize_sdk_agent(self):
@@ -378,7 +365,7 @@ class AnalysisAgent:
                 model_settings=base_settings,
                 output_type=AgentOutputSchema(AnalysisOutput, strict_json_schema=False),
             )
-            logger.info("🚀 韓世翔履歷分析助理 (GitHub Copilot) 初始化成功")
+            logger.info("🚀 韓世翔履歷分析助理初始化成功")
             logger.info("✅ 已啟用智慧工具選擇與品質控制機制")
         except Exception as e:
             logger.error(f"初始化 Analysis Agent 失敗: {e}")
