@@ -38,7 +38,7 @@ jobs:
       - name: Deploy
         run: |
           # 生成正式環境 .env.docker
-          cat <<EOF > .env.docker
+          cat <<EOF > scripts/.env.docker
           OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY || 'sk-mock-key' }}"
           LITELLM_PROXY_API_BASE="${{ secrets.LITELLM_PROXY_API_BASE }}"
           LITELLM_PROXY_API_KEY="${{ secrets.LITELLM_PROXY_API_KEY }}"
