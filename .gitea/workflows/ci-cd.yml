@@ -1,0 +1,85 @@
+name: ResumeMate CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: sacahan/resumemate
+  DOCKER_TAG: latest
+
+jobs:
+  pipeline:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio
+
+      - name: Run Tests
+        run: |
+          # 生成測試用 .env
+          cat <<EOF > .env
+          OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY || 'sk-mock-key' }}"
+          LITELLM_PROXY_API_BASE="${{ secrets.LITELLM_PROXY_API_BASE }}"
+          LITELLM_PROXY_API_KEY="${{ secrets.LITELLM_PROXY_API_KEY }}"
+          LITELLM_PROXY_MODEL="${{ secrets.LITELLM_PROXY_MODEL }}"
+          EMBEDDING_PROVIDER="${{ secrets.EMBEDDING_PROVIDER || 'openai' }}"
+          EMBEDDING_MODEL="${{ secrets.EMBEDDING_MODEL || 'text-embedding-3-small' }}"
+          LOG_CONSOLE_LEVEL="INFO"
+          ENVIRONMENT="test"
+          EOF
+
+          export PYTHONPATH=.
+          pytest
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: scripts/Dockerfile
+          push: false
+          load: true
+          tags: ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
+          platforms: linux/amd64
+
+      - name: Deploy
+        run: |
+          # 生成正式環境 .env.docker
+          cat <<EOF > .env.docker
+          OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY || 'sk-mock-key' }}"
+          LITELLM_PROXY_API_BASE="${{ secrets.LITELLM_PROXY_API_BASE }}"
+          LITELLM_PROXY_API_KEY="${{ secrets.LITELLM_PROXY_API_KEY }}"
+          LITELLM_PROXY_MODEL="${{ secrets.LITELLM_PROXY_MODEL }}"
+          EMBEDDING_PROVIDER="${{ secrets.EMBEDDING_PROVIDER || 'openai' }}"
+          EMBEDDING_MODEL="${{ secrets.EMBEDDING_MODEL || 'text-embedding-3-small' }}"
+          LOG_CONSOLE_LEVEL="INFO"
+          ENVIRONMENT="prod"
+          EOF
+
+          # 確保網絡存在
+          docker network create sacahan-network || true
+
+          # 執行部署 (使用剛建置的本地 Image)
+          chmod +x scripts/docker-run.sh
+          ./scripts/docker-run.sh run
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker system prune -f
