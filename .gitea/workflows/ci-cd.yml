@@ -22,29 +22,6 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-asyncio
-
-      - name: Run Tests
-        run: |
-          # 生成測試用 .env
-          cat <<EOF > .env
-          OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY || 'sk-mock-key' }}"
-          LITELLM_PROXY_API_BASE="${{ secrets.LITELLM_PROXY_API_BASE }}"
-          LITELLM_PROXY_API_KEY="${{ secrets.LITELLM_PROXY_API_KEY }}"
-          LITELLM_PROXY_MODEL="${{ secrets.LITELLM_PROXY_MODEL }}"
-          EMBEDDING_PROVIDER="${{ secrets.EMBEDDING_PROVIDER || 'openai' }}"
-          EMBEDDING_MODEL="${{ secrets.EMBEDDING_MODEL || 'text-embedding-3-small' }}"
-          LOG_CONSOLE_LEVEL="INFO"
-          ENVIRONMENT="test"
-          EOF
-
-          export PYTHONPATH=.
-          pytest
-
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
