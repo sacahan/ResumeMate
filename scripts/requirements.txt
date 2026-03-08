@@ -6,6 +6,7 @@ gradio>=5.44.1,<6.0.0
 
 # Vector Database & RAG
 chromadb>=0.4.0
+sentence-transformers>=3.0.0
 
 # LLM & Agents
 openai>=1.0.0
