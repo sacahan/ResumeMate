@@ -1,0 +1,6 @@
+--index-url https://download.pytorch.org/whl/cpu
+--extra-index-url https://pypi.org/simple
+
+# Keep Docker on CPU-only torch while reusing the shared app dependency list.
+torch>=2.2,<3.0
+-r ../requirements.txt

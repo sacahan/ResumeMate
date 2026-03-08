@@ -8,11 +8,13 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
+# Copy dependency manifests
 COPY requirements.txt requirements.txt
+COPY scripts/requirements-docker.txt scripts/requirements-docker.txt
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r scripts/requirements-docker.txt
 
 # Copy application code
 COPY app.py ./
