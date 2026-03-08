@@ -29,6 +29,8 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR"
 NETWORK_NAME="sacahan-network"
+DEFAULT_REGISTRY="${GITEA_REGISTRY:-sacahan-ubunto:3333}"
+DEFAULT_IMAGE_PATH="${GITEA_REGISTRY_IMAGE:-sacahan/resumemate}"
 
 ENV_FILE="$PROJECT_DIR/.env.docker"
 if [[ ! -f "$ENV_FILE" && -f "$SCRIPT_DIR/.env.docker" ]]; then
@@ -41,7 +43,11 @@ if [[ -z "${GRADIO_SERVER_PORT:-}" && -f "$ENV_FILE" ]]; then
     set +a
 fi
 CONTAINER_NAME="resumemate"
-IMAGE_NAME="sacahan/resumemate"
+if [[ -n "$DEFAULT_REGISTRY" ]]; then
+    IMAGE_NAME="${DEFAULT_REGISTRY}/${DEFAULT_IMAGE_PATH}"
+else
+    IMAGE_NAME="$DEFAULT_IMAGE_PATH"
+fi
 CONTAINER_PORT="${GRADIO_SERVER_PORT:-7860}"
 HOST_PORT="${HOST_PORT:-$CONTAINER_PORT}"
 
@@ -58,7 +64,8 @@ ResumeMate Docker 管理工具
 
 📋 命令:
 
-  build               建置映像
+  build               建置本地開發映像
+  pull                從 registry 下載映像
   run, up             啟動容器
   stop, down          停止容器
   logs                查看容器日誌 (使用 -f 參數跟蹤)
@@ -73,19 +80,23 @@ ResumeMate Docker 管理工具
      cp .env.example .env
      # 編輯 .env 檔案設定必要的環境變數
 
-  2. 建置映像:
-     ./docker-run.sh build
+  2. 從 registry 下載映像（建議）:
+     docker login <gitea-registry>
+     ./docker-run.sh pull
 
   3. 啟動容器:
      ./docker-run.sh run
 
-  4. 查看日誌:
+  4. 本地開發需要時才建置映像:
+     ./docker-run.sh build
+
+  5. 查看日誌:
      ./docker-run.sh logs -f
 
-  5. 進入容器:
+  6. 進入容器:
      ./docker-run.sh shell
 
-  6. 停止容器:
+  7. 停止容器:
      ./docker-run.sh stop
 
 🔗 服務端點:
@@ -103,6 +114,7 @@ ResumeMate Docker 管理工具
   - LITELLM_PROXY_API_KEY
   - LITELLM_PROXY_MODEL
   - EMBEDDING_PROVIDER 等
+  - 可選：GITEA_REGISTRY、GITEA_REGISTRY_IMAGE
 
 EOF
 }
@@ -143,9 +155,20 @@ main() {
             docker build -t "$IMAGE_NAME" -f "$SCRIPT_DIR/Dockerfile" "$PROJECT_DIR"
             echo -e "${GREEN}✓ 建置完成${NC}"
             ;;
+        pull)
+            echo -e "${BLUE}📥 從 registry 下載映像 $IMAGE_NAME...${NC}"
+            docker pull "$IMAGE_NAME"
+            echo -e "${GREEN}✓ 映像下載完成${NC}"
+            ;;
         run|up)
             echo -e "${BLUE}🚀 啟動容器...${NC}"
             ensure_directories
+
+            if ! docker image inspect "$IMAGE_NAME" > /dev/null 2>&1; then
+                echo -e "${YELLOW}本機尚未找到映像：$IMAGE_NAME${NC}"
+                echo -e "${YELLOW}請先執行 ${GREEN}./docker-run.sh pull${YELLOW} 或手動 docker pull${NC}"
+                exit 1
+            fi
 
             # 檢查容器是否已存在
             if docker ps -a --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
