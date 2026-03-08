@@ -39,12 +39,11 @@ jobs:
         run: |
           # 生成正式環境 .env.docker
           cat <<EOF > scripts/.env.docker
-          OPENAI_API_KEY="${{ secrets.OPENAI_API_KEY || 'sk-mock-key' }}"
           LITELLM_PROXY_API_BASE="${{ secrets.LITELLM_PROXY_API_BASE }}"
           LITELLM_PROXY_API_KEY="${{ secrets.LITELLM_PROXY_API_KEY }}"
           LITELLM_PROXY_MODEL="${{ secrets.LITELLM_PROXY_MODEL }}"
-          EMBEDDING_PROVIDER="${{ secrets.EMBEDDING_PROVIDER || 'openai' }}"
-          EMBEDDING_MODEL="${{ secrets.EMBEDDING_MODEL || 'text-embedding-3-small' }}"
+          EMBEDDING_PROVIDER="${{ secrets.EMBEDDING_PROVIDER || 'local' }}"
+          LOCAL_MODEL_NAME="${{ secrets.LOCAL_MODEL_NAME || 'all-MiniLM-L6-v2' }}"
           LOG_CONSOLE_LEVEL="INFO"
           ENVIRONMENT="prod"
           EOF
