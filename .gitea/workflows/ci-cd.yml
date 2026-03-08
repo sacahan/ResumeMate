@@ -23,17 +23,25 @@ jobs:
           python-version: "3.12"
 
       - name: Set up Docker Buildx
+        id: buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build Docker Image
+      - name: Build Docker Image Archive
         uses: docker/build-push-action@v5
         with:
           context: .
           file: scripts/Dockerfile
           push: false
-          load: true
           tags: ${{ env.IMAGE_NAME }}:${{ env.DOCKER_TAG }}
           platforms: linux/amd64
+          outputs: type=docker,dest=/tmp/resumemate-image.tar
+
+      - name: Release Buildx Cache
+        run: |
+          docker buildx prune \
+            --builder "${{ steps.buildx.outputs.name }}" \
+            --all \
+            --force || true
 
       - name: Deploy
         run: |
@@ -48,6 +56,9 @@ jobs:
           ENVIRONMENT="prod"
           EOF
 
+          # 將映像在真正需要部署前才載入本機 Docker
+          docker load --input /tmp/resumemate-image.tar
+
           # 確保網絡存在
           docker network create sacahan-network || true
 
@@ -58,4 +69,5 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
+          rm -f /tmp/resumemate-image.tar
           docker system prune -f
