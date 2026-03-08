@@ -8,6 +8,7 @@ on:
 
 env:
   IMAGE_NAME: ${{ vars.GITEA_REGISTRY_IMAGE || format('{0}/{1}', vars.GITEA_REGISTRY, 'sacahan/resumemate') }}
+  REGISTRY_HOST: ${{ vars.GITEA_REGISTRY }}
   DOCKER_TAG: latest
 
 jobs:
@@ -25,15 +26,13 @@ jobs:
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
+        with:
+          buildkitd-config-inline: |
+            [registry."${{ env.REGISTRY_HOST }}"]
+              http = true
+              insecure = true
 
-      - name: Extract Registry Hostname
-        run: |
-          # 使用 Gitea FQDN（HTTPS）作為 Registry Host
-          echo "REGISTRY_HOST=sacahan-ubunto:3333" >> $GITHUB_ENV
-          # 確保 repository 和 owner 名稱為全小寫，符合 Docker tag 規範
-          echo "REPO_LOWER=$(echo ${{ gitea.repository }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_ENV
-
-      - name: Build Docker Image Archive
+      - name: Login to Gitea Registry
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY_HOST }}
@@ -47,8 +46,8 @@ jobs:
           file: scripts/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY_HOST }}/${{ env.REPO_LOWER }}:latest
-            ${{ env.REGISTRY_HOST }}/${{ env.REPO_LOWER }}:${{ gitea.sha }}
+            ${{ env.REGISTRY_HOST }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY_HOST }}/${{ env.IMAGE_NAME }}:${{ gitea.sha }}
           platforms: linux/amd64
           provenance: false
 
@@ -61,10 +60,10 @@ jobs:
 
       - name: Publish Summary
         run: |
-          echo "Docker image published to ${{ env.REGISTRY_HOST }}/${{ env.REPO_LOWER }}:latest"
+          echo "Docker image published to ${{ env.REGISTRY_HOST }}/${{ env.IMAGE_NAME }}:latest"
           echo "Users can install with:"
           echo "  docker login ${{ env.REGISTRY_HOST }}"
-          echo "  docker pull ${{ env.REGISTRY_HOST }}/${{ env.REPO_LOWER }}:latest"
+          echo "  docker pull ${{ env.REGISTRY_HOST }}/${{ env.IMAGE_NAME }}:latest"
           echo "  ./scripts/docker-run.sh run"
 
       - name: Cleanup
