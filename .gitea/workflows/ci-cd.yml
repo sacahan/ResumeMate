@@ -24,12 +24,15 @@ jobs:
           python-version: "3.12"
 
       - name: Generate BuildKit Config
+        env:
+          REGISTRY_HOST: ${{ vars.GITEA_REGISTRY }}
         run: |
-          cat <<EOF > /tmp/buildkitd.toml
-          [registry."${{ env.REGISTRY_HOST }}"]
-            http = true
-            insecure = true
-          EOF
+          test -n "$REGISTRY_HOST"
+          {
+            printf '[registry."%s"]\n' "$REGISTRY_HOST"
+            printf '  http = true\n'
+            printf '  insecure = true\n'
+          } > /tmp/buildkitd.toml
 
       - name: Set up Docker Buildx
         id: buildx
