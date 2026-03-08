@@ -46,7 +46,7 @@ jobs:
       - name: Deploy
         run: |
           # 生成正式環境 .env.docker
-          cat <<EOF > scripts/.env.docker
+          cat <<EOF > /home/sacahan/codespace/resume-mate/.env.docker
           LITELLM_PROXY_API_BASE="${{ secrets.LITELLM_PROXY_API_BASE }}"
           LITELLM_PROXY_API_KEY="${{ secrets.LITELLM_PROXY_API_KEY }}"
           LITELLM_PROXY_MODEL="${{ secrets.LITELLM_PROXY_MODEL }}"
@@ -63,8 +63,8 @@ jobs:
           docker network create sacahan-network || true
 
           # 執行部署 (使用剛建置的本地 Image)
-          chmod +x scripts/docker-run.sh
-          ./scripts/docker-run.sh run
+          chmod +x /home/sacahan/codespace/resume-mate/docker-run.sh
+          /home/sacahan/codespace/resume-mate/docker-run.sh run
 
       - name: Cleanup
         if: always()
