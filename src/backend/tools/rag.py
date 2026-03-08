@@ -7,22 +7,22 @@
 import os
 import re
 import time
+import json
 import hashlib
 import logging
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Tuple
+from typing import Any, List, Dict, Optional, Tuple
 from dotenv import load_dotenv
 
 import chromadb
 from chromadb.config import Settings
-import openai
-from openai import APIError, RateLimitError
 
 try:
     from sentence_transformers import SentenceTransformer
 
     SENTENCE_TRANSFORMERS_AVAILABLE = True
 except ImportError:
+    SentenceTransformer = Any  # type: ignore[assignment]
     SENTENCE_TRANSFORMERS_AVAILABLE = False
 
 from backend.models import SearchResult
@@ -38,14 +38,11 @@ logger = logging.getLogger(__name__)
 class RAGConfig:
     """RAG 工具配置類 - 性能優化版"""
 
-    # 🎯 向量化提供者配置
-    embedding_provider: str = "openai"  # openai | local (需安裝 torch)
-    embedding_model: str = "text-embedding-3-small"  # OpenAI 模型名稱
+    # 🎯 本地向量化配置
     local_model_name: str = "all-MiniLM-L6-v2"  # 本地模型名稱
     device: str = "cpu"  # cpu | cuda | mps
 
     batch_size: int = 100  # 優化批次大小平衡速度與記憶體
-    max_retries: int = 2  # 增加重試次數提高穩定性
     cache_size: int = 100  # 擴大快取大小
     db_path: str = "./chroma_db"
     collection_name: str = ""  # 自動根據模型選擇
@@ -65,24 +62,15 @@ class RAGConfig:
         if self.collection_name:  # 如果手動指定，則使用指定的名稱
             return self.collection_name
 
-        if self.embedding_provider == "openai":
-            if self.embedding_model == "text-embedding-3-small":
-                return "markdown_documents_openai"
-            else:
-                # 其他 OpenAI 模型也使用 openai collection
-                return "markdown_documents_openai"
-        elif self.embedding_provider == "local":
-            if self.local_model_name == "all-MiniLM-L6-v2":
-                return "markdown_documents_minilm"
-            elif "bge" in self.local_model_name.lower():
-                return "markdown_documents_bge"
-            elif "m3e" in self.local_model_name.lower():
-                return "markdown_documents_m3e"
-            else:
-                # 其他本地模型使用通用名稱
-                return "markdown_documents_local"
+        if self.local_model_name == "all-MiniLM-L6-v2":
+            return "markdown_documents_minilm"
+        elif "bge" in self.local_model_name.lower():
+            return "markdown_documents_bge"
+        elif "m3e" in self.local_model_name.lower():
+            return "markdown_documents_m3e"
         else:
-            return "markdown_documents"  # 預設名稱
+            # 其他本地模型使用通用名稱
+            return "markdown_documents_local"
 
     @classmethod
     def from_env(cls) -> "RAGConfig":
@@ -93,13 +81,13 @@ class RAGConfig:
                 return None
             return value.strip().strip('"').strip("'")
 
+        embedding_provider = _strip_quotes(os.getenv("EMBEDDING_PROVIDER", "local"))
+        if embedding_provider and embedding_provider.lower() != "local":
+            raise ValueError(
+                "Only local embeddings are supported. " "Set EMBEDDING_PROVIDER=local."
+            )
+
         return cls(
-            embedding_provider=_strip_quotes(
-                os.getenv("EMBEDDING_PROVIDER", cls.embedding_provider)
-            ),
-            embedding_model=_strip_quotes(
-                os.getenv("EMBEDDING_MODEL", cls.embedding_model)
-            ),
             local_model_name=_strip_quotes(
                 os.getenv("LOCAL_MODEL_NAME", cls.local_model_name)
             ),
@@ -115,7 +103,7 @@ class RAGConfig:
 class RAGTools:
     """改進的 RAG (檢索增強生成) 系統工具類別
 
-    整合 ChromaDB 向量資料庫和 OpenAI 嵌入模型，提供完整的文件檢索、
+    整合 ChromaDB 向量資料庫和本地嵌入模型，提供完整的文件檢索、
     向量搜尋、文本摘要等功能，包含安全性和性能優化。
     """
 
@@ -126,7 +114,6 @@ class RAGTools:
             config: RAG 配置，若為 None 則使用環境變數配置
 
         Raises:
-            ValueError: 當必要的環境變數未設置時
             RuntimeError: 當資料庫初始化失敗時
         """
         self.config = config or RAGConfig.from_env()
@@ -147,17 +134,9 @@ class RAGTools:
             "last_reset_time": time.time(),
         }
 
-        # 驗證 API 金鑰（僅當使用 OpenAI 時需要）
-        self.api_key = os.getenv("OPENAI_API_KEY")
-        if self.config.embedding_provider == "openai" and not self.api_key:
-            raise ValueError(
-                "OPENAI_API_KEY environment variable is required for OpenAI provider"
-            )
-
         # 初始化組件
         self.dbClient: Optional[chromadb.PersistentClient] = None
-        self.provider: Optional[openai.OpenAI] = None
-        self.local_model: Optional[SentenceTransformer] = None
+        self.local_model: Optional["SentenceTransformer"] = None
         self.collection = None
 
         self._initialize_db()
@@ -219,9 +198,131 @@ class RAGTools:
                 self.collection = self.dbClient.create_collection(collection_name)
                 logger.info(f"創建新的 {collection_name} collection")
 
+            self._auto_migrate_from_openai_collection(collection_name)
+
         except Exception as e:
             logger.error(f"初始化 ChromaDB 失敗: {e}")
             raise RuntimeError(f"Database initialization failed: {e}") from e
+
+    def _get_migration_marker_path(self, target_collection_name: str) -> str:
+        """回傳遷移標記檔案路徑，避免重複重建。"""
+        safe_model_name = re.sub(r"[^a-zA-Z0-9_.-]", "_", self.config.local_model_name)
+        filename = f".migration_{target_collection_name}_{safe_model_name}.json"
+        return os.path.join(self.config.db_path, filename)
+
+    def _write_migration_marker(
+        self, marker_path: str, payload: Dict[str, Any]
+    ) -> None:
+        """寫入遷移完成標記。"""
+        marker_payload = {
+            "target_collection": self.config.get_collection_name(),
+            "local_model_name": self.config.local_model_name,
+            "timestamp": int(time.time()),
+            **payload,
+        }
+        with open(marker_path, "w", encoding="utf-8") as marker_file:
+            json.dump(marker_payload, marker_file, ensure_ascii=True)
+
+    def _auto_migrate_from_openai_collection(self, target_collection_name: str) -> None:
+        """啟動時自動偵測舊 OpenAI collection 並遷移到本地 MiniLM。"""
+        if target_collection_name != "markdown_documents_minilm":
+            return
+
+        marker_path = self._get_migration_marker_path(target_collection_name)
+        if os.path.exists(marker_path):
+            logger.info("已存在本地向量遷移標記，略過自動遷移")
+            return
+
+        target_count = self.collection.count()
+        if target_count > 0:
+            logger.info(
+                f"目標 collection {target_collection_name} 已有 {target_count} 筆資料，略過遷移"
+            )
+            self._write_migration_marker(
+                marker_path,
+                {"status": "skipped", "reason": "target_already_populated"},
+            )
+            return
+
+        try:
+            legacy_collection = self.dbClient.get_collection(
+                "markdown_documents_openai"
+            )
+        except Exception:
+            logger.info("未找到舊 OpenAI collection，無需自動遷移")
+            return
+
+        legacy_count = legacy_collection.count()
+        if legacy_count == 0:
+            logger.info("舊 OpenAI collection 為空，無需自動遷移")
+            self._write_migration_marker(
+                marker_path, {"status": "skipped", "reason": "legacy_collection_empty"}
+            )
+            return
+
+        logger.warning(
+            f"偵測到舊 OpenAI 向量資料 {legacy_count} 筆，開始自動遷移至本地 MiniLM"
+        )
+
+        migrated_count = 0
+        batch_size = max(1, self.config.batch_size)
+        try:
+            for offset in range(0, legacy_count, batch_size):
+                batch = legacy_collection.get(
+                    include=["documents", "metadatas"],
+                    offset=offset,
+                    limit=batch_size,
+                )
+
+                ids = batch.get("ids") or []
+                documents = batch.get("documents") or []
+                metadatas = batch.get("metadatas") or []
+
+                valid_ids: List[str] = []
+                valid_documents: List[str] = []
+                valid_metadatas: List[Dict[str, Any]] = []
+                for index, doc_id in enumerate(ids):
+                    if not doc_id:
+                        continue
+                    if index >= len(documents):
+                        continue
+                    document = documents[index]
+                    if not isinstance(document, str) or not document.strip():
+                        continue
+                    metadata = metadatas[index] if index < len(metadatas) else {}
+                    valid_ids.append(str(doc_id))
+                    valid_documents.append(document)
+                    valid_metadatas.append(
+                        metadata if isinstance(metadata, dict) else {}
+                    )
+
+                if not valid_ids:
+                    continue
+
+                embeddings = self._embed_texts_local(valid_documents)
+                self.collection.upsert(
+                    ids=valid_ids,
+                    documents=valid_documents,
+                    metadatas=valid_metadatas,
+                    embeddings=embeddings,
+                )
+                migrated_count += len(valid_ids)
+
+            self._write_migration_marker(
+                marker_path,
+                {
+                    "status": "migrated",
+                    "legacy_collection": "markdown_documents_openai",
+                    "legacy_count": legacy_count,
+                    "migrated_count": migrated_count,
+                },
+            )
+            logger.info(
+                f"OpenAI → MiniLM 向量遷移完成：{migrated_count}/{legacy_count}"
+            )
+        except Exception as e:
+            logger.error(f"自動遷移 OpenAI collection 失敗: {e}")
+            raise RuntimeError(f"Auto migration failed: {e}") from e
 
     def _check_db_corruption(self) -> bool:
         """檢查數據庫是否可能損壞
@@ -267,29 +368,21 @@ class RAGTools:
 
     def _initialize_embedding_provider(self) -> None:
         """初始化嵌入提供者"""
-        if self.config.embedding_provider == "openai":
-            self.provider = openai.OpenAI(api_key=self.api_key)
-            logger.info("初始化 OpenAI 嵌入提供者")
-        elif self.config.embedding_provider == "local":
-            if not SENTENCE_TRANSFORMERS_AVAILABLE:
-                raise RuntimeError(
-                    "sentence-transformers is required for local embeddings. "
-                    "Install with: pip install sentence-transformers"
-                )
-            try:
-                self.local_model = SentenceTransformer(
-                    self.config.local_model_name, device=self.config.device
-                )
-                logger.info(
-                    f"載入本地模型: {self.config.local_model_name} ({self.config.device})"
-                )
-            except Exception as e:
-                logger.error(f"載入本地模型失敗: {e}")
-                raise RuntimeError(f"Failed to load local model: {e}") from e
-        else:
-            raise ValueError(
-                f"Unsupported embedding provider: {self.config.embedding_provider}"
+        if not SENTENCE_TRANSFORMERS_AVAILABLE:
+            raise RuntimeError(
+                "sentence-transformers is required for local embeddings. "
+                "Install with: pip install sentence-transformers"
             )
+        try:
+            self.local_model = SentenceTransformer(
+                self.config.local_model_name, device=self.config.device
+            )
+            logger.info(
+                f"載入本地模型: {self.config.local_model_name} ({self.config.device})"
+            )
+        except Exception as e:
+            logger.error(f"載入本地模型失敗: {e}")
+            raise RuntimeError(f"Failed to load local model: {e}") from e
 
     def _validate_input(self, query: str, top_k: int) -> None:
         """驗證輸入參數
@@ -352,17 +445,11 @@ class RAGTools:
 
         Returns:
             List[List[float]]: 嵌入向量列表
-
-        Raises:
-            APIError: 當 API 調用失敗時
         """
         if not texts:
             return []
 
-        if self.config.embedding_provider == "local":
-            return self._embed_texts_local(texts)
-        else:
-            return self._embed_texts_openai(texts)
+        return self._embed_texts_local(texts)
 
     def _embed_texts_local(self, texts: List[str]) -> List[List[float]]:
         """使用本地模型生成嵌入向量"""
@@ -384,44 +471,6 @@ class RAGTools:
         except Exception as e:
             logger.error(f"本地嵌入向量生成失敗: {e}")
             raise RuntimeError(f"Local embedding generation failed: {e}") from e
-
-    def _embed_texts_openai(self, texts: List[str]) -> List[List[float]]:
-        """使用 OpenAI API 生成嵌入向量"""
-        all_embeddings = []
-
-        # 分批處理文字
-        for i in range(0, len(texts), self.config.batch_size):
-            batch = texts[i : i + self.config.batch_size]
-
-            # 實現重試機制
-            for attempt in range(self.config.max_retries):
-                try:
-                    response = self.provider.embeddings.create(
-                        model=self.config.embedding_model, input=batch
-                    )
-                    batch_embeddings = [item.embedding for item in response.data]
-                    all_embeddings.extend(batch_embeddings)
-                    break
-
-                except RateLimitError:
-                    if attempt < self.config.max_retries - 1:
-                        wait_time = 2**attempt  # Exponential backoff
-                        logger.warning(f"Rate limit hit, waiting {wait_time}s...")
-                        time.sleep(wait_time)
-                        continue
-                    logger.error(
-                        f"Rate limit exceeded after {self.config.max_retries} attempts"
-                    )
-                    raise
-
-                except APIError as e:
-                    logger.error(f"OpenAI API error on attempt {attempt + 1}: {e}")
-                    if attempt == self.config.max_retries - 1:
-                        raise
-                    time.sleep(1)
-
-        logger.debug(f"OpenAI 成功生成 {len(all_embeddings)} 個嵌入向量")
-        return all_embeddings
 
     def rag_search(self, query: str, top_k: int = 10) -> List[SearchResult]:
         """執行高性能 RAG 檢索 🚀
@@ -775,10 +824,8 @@ class RAGTools:
                 "document_count": count,
                 "status": "active",
                 "cache_size": len(self._query_cache),
-                "embedding_provider": self.config.embedding_provider,
-                "model": self.config.embedding_model
-                if self.config.embedding_provider == "openai"
-                else self.config.local_model_name,
+                "embedding_provider": "local",
+                "model": self.config.local_model_name,
             }
         except Exception as e:
             logger.error(f"取得 collection 資訊失敗: {e}")
