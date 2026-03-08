@@ -102,7 +102,8 @@ uv run app.py
 
 ### Environment Variables (.env)
 
-- `OPENAI_API_KEY` - Required for AI functionality
+- `GITHUB_COPILOT_TOKEN` - Required for GitHub Copilot model access
+- `LITELLM_PROXY_API_KEY` / `LITELLM_PROXY_API_BASE` - Required for LiteLLM proxy routing
 - Additional configuration in `.env.example`
 
 ### Code Style

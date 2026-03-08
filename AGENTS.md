@@ -247,7 +247,7 @@ uv run app.py
 
 ## 安全與設定
 
-- 複製 `.env.example` 至 `.env` 並設定 `OPENAI_API_KEY`
+- 複製 `.env.example` 至 `.env` 並設定必要代理金鑰（如 `GITHUB_COPILOT_TOKEN`）
 - **絕對不要** 將金鑰或敏感資訊提交至版本控制
 - Python 3.10+ 為必要環境
 - 公開 API 變更需於 PR 中說明遷移方式

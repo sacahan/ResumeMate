@@ -215,7 +215,6 @@ pip install litellm>=1.0.0
 ```bash
 # .env
 GITHUB_COPILOT_TOKEN=ghp_xxxxxxxxxxxxxx
-OPENAI_API_KEY=sk-...
 GOOGLE_API_KEY=AIza...
 ```
 

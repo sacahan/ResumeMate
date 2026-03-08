@@ -111,9 +111,15 @@ Use the root directory `.env` file with these key variables:
 
 - `GRADIO_SERVER_PORT` - Main app port (default: 7860)
 - `AGENT_MODEL` - LLM model to use (default: gpt-4o)
-- `EMBEDDING_MODEL` - Embedding model (default: text-embedding-3-small)
+- `EMBEDDING_PROVIDER` - Embedding provider (default: local)
+- `LOCAL_MODEL_NAME` - Local embedding model (default: all-MiniLM-L6-v2)
 - `CHROMA_DB_PATH` - Vector database path
 - `GITHUB_COPILOT_TOKEN` - GitHub Copilot API token
+
+The embedding model runs locally and does not require `OPENAI_API_KEY`.
+On first startup, the model will be downloaded; if legacy
+`markdown_documents_openai` vectors exist, they are auto-migrated to the
+MiniLM collection at startup.
 
 #### Build Custom Image
 

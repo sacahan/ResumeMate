@@ -111,9 +111,14 @@ ResumeMate 支援透過 Docker 容器化部署主應用程式。
 
 - `GRADIO_SERVER_PORT` - 主應用程式連接埠（預設：7860）
 - `AGENT_MODEL` - 使用的 LLM 模型（預設：gpt-4o）
-- `EMBEDDING_MODEL` - 嵌入模型（預設：text-embedding-3-small）
+- `EMBEDDING_PROVIDER` - 嵌入提供者（預設：local）
+- `LOCAL_MODEL_NAME` - 本地嵌入模型（預設：all-MiniLM-L6-v2）
 - `CHROMA_DB_PATH` - 向量資料庫路徑
 - `GITHUB_COPILOT_TOKEN` - GitHub Copilot API 令牌
+
+嵌入模型完全本地運行，不需要 `OPENAI_API_KEY`。首次啟動會下載模型；
+若檢測到舊的 `markdown_documents_openai` 向量資料，系統會在啟動時自動遷移
+到 MiniLM 對應 collection。
 
 #### 建置自訂映像
 
