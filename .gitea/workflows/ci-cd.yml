@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_NAME: ${{ vars.GITEA_REGISTRY_IMAGE || format('{0}/{1}', vars.GITEA_REGISTRY, 'sacahan/resumemate') }}
-  REGISTRY_HOST: ${{ vars.GITEA_REGISTRY }}
+  REGISTRY_HOST: 'sacahan-ubunto:222'
+  IMAGE_NAME: ${{ format('{0}/{1}', env.REGISTRY_HOST, 'sacahan/resumemate') }}
   DOCKER_TAG: latest
 
 jobs:
@@ -23,22 +23,9 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Generate BuildKit Config
-        env:
-          REGISTRY_HOST: ${{ vars.GITEA_REGISTRY }}
-        run: |
-          test -n "$REGISTRY_HOST"
-          {
-            printf '[registry."%s"]\n' "$REGISTRY_HOST"
-            printf '  http = true\n'
-            printf '  insecure = true\n'
-          } > /tmp/buildkitd.toml
-
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          buildkitd-config: /tmp/buildkitd.toml
 
       - name: Login to Gitea Registry
         uses: docker/login-action@v3
@@ -54,8 +41,8 @@ jobs:
           file: scripts/Dockerfile
           push: true
           tags: |
-            ${{ env.REGISTRY_HOST }}/${{ env.IMAGE_NAME }}:latest
-            ${{ env.REGISTRY_HOST }}/${{ env.IMAGE_NAME }}:${{ gitea.sha }}
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ gitea.sha }}
           platforms: linux/amd64
           provenance: false
 
@@ -68,10 +55,10 @@ jobs:
 
       - name: Publish Summary
         run: |
-          echo "Docker image published to ${{ env.REGISTRY_HOST }}/${{ env.IMAGE_NAME }}:latest"
+          echo "Docker image published to ${{ env.IMAGE_NAME }}:latest"
           echo "Users can install with:"
           echo "  docker login ${{ env.REGISTRY_HOST }}"
-          echo "  docker pull ${{ env.REGISTRY_HOST }}/${{ env.IMAGE_NAME }}:latest"
+          echo "  docker pull ${{ ${{ env.IMAGE_NAME }}:latest"
           echo "  ./scripts/docker-run.sh run"
 
       - name: Cleanup
