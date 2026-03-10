@@ -138,6 +138,26 @@ Supported options:
 - `--platform`: arm64, amd64 or all
 - `--action`: build, push or build-push
 
+### Gitea Actions internal registry
+
+The Gitea Actions workflow at `.gitea/workflows/ci-cd.yml` is configured to
+push images through the internal registry address `gitea-server:3000`.
+
+This setup assumes the workflow uses a BuildKit builder that can join the same
+Docker network as `gitea-server` (`sacahan-network` in the current deployment
+plan). The runner may still mount `/var/run/docker.sock`, but the builder used
+for `docker buildx build --push` must run on the shared network rather than the
+default host network.
+
+The workflow configures `docker/setup-buildx-action` with
+`network=sacahan-network` and probes `gitea-server:3000/v2/` from both the
+runner container and a container attached to the builder network before logging
+in and pushing the image.
+
+CI pushes through the internal address, while external consumers should pull
+from the host-published registry address, for example
+`sacahan-ubunto:3333/sacahan/resumemate:latest`.
+
 ### CMS Admin Interface (Local Python)
 
 The CMS admin interface is recommended to run in a local Python environment:
