@@ -151,8 +151,14 @@ default host network.
 
 The workflow configures `docker/setup-buildx-action` with
 `network=sacahan-network` and probes `gitea-server:3000/v2/` from both the
-runner container and a container attached to the builder network before logging
-in and pushing the image.
+runner container and a container attached to the builder network before pushing
+the image.
+
+Because `docker/login-action` runs from the job environment and may not share
+the same DNS view as the BuildKit builder, the workflow writes Docker auth
+credentials into `DOCKER_CONFIG` directly instead of performing an online login
+request from the runner namespace. The actual registry connection is then made
+by the BuildKit builder running on `sacahan-network`.
 
 CI pushes through the internal address, while external consumers should pull
 from the host-published registry address, for example

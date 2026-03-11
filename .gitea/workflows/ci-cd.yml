@@ -13,6 +13,7 @@ env:
   IMAGE_REPOSITORY: 'sacahan/resumemate'
   INTERNAL_IMAGE_NAME: ${{ format('{0}/{1}', env.INTERNAL_REGISTRY_HOST, env.IMAGE_REPOSITORY) }}
   PUBLIC_IMAGE_NAME: ${{ format('{0}/{1}', env.PUBLIC_REGISTRY_HOST, env.IMAGE_REPOSITORY) }}
+  DOCKER_CONFIG: ${{ runner.temp }}/.docker
 
 jobs:
   pipeline:
@@ -77,12 +78,35 @@ jobs:
             "http://${{ env.INTERNAL_REGISTRY_HOST }}/v2/" \
             | python -c 'import sys; code = sys.stdin.read().strip(); raise SystemExit(0 if code in {"200", "401"} else 1)'
 
-      - name: Login to Gitea Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.INTERNAL_REGISTRY_HOST }}
-          username: ${{ gitea.actor }}
-          password: ${{ secrets.DOCKER_LOGIN_TOKEN }}
+      - name: Prepare Docker auth for Gitea Registry
+        env:
+          GITEA_ACTOR: ${{ gitea.actor }}
+          DOCKER_LOGIN_TOKEN: ${{ secrets.DOCKER_LOGIN_TOKEN }}
+        run: |
+          python - <<'PY'
+          import base64
+          import json
+          import os
+          from pathlib import Path
+
+          registry = os.environ["INTERNAL_REGISTRY_HOST"]
+          username = os.environ["GITEA_ACTOR"]
+          password = os.environ["DOCKER_LOGIN_TOKEN"]
+          docker_config_dir = Path(os.environ["DOCKER_CONFIG"])
+          docker_config_dir.mkdir(parents=True, exist_ok=True)
+
+          auth = base64.b64encode(f"{username}:{password}".encode("utf-8")).decode("ascii")
+          config = {
+              "auths": {
+                  registry: {
+                      "auth": auth,
+                  }
+              }
+          }
+          config_path = docker_config_dir / "config.json"
+          config_path.write_text(json.dumps(config), encoding="utf-8")
+          print(f"Wrote Docker auth config to {config_path}")
+          PY
 
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
@@ -115,4 +139,5 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
+          rm -rf "${{ env.DOCKER_CONFIG }}"
           docker system prune -f
