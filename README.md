@@ -138,31 +138,22 @@ Supported options:
 - `--platform`: arm64, amd64 or all
 - `--action`: build, push or build-push
 
-### Gitea Actions internal registry
+### Gitea Actions Docker registry
 
 The Gitea Actions workflow at `.gitea/workflows/ci-cd.yml` is configured to
-push images through the internal registry address `gitea-server:3000`.
+push images through the published registry address `sacahan-ubunto:3333`.
 
-This setup assumes the workflow uses a BuildKit builder that can join the same
-Docker network as `gitea-server` (`sacahan-network` in the current deployment
-plan). The runner may still mount `/var/run/docker.sock`, but the builder used
-for `docker buildx build --push` must run on the shared network rather than the
-default host network.
+This avoids the split between an internal registry endpoint and a different
+token endpoint advertised by Gitea. The workflow now uses the same public host
+for login, build, push, and pull instructions.
 
 The workflow configures `docker/setup-buildx-action` with
-`network=sacahan-network` and probes `gitea-server:3000/v2/` from both the
-runner container and a container attached to the builder network before pushing
-the image.
+`network=host` and probes `sacahan-ubunto:3333/v2/` from both the runner and a
+host-networked helper container before pushing the image.
 
-Because `docker/login-action` runs from the job environment and may not share
-the same DNS view as the BuildKit builder, the workflow writes Docker auth
-credentials into `DOCKER_CONFIG` directly instead of performing an online login
-request from the runner namespace. The actual registry connection is then made
-by the BuildKit builder running on `sacahan-network`.
-
-CI pushes through the internal address, while external consumers should pull
-from the host-published registry address, for example
-`sacahan-ubunto:3333/sacahan/resumemate:latest`.
+If `sacahan-ubunto` resolves to a loopback-only address such as `127.0.1.1` in
+your runner environment, update host or container name resolution so it points
+to a host-reachable address for Docker clients.
 
 ### CMS Admin Interface (Local Python)
 
