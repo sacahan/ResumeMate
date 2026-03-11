@@ -67,8 +67,10 @@ jobs:
 
       - name: Patch BuildKit container hosts
         run: |
-          docker exec "buildx_buildkit_${{ steps.buildx.outputs.name }}" \
-            sh -c "echo '192.168.10.1 sacahan-ubunto' >> /etc/hosts"
+          BUILDER_CONTAINER=$(docker ps --filter "name=buildx_buildkit_${{ steps.buildx.outputs.name }}" --format "{{.Names}}" | head -1)
+          echo "BuildKit container: $BUILDER_CONTAINER"
+          docker exec "$BUILDER_CONTAINER" sh -c "echo '192.168.10.1 sacahan-ubunto' >> /etc/hosts"
+          docker exec "$BUILDER_CONTAINER" cat /etc/hosts
 
       - name: Verify registry reachability from builder daemon
         run: |
