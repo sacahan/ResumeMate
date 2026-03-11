@@ -80,19 +80,22 @@ jobs:
           GITEA_ACTOR: ${{ gitea.actor }}
           DOCKER_LOGIN_TOKEN: ${{ secrets.DOCKER_LOGIN_TOKEN }}
         run: |
-          python - <<'PY'
+          # docker/login-action would attempt HTTPS even for HTTP-only registries.
+          # Writing credentials directly bypasses the online login handshake.
+          # Buildx and Docker both respect the DOCKER_CONFIG env var set above.
+          python3 - <<'PY'
           import base64, json, os
           from pathlib import Path
           registry = os.environ["REGISTRY_HOST"]
           auth = base64.b64encode(
               f'{os.environ["GITEA_ACTOR"]}:{os.environ["DOCKER_LOGIN_TOKEN"]}'.encode()
           ).decode()
-          config_path = Path.home() / ".docker" / "config.json"
-          config_path.parent.mkdir(parents=True, exist_ok=True)
-          existing = json.loads(config_path.read_text()) if config_path.exists() else {}
-          existing.setdefault("auths", {})[registry] = {"auth": auth}
-          config_path.write_text(json.dumps(existing))
-          print(f"Wrote auth for {registry}")
+          cfg_dir = Path(os.environ["DOCKER_CONFIG"])
+          cfg_dir.mkdir(parents=True, exist_ok=True)
+          (cfg_dir / "config.json").write_text(
+              json.dumps({"auths": {registry: {"auth": auth}}}), encoding="utf-8"
+          )
+          print(f"Wrote auth for {registry} -> {cfg_dir / 'config.json'}")
           PY
 
       - name: Build and Push Docker Image
