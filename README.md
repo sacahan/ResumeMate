@@ -141,19 +141,19 @@ Supported options:
 ### Gitea Actions Docker registry
 
 The Gitea Actions workflow at `.gitea/workflows/ci-cd.yml` is configured to
-push images through the published registry address `sacahan-ubunto:3333`.
+push images through the published registry address `192.168.10.1:3333`.
 
 This avoids the split between an internal registry endpoint and a different
 token endpoint advertised by Gitea. The workflow now uses the same public host
 for login, build, push, and pull instructions.
 
 The workflow configures `docker/setup-buildx-action` with
-`network=host` and probes `sacahan-ubunto:3333/v2/` from both the runner and a
+`network=host` and probes `192.168.10.1:3333/v2/` from both the runner and a
 host-networked helper container before pushing the image.
 
-If `sacahan-ubunto` resolves to a loopback-only address such as `127.0.1.1` in
-your runner environment, update host or container name resolution so it points
-to a host-reachable address for Docker clients.
+This avoids the runner job container resolving `sacahan-ubunto` to `127.0.1.1`,
+which caused the earlier registry connectivity checks to fail before login and
+push.
 
 ### CMS Admin Interface (Local Python)
 
