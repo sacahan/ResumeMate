@@ -10,6 +10,7 @@ env:
   REGISTRY_HOST: '192.168.10.1:3333'
   IMAGE_REPOSITORY: 'sacahan/resumemate'
   IMAGE_NAME: ${{ format('{0}/{1}', env.REGISTRY_HOST, env.IMAGE_REPOSITORY) }}
+  DOCKER_CONFIG: /tmp/.docker-ci
 
 jobs:
   pipeline:
@@ -74,12 +75,25 @@ jobs:
             "http://${{ env.REGISTRY_HOST }}/v2/" \
             | python -c 'import sys; code = sys.stdin.read().strip(); raise SystemExit(0 if code in {"200", "401"} else 1)'
 
-      - name: Login to Gitea Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY_HOST }}
-          username: ${{ gitea.actor }}
-          password: ${{ secrets.DOCKER_LOGIN_TOKEN }}
+      - name: Write Docker registry credentials
+        env:
+          GITEA_ACTOR: ${{ gitea.actor }}
+          DOCKER_LOGIN_TOKEN: ${{ secrets.DOCKER_LOGIN_TOKEN }}
+        run: |
+          python - <<'PY'
+          import base64, json, os
+          from pathlib import Path
+          registry = os.environ["REGISTRY_HOST"]
+          auth = base64.b64encode(
+              f'{os.environ["GITEA_ACTOR"]}:{os.environ["DOCKER_LOGIN_TOKEN"]}'.encode()
+          ).decode()
+          config_path = Path.home() / ".docker" / "config.json"
+          config_path.parent.mkdir(parents=True, exist_ok=True)
+          existing = json.loads(config_path.read_text()) if config_path.exists() else {}
+          existing.setdefault("auths", {})[registry] = {"auth": auth}
+          config_path.write_text(json.dumps(existing))
+          print(f"Wrote auth for {registry}")
+          PY
 
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
@@ -112,4 +126,5 @@ jobs:
       - name: Cleanup
         if: always()
         run: |
+          rm -rf "$DOCKER_CONFIG"
           docker system prune -f
