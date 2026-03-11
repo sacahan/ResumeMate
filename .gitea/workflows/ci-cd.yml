@@ -61,6 +61,14 @@ jobs:
             [registry."${{ env.REGISTRY_HOST }}"]
               http = true
               insecure = true
+            [registry."sacahan-ubunto:3333"]
+              http = true
+              insecure = true
+
+      - name: Patch BuildKit container hosts
+        run: |
+          docker exec "buildx_buildkit_${{ steps.buildx.outputs.name }}" \
+            sh -c "echo '192.168.10.1 sacahan-ubunto' >> /etc/hosts"
 
       - name: Verify registry reachability from builder daemon
         run: |
