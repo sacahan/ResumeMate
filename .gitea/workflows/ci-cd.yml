@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 env:
-  REGISTRY_HOST: '192.168.10.1:3333'
+  REGISTRY_HOST: 'gitea.brianhan.cc'
   IMAGE_REPOSITORY: 'sacahan/resumemate'
   IMAGE_NAME: ${{ format('{0}/{1}', env.REGISTRY_HOST, env.IMAGE_REPOSITORY) }}
   DOCKER_CONFIG: /tmp/.docker-ci
