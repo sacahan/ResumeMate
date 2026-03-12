@@ -10,7 +10,6 @@ env:
   REGISTRY_HOST: 'gitea.brianhan.cc'
   IMAGE_REPOSITORY: 'sacahan/resumemate'
   IMAGE_NAME: ${{ format('{0}/{1}', env.REGISTRY_HOST, env.IMAGE_REPOSITORY) }}
-  DOCKER_CONFIG: /tmp/.docker-ci
 
 jobs:
   pipeline:
@@ -18,32 +17,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Verify registry reachability from runner
-        run: |
-          python - <<'PY'
-          import os
-          import socket
-
-          host, port = os.environ["REGISTRY_HOST"].split(":", 1)
-          port = int(port)
-
-          print(f"Resolving {host}...")
-          print(socket.gethostbyname_ex(host))
-
-          with socket.create_connection((host, port), timeout=10):
-              print(f"TCP connectivity to {host}:{port} verified")
-          PY
-          status_code="$(curl --silent --show-error --output /dev/null \
-            --write-out '%{http_code}' \
-            --retry 5 \
-            --retry-connrefused \
-            --retry-delay 3 \
-            "http://${{ env.REGISTRY_HOST }}/v2/")"
-          if [ "$status_code" != "200" ] && [ "$status_code" != "401" ]; then
-            echo "Unexpected registry probe status: $status_code"
-            exit 1
-          fi
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -53,65 +26,13 @@ jobs:
       - name: Set up Docker Buildx
         id: buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Login to Gitea Registry
+        uses: docker/login-action@v3
         with:
-          driver-opts: |
-            image=moby/buildkit:master
-            network=host
-          config-inline: |
-            [registry."${{ env.REGISTRY_HOST }}"]
-              http = true
-              insecure = true
-            [registry."sacahan-ubunto:3333"]
-              http = true
-              insecure = true
-
-      - name: Patch BuildKit container hosts
-        run: |
-          BUILDER_CONTAINER=$(docker ps --filter "name=buildx_buildkit_${{ steps.buildx.outputs.name }}" --format "{{.Names}}" | head -1)
-          echo "BuildKit container: $BUILDER_CONTAINER"
-          docker exec "$BUILDER_CONTAINER" sh -c '
-            grep -v "sacahan-ubunto" /etc/hosts > /tmp/hosts_new
-            echo "192.168.10.1 sacahan-ubunto" >> /tmp/hosts_new
-            cat /tmp/hosts_new > /etc/hosts
-            echo "--- /etc/hosts after patch ---"
-            cat /etc/hosts
-          '
-
-      - name: Verify registry reachability from builder daemon
-        run: |
-          docker run --rm \
-            --network host \
-            curlimages/curl:8.12.1 \
-            --silent --show-error --output /dev/null \
-            --write-out '%{http_code}' \
-            --retry 5 \
-            --retry-connrefused \
-            --retry-delay 3 \
-            "http://${{ env.REGISTRY_HOST }}/v2/" \
-            | python -c 'import sys; code = sys.stdin.read().strip(); raise SystemExit(0 if code in {"200", "401"} else 1)'
-
-      - name: Write Docker registry credentials
-        env:
-          GITEA_ACTOR: ${{ gitea.actor }}
-          DOCKER_LOGIN_TOKEN: ${{ secrets.DOCKER_LOGIN_TOKEN }}
-        run: |
-          # docker/login-action would attempt HTTPS even for HTTP-only registries.
-          # Writing credentials directly bypasses the online login handshake.
-          # Buildx and Docker both respect the DOCKER_CONFIG env var set above.
-          python3 - <<'PY'
-          import base64, json, os
-          from pathlib import Path
-          registry = os.environ["REGISTRY_HOST"]
-          auth = base64.b64encode(
-              f'{os.environ["GITEA_ACTOR"]}:{os.environ["DOCKER_LOGIN_TOKEN"]}'.encode()
-          ).decode()
-          cfg_dir = Path(os.environ["DOCKER_CONFIG"])
-          cfg_dir.mkdir(parents=True, exist_ok=True)
-          (cfg_dir / "config.json").write_text(
-              json.dumps({"auths": {registry: {"auth": auth}}}), encoding="utf-8"
-          )
-          print(f"Wrote auth for {registry} -> {cfg_dir / 'config.json'}")
-          PY
+          registry: ${{ env.REGISTRY_HOST }}
+          username: ${{ gitea.actor }}
+          password: ${{ secrets.DOCKER_LOGIN_TOKEN }}
 
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
@@ -140,9 +61,3 @@ jobs:
           echo "  docker login ${{ env.REGISTRY_HOST }}"
           echo "  docker pull ${{ env.IMAGE_NAME }}:latest"
           echo "  ./scripts/docker-run.sh run"
-
-      - name: Cleanup
-        if: always()
-        run: |
-          rm -rf "$DOCKER_CONFIG"
-          docker system prune -f
