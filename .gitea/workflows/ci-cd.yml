@@ -34,17 +34,23 @@ jobs:
           username: ${{ gitea.actor }}
           password: ${{ secrets.DOCKER_LOGIN_TOKEN }}
 
-      - name: Build and Push Docker Image
+      - name: Build Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
           file: scripts/Dockerfile
-          push: true
+          push: false
+          load: true
           tags: |
             ${{ env.IMAGE_NAME }}:latest
             ${{ env.IMAGE_NAME }}:${{ gitea.sha }}
           platforms: linux/amd64
           provenance: false
+
+      - name: Push Docker Image
+        run: |
+          docker push ${{ env.IMAGE_NAME }}:latest
+          docker push ${{ env.IMAGE_NAME }}:${{ gitea.sha }}
 
       - name: Release Buildx Cache
         run: |
