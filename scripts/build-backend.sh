@@ -229,21 +229,16 @@ else
     echo "⏭️  跳過建置步驟 (僅推送模式)"
 fi
 
-# Step 2: 推送 (如果動作是 push 或 build-push)
-if [ "$ACTION" != "build" ]; then
+# Step 2: 推送 (僅在 push 動作時，推送既有映像)
+if [ "$ACTION" = "push" ]; then
     echo ""
     echo "📤 推送 Docker 映像至 Registry..."
     echo "════════════════════════════════════════"
 
-    docker buildx build \
-        --platform "$PLATFORMS" \
-        --push \
-        -t "$FULL_IMAGE_NAME:$DOCKER_TAG" \
-        -f "$SCRIPT_DIR/Dockerfile" \
-        "$PROJECT_ROOT"
+    docker push "$FULL_IMAGE_NAME:$DOCKER_TAG"
 
     echo "✅ 映像推送成功!"
-else
+elif [ "$ACTION" = "build" ]; then
     echo ""
     echo "⏭️  跳過推送步驟 (僅建置模式)"
 fi
