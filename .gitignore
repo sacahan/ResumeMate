@@ -213,6 +213,10 @@ __marimo__/
 chroma_db/
 contact/
 deployment/
+.opencode/skills/
+.agent/skills/
+.claude/skills/
+.github/skills/
 
 # Docker
 .env.docker
