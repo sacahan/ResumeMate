@@ -29,8 +29,9 @@ NC='\033[0m' # No Color
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$SCRIPT_DIR"
 NETWORK_NAME="sacahan-network"
-DEFAULT_REGISTRY="${GITEA_REGISTRY:-sacahan-ubunto:3333}"
-DEFAULT_IMAGE_PATH="${GITEA_REGISTRY_IMAGE:-sacahan/resumemate}"
+# DEFAULT_REGISTRY="${GITEA_REGISTRY:-sacahan-ubunto:3333}"
+# DEFAULT_IMAGE_PATH="${GITEA_REGISTRY_IMAGE:-sacahan/resumemate}"
+DEFAULT_IMAGE_PATH="${DEFAULT_IMAGE_PATH:-sacahan/resumemate}"
 
 ENV_FILE="$PROJECT_DIR/.env.docker"
 if [[ ! -f "$ENV_FILE" && -f "$SCRIPT_DIR/.env.docker" ]]; then
@@ -43,11 +44,14 @@ if [[ -z "${GRADIO_SERVER_PORT:-}" && -f "$ENV_FILE" ]]; then
     set +a
 fi
 CONTAINER_NAME="resumemate"
-if [[ -n "$DEFAULT_REGISTRY" ]]; then
-    IMAGE_NAME="${DEFAULT_REGISTRY}/${DEFAULT_IMAGE_PATH}"
-else
-    IMAGE_NAME="$DEFAULT_IMAGE_PATH"
-fi
+
+# if [[ -n "$DEFAULT_REGISTRY" ]]; then
+#     IMAGE_NAME="${DEFAULT_REGISTRY}/${DEFAULT_IMAGE_PATH}"
+# else
+#     IMAGE_NAME="$DEFAULT_IMAGE_PATH"
+# fi
+IMAGE_NAME="${DEFAULT_IMAGE_PATH}:latest"
+
 CONTAINER_PORT="${GRADIO_SERVER_PORT:-7860}"
 HOST_PORT="${HOST_PORT:-$CONTAINER_PORT}"
 
