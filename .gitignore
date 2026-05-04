@@ -146,6 +146,7 @@ env.bak/
 venv.bak/
 .env.admin
 .env.main
+.github/
 
 # Spyder project settings
 .spyderproject

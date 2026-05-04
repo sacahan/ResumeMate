@@ -4,21 +4,24 @@
 
 These are VS Code coding guidelines. Please also review our [Source Code Organisation](https://github.com/microsoft/vscode/wiki/Source-Code-Organization) page.
 
+## Key Principles
+
+- **Code as configuration** - No need for a complex configuration system
+- **Configuration close to usage** - Place configuration where it is used, not buried deep
+- **Explicit over implicit** - See parameter values directly, no need to track down
+- **Simple over complex** - Prefer a few repeated lines over excessive abstraction
+
+## Task List
+
+List the available executable tasks or options using 1, 2, 3, ... for easy user selection.
+
 ## Indentation
 
 Use spaces, not tabs.
 
 ## Shell Tool
 
-- Use zsh syntax for shell commands.
-- Prefer `uv` for Python package management.
-
-## Github Copilot Chat
-
-- Use clear and concise prompts.
-- Provide context and examples for better responses.
-- Refine prompts based on previous interactions.
-- Not always ask for approval, just do it.
+Use zsh syntax for shell commands.
 
 ## Naming Conventions
 
@@ -71,6 +74,7 @@ Use spaces, not tabs.
 - Perform end-to-end tests to ensure the system works as expected.
 - Aim for high test coverage and use tools to measure it.
 - Use testing frameworks like `pytest` or `Jest`.
+- Each test case should add comments explaining its purpose and any complex logic.
 
 ## Version Control
 
