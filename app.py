@@ -6,6 +6,7 @@
 import logging
 import sys
 import os
+from typing import Any
 
 # 修復 Gradio 環境變數問題
 if os.getenv("GRADIO_SERVER_PORT") == "":
@@ -23,21 +24,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "src"))
 # 重要：gradio 必須在環境變數修復後才能導入
 import gradio as gr  # noqa: E402
 
-from agents import trace, set_default_openai_api  # noqa: E402
-
-# 🔧 設置使用 Chat Completions API 而非 Responses API 以避免推理錯誤
-set_default_openai_api("chat_completions")
 from src.backend.models import Question  # noqa: E402
-from src.backend.processor import ResumeMateProcessor  # noqa: E402
+from src.backend.dify import DifyProcessor  # noqa: E402
 from src.backend.tools.contact import (  # noqa: E402
     ContactManager,
     generate_contact_request_message,
     is_contact_info_input,
 )
-
-
-# 追蹤功能已啟用標記
-TRACING_AVAILABLE = True
 
 # 設定日誌
 from src.backend.logging_config import configure_logging  # noqa: E402
@@ -56,9 +49,10 @@ configure_logging(
 logger = logging.getLogger(__name__)
 
 # 初始化處理器
+processor: DifyProcessor | None
 try:
-    processor = ResumeMateProcessor()
-    logger.info("ResumeMate 處理器初始化成功")
+    processor = DifyProcessor()
+    logger.info("DifyProcessor 初始化成功")
 except Exception as e:
     logger.error(f"初始化處理器失敗: {e}")
     processor = None
@@ -69,7 +63,7 @@ contact_manager = ContactManager()
 # 語言配置 - 僅中文
 TEXTS = {
     "title": "🤖 ResumeMate - AI 履歷助手",
-    "description": "這是一個由 RAG 技術驅動的 AI 代理人展示。您可以詢問關於我的技能、經驗、教育、聯絡資訊等問題。",
+    "description": "這是一個由 Dify Chatflow 驅動的 AI 履歷助手。您可以詢問關於我的技能、經驗、教育、聯絡資訊等問題。",
     "chat_label": "對話",
     "chat_placeholder": "目前還沒有對話記錄...",
     "input_label": "您的問題",
@@ -98,9 +92,10 @@ TEXTS = {
 }
 
 
-async def stream_process_question(user_input: str, history: list):
+async def stream_process_question(user_input: str, history: list, conv_id: str = ""):
     """
-    用於 streaming 輸出的處理函數，支援對話式聯絡資訊收集
+    用於 streaming 輸出的處理函數，支援對話式聯絡資訊收集。
+    最終 yield 為 4-tuple (history, action_md, clarify_row, new_conv_id)。
     """
     texts = TEXTS
 
@@ -109,6 +104,7 @@ async def stream_process_question(user_input: str, history: list):
             history + [{"role": "assistant", "content": texts["system_error"]}],
             gr.update(visible=False),
             gr.update(visible=False),
+            conv_id,
         )
         return
 
@@ -117,6 +113,7 @@ async def stream_process_question(user_input: str, history: list):
             history + [{"role": "assistant", "content": texts["empty_input"]}],
             gr.update(visible=False),
             gr.update(visible=False),
+            conv_id,
         )
         return
 
@@ -130,7 +127,7 @@ async def stream_process_question(user_input: str, history: list):
                 break
 
         # 處理聯絡資訊
-        success, message, contact_info = contact_manager.process_contact_input(
+        _, message, _ = contact_manager.process_contact_input(
             user_input, original_question
         )
 
@@ -139,6 +136,7 @@ async def stream_process_question(user_input: str, history: list):
             final_history,
             gr.update(visible=False),
             gr.update(visible=False),
+            conv_id,
         )
         return
 
@@ -151,7 +149,7 @@ async def stream_process_question(user_input: str, history: list):
             thinking_history,
             gr.update(visible=False),
             gr.update(visible=False),
-            gr.update(visible=False),
+            conv_id,
         )
 
         question = Question(
@@ -164,96 +162,89 @@ async def stream_process_question(user_input: str, history: list):
             ),
         )
 
-        with trace(
-            f"ResumeMate: {user_input[:10]}...",
-            metadata={"session_id": str(id(history))},
-        ):
-            response = await processor.process_question(question)
+        response, new_conv_id = await processor.process_question(question, conv_id)
 
-            answer = response.answer or ""
+        answer = response.answer or ""
 
-            # 優化 streaming 效果 - 減少不必要延遲
-            current_text = answer.strip()
-            streaming_history = history + [
-                {"role": "assistant", "content": current_text}
-            ]
-            yield (
-                streaming_history,
-                gr.update(visible=False),
-                gr.update(visible=False),
-                gr.update(visible=False),
-            )
+        # 先顯示回答文字
+        current_text = answer.strip()
+        streaming_history = history + [{"role": "assistant", "content": current_text}]
+        yield (
+            streaming_history,
+            gr.update(visible=False),
+            gr.update(visible=False),
+            conv_id,
+        )
 
-            # 低信心提示
-            if response.confidence < 0.3:
-                final_answer = current_text.strip() + texts["low_confidence_hint"]
-                final_history = history + [
-                    {"role": "assistant", "content": final_answer}
-                ]
-                yield (
-                    final_history,
-                    gr.update(visible=False),
-                    gr.update(visible=False),
-                    gr.update(visible=False),
-                )
-
-            # 根據 SystemResponse.action 決定 UI 呈現
-            action_text = ""
-            show_clarify = False
-
-            action = (response.action or "").strip()
-            meta = response.metadata or {}
-
-            if action == "請提供更多資訊":
-                show_clarify = True
-                missing = meta.get("missing_fields") or []
-                ex = meta.get("clarify_examples") or []
-                bullet_missing = (
-                    "、".join(missing) if missing else "必要細節（公司/年份/職稱等）"
-                )
-                bullet_examples = (
-                    "；".join(ex)
-                    if ex
-                    else "例如：請補充「2023 在 台灣之星 擔任什麼職務與職責？」"
-                )
-                action_text = (
-                    f"🔎 需要補充資訊：請提供 **{bullet_missing}**。{bullet_examples}"
-                )
-
-            elif (
-                action == "請填寫聯絡表單"
-                or str(meta.get("status", "")).lower() == "escalate_to_human"
-                or str(meta.get("status", "")).lower() == "out_of_scope"
-            ):
-                # 直接在對話中顯示聯絡資訊請求
-                contact_request_msg = generate_contact_request_message()
-                final_answer = current_text.strip() + "\n\n" + contact_request_msg
-                final_history = history + [
-                    {"role": "assistant", "content": final_answer}
-                ]
-                yield (
-                    final_history,
-                    gr.update(visible=False),
-                    gr.update(visible=False),
-                )
-                return
-
-            # 最終回應包含所有 UI 狀態
-            final_history = history + [
-                {
-                    "role": "assistant",
-                    "content": (
-                        final_answer
-                        if response.confidence < 0.3
-                        else current_text.strip()
-                    ),
-                }
-            ]
+        # 低信心提示
+        if response.confidence < 0.3:
+            final_answer = current_text.strip() + str(texts["low_confidence_hint"])
+            final_history = history + [{"role": "assistant", "content": final_answer}]
             yield (
                 final_history,
-                gr.update(value=action_text, visible=bool(action_text)),
-                gr.update(visible=show_clarify),
+                gr.update(visible=False),
+                gr.update(visible=False),
+                conv_id,
             )
+
+        # 根據 SystemResponse.action 決定 UI 呈現
+        action_text = ""
+        show_clarify = False
+
+        action = (response.action or "").strip()
+        meta = response.metadata or {}
+
+        if action == "請提供更多資訊":
+            show_clarify = True
+            missing_raw = meta.get("missing_fields") or []
+            clarify_examples_raw = meta.get("clarify_examples") or []
+            missing = [str(item) for item in missing_raw]
+            clarify_examples = [str(item) for item in clarify_examples_raw]
+            bullet_missing = (
+                "、".join(missing) if missing else "必要細節（公司/年份/職稱等）"
+            )
+            bullet_examples = (
+                "；".join(clarify_examples)
+                if clarify_examples
+                else "例如：請補充「2023 在 台灣之星 擔任什麼職務與職責？」"
+            )
+            action_text = (
+                f"🔎 需要補充資訊：請提供 **{bullet_missing}**。{bullet_examples}"
+            )
+
+        elif (
+            action == "請填寫聯絡表單"
+            or str(meta.get("status", "")).lower() == "escalate_to_human"
+            or str(meta.get("status", "")).lower() == "out_of_scope"
+        ):
+            # 直接在對話中顯示聯絡資訊請求
+            contact_request_msg = generate_contact_request_message()
+            final_answer = current_text.strip() + "\n\n" + contact_request_msg
+            final_history = history + [{"role": "assistant", "content": final_answer}]
+            # 最終 yield 含 new_conv_id
+            yield (
+                final_history,
+                gr.update(visible=False),
+                gr.update(visible=False),
+                new_conv_id,
+            )
+            return
+
+        # 最終回應包含所有 UI 狀態與更新後的 conversation_id
+        final_history = history + [
+            {
+                "role": "assistant",
+                "content": (
+                    final_answer if response.confidence < 0.3 else current_text.strip()
+                ),
+            }
+        ]
+        yield (
+            final_history,
+            gr.update(value=action_text, visible=bool(action_text)),
+            gr.update(visible=show_clarify),
+            new_conv_id,
+        )
 
     except Exception as e:
         logging.getLogger(__name__).error(f"處理問題時發生錯誤: {e}")
@@ -263,6 +254,7 @@ async def stream_process_question(user_input: str, history: list):
             error_history,
             gr.update(visible=False),
             gr.update(visible=False),
+            conv_id,
         )
 
 
@@ -271,22 +263,13 @@ def get_system_status() -> str:
     if not processor:
         return "❌ 系統未初始化"
 
-    try:
-        info = processor.get_system_info()
-
-        # 添加追蹤狀態
-        tracing_status = "✅ 已啟用" if TRACING_AVAILABLE else "❌ 未啟用"
-
-        status_text = f"""
+    client = processor._client
+    return f"""
 **系統狀態**: ✅ 正常運行
-**版本**: {info["version"]}
-**資料庫**: {info["database"]["document_count"]} 個文件
-**代理人**: Analysis Agent ✅, Evaluate Agent ✅
-**追蹤功能**: {tracing_status}
-        """
-        return status_text.strip()
-    except Exception as e:
-        return f"❌ 系統狀態檢查失敗: {e}"
+**後端**: Dify Chatflow
+**API Base**: {client.api_base}
+**User**: {client.user}
+    """.strip()
 
 
 def create_gradio_interface():
@@ -562,197 +545,154 @@ def create_gradio_interface():
             status_display = gr.Markdown(get_system_status())
             refresh_btn = gr.Button(TEXTS["refresh_button"])
 
+        # --- conversation_id 狀態（Dify 多輪對話） ---
+        conv_state = gr.State("")
+
         # --- 事件處理（支援 streaming） ---
-        async def handle_user_input_with_streaming(user_text, history):
+        async def handle_user_input_with_streaming(user_text, history, conv_id):
             """處理用戶輸入的包裝函數，支援 streaming"""
-            # 先立即顯示用戶消息並隱藏所有 action UI，同時禁用按鈕
             if user_text.strip():
                 updated_history = history + [{"role": "user", "content": user_text}]
-                # 第一次 yield：清空輸入框、顯示用戶消息、隱藏 action UI、禁用按鈕
                 yield (
-                    "",  # 清空輸入框
-                    updated_history,  # 更新對話歷史
-                    gr.update(visible=False),  # action_md
-                    gr.update(visible=False),  # clarify_row
-                    gr.update(interactive=False, value="處理中..."),  # 禁用發送按鈕
+                    "",
+                    updated_history,
+                    gr.update(visible=False),
+                    gr.update(visible=False),
+                    gr.update(interactive=False, value="處理中..."),
+                    conv_id,
                 )
 
-                # 然後啟動 streaming 處理，傳入完整的對話歷史（包含用戶問題）
+                current_conv_id = conv_id
                 last_result = None
-                async for result in stream_process_question(user_text, updated_history):
+                async for result in stream_process_question(
+                    user_text, updated_history, conv_id
+                ):
                     last_result = result
-                    if len(result) == 3:
-                        # streaming 過程中保持按鈕禁用狀態
-                        yield (
-                            "",  # 保持輸入框清空
-                            result[0],  # 對話歷史
-                            result[1],  # action_md
-                            result[2],  # clarify_row
-                            gr.update(
-                                interactive=False, value="處理中..."
-                            ),  # 按鈕仍禁用
-                        )
-                    else:
-                        yield (
-                            "",
-                            result[0],
-                            gr.update(visible=False),
-                            gr.update(visible=False),
-                            gr.update(interactive=False, value="處理中..."),
-                        )
+                    if len(result) >= 4:
+                        current_conv_id = result[3]
+                    yield (
+                        "",
+                        result[0],
+                        result[1],
+                        result[2],
+                        gr.update(interactive=False, value="處理中..."),
+                        current_conv_id,
+                    )
 
-                # 最後啟用按鈕
-                if last_result and len(last_result) == 3:
+                # 最後恢復按鈕
+                if last_result:
                     yield (
                         "",
                         last_result[0],
                         last_result[1],
                         last_result[2],
-                        gr.update(interactive=True, value="發送"),  # 恢復按鈕
-                    )
-                elif last_result:
-                    yield (
-                        "",
-                        last_result[0],
-                        gr.update(visible=False),
-                        gr.update(visible=False),
-                        gr.update(visible=False),
                         gr.update(interactive=True, value="發送"),
+                        current_conv_id,
                     )
             else:
-                # 空輸入的情況
-                async for result in stream_process_question(user_text, history):
-                    if len(result) == 3:
-                        yield (
-                            "",
-                            result[0],
-                            result[1],
-                            result[2],
-                            gr.update(interactive=True, value="發送"),
-                        )
-                    else:
-                        yield (
-                            "",
-                            result[0],
-                            gr.update(visible=False),
-                            gr.update(visible=False),
-                            gr.update(interactive=True, value="發送"),
-                        )
+                async for result in stream_process_question(
+                    user_text, history, conv_id
+                ):
+                    current_conv_id = result[3] if len(result) >= 4 else conv_id
+                    yield (
+                        "",
+                        result[0],
+                        result[1],
+                        result[2],
+                        gr.update(interactive=True, value="發送"),
+                        current_conv_id,
+                    )
 
         send_btn.click(
             fn=handle_user_input_with_streaming,
-            inputs=[user_input, chatbot],
+            inputs=[user_input, chatbot, conv_state],
             outputs=[
                 user_input,
                 chatbot,
                 action_md,
                 clarify_row,
                 send_btn,
+                conv_state,
             ],
         )
         user_input.submit(
             fn=handle_user_input_with_streaming,
-            inputs=[user_input, chatbot],
+            inputs=[user_input, chatbot, conv_state],
             outputs=[
                 user_input,
                 chatbot,
                 action_md,
                 clarify_row,
                 send_btn,
+                conv_state,
             ],
         )
 
-        async def handle_clarify_with_streaming(clarify_text, history):
+        async def handle_clarify_with_streaming(
+            clarify_text: str, history: list[dict[str, Any]], conv_id: str
+        ):
             """處理補充資訊的包裝函數"""
-            # 先立即顯示用戶補充的消息並隱藏所有 action UI，同時禁用按鈕
             if clarify_text.strip():
                 updated_history = history + [{"role": "user", "content": clarify_text}]
-                # 第一次 yield：清空輸入框、顯示用戶消息、隱藏 action UI、禁用按鈕
                 yield (
-                    "",  # 清空 clarify_input
-                    updated_history,  # 更新對話歷史
-                    gr.update(visible=False),  # action_md
-                    gr.update(visible=False),  # clarify_row
-                    gr.update(
-                        interactive=False, value="處理中..."
-                    ),  # 禁用 clarify 按鈕
+                    "",
+                    updated_history,
+                    gr.update(visible=False),
+                    gr.update(visible=False),
+                    gr.update(interactive=False, value="處理中..."),
+                    conv_id,
                 )
 
-                # 然後啟動 streaming 處理，傳入完整的對話歷史（包含補充資訊）
+                current_conv_id = conv_id
                 last_result = None
                 async for result in stream_process_question(
-                    clarify_text, updated_history
+                    clarify_text, updated_history, conv_id
                 ):
                     last_result = result
-                    if len(result) == 3:
-                        # streaming 過程中保持按鈕禁用狀態
-                        yield (
-                            "",  # 保持輸入框清空
-                            result[0],  # 對話歷史
-                            result[1],  # action_md
-                            result[2],  # clarify_row
-                            gr.update(
-                                interactive=False, value="處理中..."
-                            ),  # 按鈕仍禁用
-                        )
-                    else:
-                        yield (
-                            "",
-                            result[0],
-                            gr.update(visible=False),
-                            gr.update(visible=False),
-                            gr.update(interactive=False, value="處理中..."),
-                        )
+                    if len(result) >= 4:
+                        current_conv_id = result[3]
+                    yield (
+                        "",
+                        result[0],
+                        result[1],
+                        result[2],
+                        gr.update(interactive=False, value="處理中..."),
+                        current_conv_id,
+                    )
 
-                # 最後啟用按鈕
-                if last_result and len(last_result) == 3:
+                if last_result:
                     yield (
                         "",
                         last_result[0],
                         last_result[1],
                         last_result[2],
-                        gr.update(
-                            interactive=True, value="送出補充"
-                        ),  # 恢復 clarify 按鈕
-                    )
-                elif last_result:
-                    yield (
-                        "",
-                        last_result[0],
-                        gr.update(visible=False),
-                        gr.update(visible=False),
-                        gr.update(visible=False),
                         gr.update(interactive=True, value="送出補充"),
+                        current_conv_id,
                     )
             else:
-                # 空輸入的情況
-                async for result in stream_process_question(clarify_text, history):
-                    if len(result) == 3:
-                        yield (
-                            "",
-                            result[0],
-                            result[1],
-                            result[2],
-                            gr.update(interactive=True, value="送出補充"),
-                        )
-                    else:
-                        yield (
-                            "",
-                            result[0],
-                            gr.update(visible=False),
-                            gr.update(visible=False),
-                            gr.update(interactive=True, value="送出補充"),
-                        )
+                async for result in stream_process_question(
+                    clarify_text, history, conv_id
+                ):
+                    current_conv_id = result[3] if len(result) >= 4 else conv_id
+                    yield (
+                        "",
+                        result[0],
+                        result[1],
+                        result[2],
+                        gr.update(interactive=True, value="送出補充"),
+                        current_conv_id,
+                    )
 
         clarify_submit.click(
             fn=handle_clarify_with_streaming,
-            inputs=[clarify_input, chatbot],
+            inputs=[clarify_input, chatbot, conv_state],
             outputs=[
                 clarify_input,
                 chatbot,
                 action_md,
                 clarify_row,
                 clarify_submit,
+                conv_state,
             ],
         )
 

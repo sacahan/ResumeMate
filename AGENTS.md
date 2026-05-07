@@ -4,7 +4,7 @@
 
 ## 專案概述
 
-ResumeMate 是一個 AI 驅動的履歷代理平台，結合靜態履歷展示與 AI 互動問答功能。系統採用 RAG（Retrieval Augmented Generation）技術實現個人化履歷對話，支援中英文雙語介面。
+ResumeMate 是一個 AI 驅動的履歷代理平台，結合靜態履歷展示與 AI 互動問答功能。系統串接 Dify Chatflow API 實現個人化履歷對話，支援中英文雙語介面。
 
 ## 專案結構
 
@@ -13,22 +13,22 @@ ResumeMate/
 ├── app.py                      # Gradio 主應用程式入口
 ├── src/
 │   ├── backend/                # 後端核心邏輯
-│   │   ├── agents/             # AI 代理模組
-│   │   │   ├── analysis.py     # 分析代理 - 問題分析與資訊檢索
-│   │   │   └── evaluate.py     # 評估代理 - 回應評估與品質控制
+│   │   ├── dify/               # Dify API 整合層
+│   │   │   ├── __init__.py     # 匯出 DifyProcessor
+│   │   │   ├── client.py       # async httpx Dify 客戶端
+│   │   │   ├── adapter.py      # Dify 回應 → SystemResponse 映射
+│   │   │   └── processor.py    # DifyProcessor 主處理器
 │   │   ├── tools/              # 工具模組
-│   │   │   ├── rag.py          # RAG 向量資料庫工具
-│   │   │   ├── contact.py      # 聯絡資訊收集工具
-│   │   │   └── answer_quality.py  # 回答品質分析工具
+│   │   │   └── contact.py      # 聯絡資訊收集工具
 │   │   ├── cms/                # 內容管理系統模組
 │   │   │   ├── admin_app.py    # 管理後台 Gradio 介面
-│   │   │   ├── ai_assistant.py # AI 助手（圖表元數據建議）
+│   │   │   ├── ai_assistant.py # AI 助手（圖表元數據建議，使用 openai-agents SDK）
 │   │   │   ├── data_manager.py # 資料管理器
 │   │   │   ├── git_manager.py  # Git 版本控制整合
 │   │   │   ├── project_manager.py  # 專案資料管理
 │   │   │   └── language_manager.py # 多語言內容管理
-│   │   ├── models.py           # Pydantic 資料模型
-│   │   └── processor.py        # 核心處理器 - 協調代理互動
+│   │   ├── models.py           # Pydantic 資料模型（Question、SystemResponse）
+│   │   └── logging_config.py   # 日誌設定
 │   └── frontend/               # 前端靜態資源
 │       ├── index.html          # 靜態履歷頁面
 │       ├── data/               # JSON 資料檔案
@@ -48,7 +48,6 @@ ResumeMate/
 │   ├── build-backend.sh       # Docker 映像建置腳本
 │   ├── run-cms.sh             # CMS 本地啟動腳本
 │   └── deploy_frontend.sh     # 前端部署 (GitHub Pages)
-├── chroma_db/                  # ChromaDB 向量資料庫
 └── docs/                       # 專案文件
 ```
 
@@ -235,7 +234,6 @@ uv run app.py
 
 **Docker 掛載設定**：
 
-- Host: `./chroma_db` → Container: `/app/chroma_db`
 - Host: `./logs` → Container: `/app/logs`
 - 使用根目錄 `.env` 檔案作為環境變數來源
 
@@ -247,7 +245,7 @@ uv run app.py
 
 ## 安全與設定
 
-- 複製 `.env.example` 至 `.env` 並設定必要代理金鑰（如 `GITHUB_COPILOT_TOKEN`）
+- 複製 `.env.example` 至 `.env` 並設定 `DIFY_API_KEY`（必要）
 - **絕對不要** 將金鑰或敏感資訊提交至版本控制
 - Python 3.10+ 為必要環境
 - 公開 API 變更需於 PR 中說明遷移方式
@@ -255,21 +253,19 @@ uv run app.py
 ## 核心技術棧
 
 - **Python 3.10+**：async/await 非同步模式
-- **OpenAI Agents SDK**：AI 代理實作
+- **Dify Chatflow API**：AI 問答（透過 httpx）
+- **OpenAI Agents SDK**：僅供 CMS `InfographicAssistantAgent` 使用
 - **Gradio 5.x**：Web 介面框架
-- **ChromaDB**：向量儲存與檢索
 - **Pydantic 2.x**：資料驗證
-- **LangChain**：AI 工作流程編排
 
-## AI 代理工作流程
+## AI 工作流程
 
 1. **問題處理**：使用者輸入結構化為 `Question` 模型
-2. **分析階段**：`AnalysisAgent` 處理問題並檢索相關履歷內容
-   - 使用 `get_contact_info` 處理聯絡資訊查詢
-   - 使用 `rag_search_tool` 進行一般履歷內容檢索
-3. **評估階段**：`EvaluateAgent` 評估分析結果並決定系統行動
-   - 支援多種決策狀態：ok, needs_edit, needs_clarification, escalate_to_human
-4. **回應格式化**：系統返回 `SystemResponse`，包含答案、信心度與行動建議
+2. **Dify 呼叫**：`DifyProcessor.process_question(question, conversation_id)` 呼叫 Dify Chatflow API
+   - `conversation_id=""` → Dify 建立新對話並回傳 ID
+   - 後續呼叫傳入 `conversation_id` 實現多輪對話連貫性
+3. **回應適配**：`adapter.adapt()` 將 Dify JSON → `(SystemResponse, conversation_id)`
+4. **狀態儲存**：`gr.State` 在 Gradio 中保存 `conversation_id` 供下輪使用
 
 ## 開發工作流程規則
 
@@ -297,5 +293,5 @@ uv add    # 新增依賴套件
 ### 雙語支援
 
 - 系統支援正體中文與英文
-- 所有回應基於 ChromaDB 中的履歷內容
-- 回應包含信心度分數以供品質評估
+- 所有回應來自 Dify Chatflow API
+- 回應包含固定信心度分數（`0.85`）以供品質評估

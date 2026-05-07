@@ -9,8 +9,8 @@ import os
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from backend.models import Question
-from backend.processor import ResumeMateProcessor
+from src.backend.models import Question
+from src.backend.processor import ResumeMateProcessor
 
 
 async def measure_response_time(processor, question_text):

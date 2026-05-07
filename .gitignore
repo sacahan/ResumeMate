@@ -222,3 +222,4 @@ deployment/
 # Docker
 .env.docker
 logs/
+chroma_db/

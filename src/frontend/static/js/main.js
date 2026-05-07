@@ -82,7 +82,6 @@ class ResumeMateFrontend {
   sendQuestionToChat(question) {
     // 這裡可以實作與 Gradio iframe 的通訊
     // 由於 iframe 的跨域限制，這可能需要 postMessage API 或其他方法
-    console.log("發送問題到聊天:", question);
 
     // 滾動到聊天區域
     const chatSection = document.getElementById("chat");
@@ -175,53 +174,6 @@ class ResumeMateFrontend {
         }
       }, 300);
     }, 3000);
-  }
-
-  /**
-   * 檢查 Gradio 聊天服務是否運行中，回傳布林值。
-   * @returns {Promise<boolean>} - 是否可連線
-   */
-  async checkGradioStatus() {
-    try {
-      await fetch("http://localhost:7860/", {
-        method: "HEAD",
-        mode: "no-cors",
-      });
-      return true;
-    } catch (error) {
-      console.warn("Gradio 服務無法連接:", error);
-      return false;
-    }
-  }
-
-  /**
-   * 根據 Gradio 服務狀態，更新聊天 iframe 的顯示內容。
-   * 若服務未啟動則顯示替代提示。
-   */
-  async updateChatStatus() {
-    const iframe = document.querySelector('iframe[src*="7860"]');
-    const isGradioRunning = await this.checkGradioStatus();
-
-    if (!isGradioRunning && iframe) {
-      // 如果 Gradio 未運行，顯示替代內容
-      const container = iframe.parentElement;
-      container.innerHTML = `
-                <div class="flex items-center justify-center h-full bg-gray-800 rounded-lg transition-all duration-500">
-                    <div class="text-center animate-fade-in-up">
-                        <div class="text-4xl mb-4 animate-bounce">🤖</div>
-                        <h3 class="text-xl font-bold mb-2 text-yellow-400">AI 聊天服務暫時離線</h3>
-                        <p class="text-gray-300 mb-4">請稍後再試，或透過其他方式聯繫我</p>
-                        <div class="flex flex-col space-y-2">
-                            <span class="text-sm text-gray-400">服務啟動指令：</span>
-                            <code class="bg-gray-700 px-3 py-1 rounded text-sm hover:bg-gray-600 transition-colors cursor-pointer" onclick="navigator.clipboard.writeText('python app.py').then(() => this.classList.add('bg-green-600'))">python app.py</code>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-      // 重新應用動畫
-      this.setupAnimations();
-    }
   }
 
   /**
@@ -562,11 +514,7 @@ class ResumeMateFrontend {
     // 記錄頁面載入效能
     window.addEventListener("load", () => {
       const perfData = performance.getEntriesByType("navigation")[0];
-      console.log("📊 頁面載入效能:", {
-        loadTime: perfData.loadEventEnd - perfData.fetchStart,
-        domReady: perfData.domContentLoadedEventEnd - perfData.fetchStart,
-        firstPaint: performance.getEntriesByType("paint")[0]?.startTime,
-      });
+      void perfData;
     });
   }
 
@@ -682,8 +630,6 @@ class ResumeMateFrontend {
       // 註冊語言變更觀察者
       window.multilingualManager.addObserver((event, data) => {
         if (event === "languageChanged") {
-          console.log("🌍 語言變更事件:", data);
-
           // 同步更新當前語言狀態
           this.currentLang = data.to;
 
@@ -697,8 +643,6 @@ class ResumeMateFrontend {
 
       // 整合現有的語言切換功能
       this.enhanceLanguageToggle();
-
-      console.log("🌍 多語言管理系統整合完成");
     } else {
       // 如果多語言管理器還未載入，延遲整合
       setTimeout(() => this.integrateMultilingualManager(), 100);

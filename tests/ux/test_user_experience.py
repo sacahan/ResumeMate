@@ -4,12 +4,12 @@
 import asyncio
 import sys
 import os
-from typing import List, Dict, Any
+from typing import Dict, Any, Sequence
 
 sys.path.append(os.path.join(os.path.dirname(__file__), "..", "..", "src"))
 
-from backend.models import Question
-from backend.processor import ResumeMateProcessor
+from src.backend.models import Question
+from src.backend.processor import ResumeMateProcessor
 
 
 class UXTestRunner:
@@ -181,7 +181,7 @@ class UXTestRunner:
         graceful_indicators = ["很抱歉", "無法", "不清楚", "請", "可以", "建議", "幫助"]
         return any(indicator in answer for indicator in graceful_indicators)
 
-    def _calculate_variance(self, values: List[float]) -> float:
+    def _calculate_variance(self, values: Sequence[float]) -> float:
         """計算變異數"""
         if len(values) < 2:
             return 0.0

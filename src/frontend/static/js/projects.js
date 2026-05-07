@@ -83,7 +83,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Fallback to GitHub API if projects.json is empty
-    console.log("projects.json is empty, falling back to GitHub API");
     return fetchGitHubRepos();
   }
 

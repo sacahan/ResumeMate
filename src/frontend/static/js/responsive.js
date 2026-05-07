@@ -54,13 +54,6 @@ class ResponsiveEnhancer {
     } else {
       this.onDOMReady();
     }
-
-    console.log("🎨 ResponsiveEnhancer initialized", {
-      breakpoint: this.currentBreakpoint,
-      touch: this.isTouch,
-      reducedMotion: this.reducedMotion,
-      connection: this.connectionSpeed,
-    });
   }
 
   /**
@@ -117,8 +110,6 @@ class ResponsiveEnhancer {
    * 斷點改變時的處理
    */
   onBreakpointChange(oldBreakpoint, newBreakpoint) {
-    console.log(`📱 Breakpoint changed: ${oldBreakpoint} → ${newBreakpoint}`);
-
     // 更新 CSS 自定義屬性
     document.documentElement.style.setProperty(
       "--current-breakpoint",
@@ -194,8 +185,6 @@ class ResponsiveEnhancer {
       // 記錄載入時間
       const loadTime = performance.now() - startTime;
       this.performanceMetrics.imageLoadTimes.push(loadTime);
-
-      console.log(`🖼️ Image loaded: ${img.src} (${loadTime.toFixed(2)}ms)`);
     });
 
     img.addEventListener("error", () => {
@@ -295,7 +284,6 @@ class ResponsiveEnhancer {
    */
   onSwipeLeft() {
     // 可以用來切換到下一個區段或關閉側邊選單
-    console.log("👈 Swipe left detected");
     window.dispatchEvent(new CustomEvent("swipeLeft"));
   }
 
@@ -304,7 +292,6 @@ class ResponsiveEnhancer {
    */
   onSwipeRight() {
     // 可以用來返回上一個區段或開啟側邊選單
-    console.log("👉 Swipe right detected");
     window.dispatchEvent(new CustomEvent("swipeRight"));
   }
 
@@ -321,9 +308,7 @@ class ResponsiveEnhancer {
       const observer = new PerformanceObserver((list) => {
         list.getEntries().forEach((entry) => {
           if (entry.name === "first-contentful-paint") {
-            console.log(
-              `🎨 First Contentful Paint: ${entry.startTime.toFixed(2)}ms`,
-            );
+            void entry;
           }
         });
       });
@@ -362,8 +347,6 @@ class ResponsiveEnhancer {
       const loadTime = performance.now();
       this.performanceMetrics.loadTime = loadTime;
 
-      console.log(`🚀 Page load time: ${loadTime.toFixed(2)}ms`);
-
       // 如果載入時間過長，啟用性能模式
       if (loadTime > 3000) {
         this.enablePerformanceMode();
@@ -375,8 +358,6 @@ class ResponsiveEnhancer {
    * 啟用性能模式
    */
   enablePerformanceMode() {
-    console.log("🐌 Enabling performance mode");
-
     document.body.classList.add("performance-mode");
 
     // 減少動畫和過場效果
@@ -420,7 +401,6 @@ class ResponsiveEnhancer {
   updateMotionPreferences() {
     if (this.reducedMotion) {
       document.body.classList.add("reduce-motion");
-      console.log("♿ Reduced motion enabled");
     } else {
       document.body.classList.remove("reduce-motion");
     }
@@ -545,8 +525,6 @@ class ResponsiveEnhancer {
    */
   adaptToConnection() {
     if (this.connectionSpeed === "slow") {
-      console.log("🐌 Adapting to slow connection");
-
       // 延遲載入非關鍵資源
       this.delayNonCriticalResources();
 
@@ -570,7 +548,6 @@ class ResponsiveEnhancer {
     const duration = performance.now() - start;
 
     if (duration > 10) {
-      console.log("🐌 Low performance detected, enabling optimizations");
       this.enablePerformanceMode();
     }
   }

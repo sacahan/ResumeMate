@@ -914,13 +914,11 @@
               // 根據環境自動切換 Gradio 來源
               (function () {
                 const gradioApp = document.getElementById('resumemate-gradio-app');
-                // 檢查是否為本地開發環境
                 const isLocal = window.location.hostname === 'localhost' ||
                   window.location.hostname === '127.0.0.1' ||
                   window.location.port === '5500';
 
                 if (!isLocal) {
-                  // 正式環境使用 Hugging Face Space
                   gradioApp.setAttribute('src', 'https://resume.brianhan.cc');
                 }
               })();

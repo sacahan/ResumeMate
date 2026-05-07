@@ -72,11 +72,6 @@ class MultilingualManager {
 
     // 綁定事件監聽器
     this.bindEventListeners();
-
-    console.log("🌍 多語言系統初始化完成", {
-      current: this.currentLanguage,
-      supported: this.supportedLanguages.map((l) => l.code),
-    });
   }
 
   /**
@@ -126,7 +121,6 @@ class MultilingualManager {
 
     try {
       await Promise.all(loadPromises);
-      console.log("📥 所有語言資料載入完成");
     } catch (error) {
       console.error("語言資料載入失敗:", error);
     }
@@ -270,8 +264,6 @@ class MultilingualManager {
 
       // 無障礙通知
       this.announceLanguageChange(langData);
-
-      console.log(`🌍 語言切換完成: ${previousLang} -> ${langCode}`);
       return true;
     } catch (error) {
       console.error("語言切換失敗:", error);

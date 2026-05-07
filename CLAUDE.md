@@ -4,22 +4,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-ResumeMate is an AI-driven resume agent platform that combines static resume display with AI-powered interactive Q&A functionality. The system uses RAG (Retrieval Augmented Generation) technology for personalized resume conversations with bilingual support (Chinese/English).
+ResumeMate is an AI-driven resume agent platform that combines static resume display with AI-powered interactive Q&A functionality. The system uses Dify Chatflow API for personalized resume conversations with bilingual support (Chinese/English).
 
 ## Core Architecture
 
 ### Backend Structure
 
 - **Main Application**: `app.py` - Gradio interface for the AI resume assistant
-- **Processing Core**: `src/backend/processor.py` - Coordinates interaction between Analysis and Evaluate agents
-- **AI Agents**:
-  - `src/backend/agents/analysis.py` - Analyzes user questions and retrieves relevant information
-    - Includes `get_contact_info` tool for contact information queries
-    - Includes `rag_search_tool` for resume content retrieval
-  - `src/backend/agents/evaluate.py` - Evaluates responses and determines system actions
-- **Data Models**: `src/backend/models.py` - Pydantic models for Question and SystemResponse
-- **RAG Tools**: `src/backend/tools/rag.py` - ChromaDB vector database integration
+- **Dify Integration Layer**: `src/backend/dify/`
+  - `client.py` - async httpx client for Dify `/v1/chat-messages` (blocking mode)
+  - `adapter.py` - maps Dify JSON response → `SystemResponse`
+  - `processor.py` - `DifyProcessor` (main entrypoint, replaces old `ResumeMateProcessor`)
+- **Data Models**: `src/backend/models.py` - Pydantic models: `Question`, `SystemResponse`
 - **Contact Tools**: `src/backend/tools/contact.py` - Contact information collection and management
+- **CMS**: `src/backend/cms/` - Content management system (uses openai-agents SDK internally)
 
 ### Frontend Structure
 
@@ -31,40 +29,31 @@ ResumeMate is an AI-driven resume agent platform that combines static resume dis
   - `src/frontend/data/version.json` - Version control for data updates
 - **Styling**: Tailwind CSS for responsive design
 
-### Database
-
-- **Vector DB**: ChromaDB stored in `chroma_db/` directory
-- **Initialization**: `init_db.py` - Sets up the vector database with resume content
-
 ## Development Commands
 
 ### Environment Setup
 
 ```bash
-# Initial setup (creates venv, installs dependencies, generates .env)
-chmod +x scripts/setup_dev_env.sh
-./scripts/setup_dev_env.sh
-
 # Activate virtual environment
 source .venv/bin/activate
+
+# Or use uv (recommended)
+uv sync
 ```
 
 ### Development Workflow
 
 ```bash
 # Install dependencies
-pip install -e ".[dev]"
+uv sync
 
-# Code formatting (pre-commit hook automatically runs these)
-isort src tests
-black src tests
-flake8 src tests
+# Code formatting
+ruff --fix . && ruff format .
 
 # Run tests
 pytest
-pytest tests/unit/                    # Unit tests only
-pytest tests/integration/            # Integration tests only
-pytest -v                           # Verbose output
+pytest tests/unit/     # Unit tests only
+pytest -v              # Verbose output
 ```
 
 ### Running the Application
@@ -79,102 +68,81 @@ uv run app.py
 ### Deployment
 
 ```bash
-# Backend deployment to HuggingFace Spaces
-./scripts/deploy_backend.sh
-
 # Frontend deployment to GitHub Pages
 ./scripts/deploy_frontend.sh
 
-# Combined deployment
-./scripts/build_and_deploy.sh
+# Docker backend deployment
+./scripts/build-backend.sh
+./scripts/docker-run.sh run
 ```
 
 ## Key Technologies
 
 - **Python 3.10+** with async/await patterns
-- **OpenAI Agents SDK** for AI agent implementation
-- **Gradio 4.0+** for web interface
-- **ChromaDB** for vector storage and retrieval
+- **Dify Chatflow API** for AI Q&A (via httpx)
+- **OpenAI Agents SDK** for CMS `InfographicAssistantAgent` only
+- **Gradio 5.x** for web interface
 - **Pydantic 2.0+** for data validation
-- **LangChain** for AI workflow orchestration
 
 ## Configuration
 
 ### Environment Variables (.env)
 
-- `GITHUB_COPILOT_TOKEN` - Required for GitHub Copilot model access
-- `LITELLM_PROXY_API_KEY` / `LITELLM_PROXY_API_BASE` - Required for LiteLLM proxy routing
-- Additional configuration in `.env.example`
+```
+DIFY_API_BASE=https://dify.brianhan.cc/v1
+DIFY_API_KEY=app-xxx
+DIFY_USER=resumemate-visitor
+```
+
+- `DIFY_API_BASE` — Dify API endpoint base URL
+- `DIFY_API_KEY` — Dify app API key (required)
+- `DIFY_USER` — User identifier sent to Dify (default: `resumemate-visitor`)
+- CMS also requires `LITELLM_PROXY_API_KEY` / `LITELLM_PROXY_API_BASE` (see `.env.example`)
 
 ### Code Style
 
 - **Black** formatter with 88 character line length
 - **isort** for import sorting with black profile
-- **flake8** for linting
+- **flake8** / **ruff** for linting
 - Pre-commit hooks automatically enforce formatting
 
 ## Testing Strategy
 
 - **Unit tests**: `tests/unit/` - Test individual components
-- **Integration tests**: `tests/integration/` - Test component interactions
+  - `test_dify_client.py` — mock httpx, verifies API call format
+  - `test_dify_adapter.py` — verifies Dify response → SystemResponse mapping
+  - `test_ai_assistant.py` / `test_ai_assistant_integration.py` — CMS AI assistant
 - **pytest-asyncio** for async test support
 - Tests should cover both English and Chinese functionality
 
 ## Agent Workflow
 
 1. **Question Processing**: User input is structured into `Question` model
-2. **Analysis Phase**: `AnalysisAgent` processes question and retrieves relevant resume content
-   - Uses `get_contact_info` tool for contact information queries
-   - Uses `rag_search_tool` for general resume content retrieval
-3. **Evaluation Phase**: `EvaluateAgent` evaluates analysis and determines appropriate system action
-   - Supports multiple decision states: ok, needs_edit, needs_clarification, escalate_to_human
-   - Special handling for contact information queries
-4. **Response Formatting**: System returns `SystemResponse` with answer, confidence, and action suggestions
+2. **Dify Processing**: `DifyProcessor.process_question(question, conversation_id)` calls Dify Chatflow API
+   - `conversation_id=""` → Dify creates a new conversation and returns new ID
+   - Subsequent calls pass the returned `conversation_id` for multi-turn continuity
+3. **Adaptation**: `adapter.adapt()` maps Dify JSON → `(SystemResponse, conversation_id)`
+4. **Response Display**: Gradio UI shows answer; `gr.State` stores `conversation_id` for next turn
 
 ## Special Considerations
 
 - **Bilingual Support**: System handles both Chinese (Traditional) and English
-- **RAG Integration**: All responses should be grounded in resume content from ChromaDB
-- **Confidence Scoring**: Responses include confidence levels for quality assessment
-- **Action System**: System can suggest clarification requests or human escalation
+- **Confidence Scoring**: Fixed at `0.85` (Dify Chatflow does not natively return confidence scores)
+- **Action System**: Derived from `outputs.status` in Dify End node output variables
 - **Async Processing**: Core processing functions use async/await patterns
+- **CMS Isolation**: `src/backend/cms/ai_assistant.py` uses openai-agents SDK independently; do not change its imports
 
 ## Current Project Status
 
-### Completed Features (Phase 2 - First Checkpoint ✅)
+### Completed (Dify Migration ✅)
 
-#### Backend
+- **Dify Integration Layer**: `src/backend/dify/` — client, adapter, processor
+- **Gradio multi-turn**: `gr.State` tracks `conversation_id` across turns
+- **Frontend cleanup**: Removed HF Space references, dead `checkGradioStatus`/`updateChatStatus` JS functions
+- **Models cleanup**: `models.py` simplified to `Question` + `SystemResponse` only
+- **Dependencies**: Removed `langchain`, `chromadb`, `sentence-transformers`, `litellm`; added `httpx`
+- **Tests**: New `test_dify_client.py` (5 tests) and `test_dify_adapter.py` (18 tests)
 
-- **Analysis Agent MVP**: Fully implemented with OpenAI Agents SDK
-  - Dual-tool strategy: `get_contact_info` for contact queries, `rag_search_tool` for resume content
-  - Comprehensive error handling and safe output parsing
-  - First-person response generation (representing 韓世翔 directly)
-- **Evaluate Agent MVP**: Complete evaluation and quality control system
-  - Multi-state decision system (ok, needs_edit, escalate_to_human, etc.)
-  - Contact information special handling
-  - Quality validation with confidence scoring
-
-#### Frontend
-
-- **Static Resume Site**: Complete responsive HTML5 site with Tailwind CSS
-- **Dynamic Data Loading**: JSON-driven content management system
-- **Bilingual Support**: Seamless Chinese/English switching
-- **Interactive Features**: Smooth scrolling, animations, chat examples
-
-#### Testing & Integration
-
-- **Unit Tests**: 161 lines in `tests/unit/test_analysis_agent.py`
-- **Integration Tests**: Full agent cooperation testing
-- **Contact Information Tools**: Dedicated contact collection system
-
-### Next Phase
-
-The project is ready to move into Phase 3 (Feature Enhancement) focusing on:
-
-- AI capability improvements
-- Performance optimizations
-- Advanced UI/UX enhancements
-- Production deployment preparation
 
 ## Development Standards
 

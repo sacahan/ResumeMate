@@ -45,10 +45,34 @@ class GitManager:
         Args:
             repo_path: Path to repository root. Defaults to project root.
         """
+
+        def _env_with_legacy_priority(
+            legacy_name: str, current_name: str, default: str
+        ) -> str:
+            if legacy_name in os.environ:
+                return os.environ[legacy_name]
+            return os.getenv(current_name, default)
+
         self.repo_path = repo_path or Path(__file__).parent.parent.parent.parent
-        self.auto_commit = os.getenv("CMS_GIT_AUTO_COMMIT", "false").lower() == "true"
-        self.auto_push = os.getenv("CMS_GIT_AUTO_PUSH", "false").lower() == "true"
-        self.commit_prefix = os.getenv("CMS_GIT_COMMIT_PREFIX", "[cms]")
+        auto_commit_value = _env_with_legacy_priority(
+            "INFOGRAPHICS_GIT_AUTO_COMMIT",
+            "CMS_GIT_AUTO_COMMIT",
+            "false",
+        )
+        auto_push_value = _env_with_legacy_priority(
+            "INFOGRAPHICS_GIT_AUTO_PUSH",
+            "CMS_GIT_AUTO_PUSH",
+            "false",
+        )
+        commit_prefix_value = _env_with_legacy_priority(
+            "INFOGRAPHICS_GIT_COMMIT_PREFIX",
+            "CMS_GIT_COMMIT_PREFIX",
+            "[cms]",
+        )
+
+        self.auto_commit = auto_commit_value.lower() == "true"
+        self.auto_push = auto_push_value.lower() == "true"
+        self.commit_prefix = commit_prefix_value
 
     def _run_git_command(self, *args: str, timeout: int = 30) -> tuple[bool, str]:
         """Execute a git command and return success status and output.

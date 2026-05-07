@@ -5,8 +5,8 @@ import asyncio
 
 sys.path.append("src")
 
-from backend.models import Question
-from backend.processor import ResumeMateProcessor
+from src.backend.models import Question
+from src.backend.processor import ResumeMateProcessor
 
 
 async def test_processor():

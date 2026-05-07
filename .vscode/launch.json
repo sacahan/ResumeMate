@@ -11,15 +11,6 @@
       "python": "${workspaceFolder}/.venv/bin/python"
     },
     {
-      "name": "Debug AI Q&A",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/src/backend/tools/rag.py",
-      "console": "integratedTerminal",
-      "envFile": "${workspaceFolder}/.env",
-      "python": "${workspaceFolder}/.venv/bin/python"
-    },
-    {
       "name": "Content Admin",
       "type": "debugpy",
       "request": "launch",

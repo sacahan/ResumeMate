@@ -59,7 +59,7 @@ class InfographicAssistantAgent:
         # 使用 LiteLLM Proxy 配置
         api_key = api_key or os.getenv("LITELLM_PROXY_API_KEY")
         api_base = os.getenv("LITELLM_PROXY_API_BASE")
-        proxy_model = model or os.getenv("LITELLM_PROXY_MODEL", "gpt-4o")
+        proxy_model = model or os.getenv("LITELLM_PROXY_MODEL") or "gpt-4o"
 
         # 建立 AsyncOpenAI client 指向 LiteLLM Proxy
         client = AsyncOpenAI(
@@ -73,7 +73,7 @@ class InfographicAssistantAgent:
             openai_client=client,
         )
 
-        model_settings = ModelSettings(max_completion_tokens=300, include_usage=True)
+        model_settings = ModelSettings(max_tokens=300, include_usage=True)
 
         return llm_model, model_settings
 

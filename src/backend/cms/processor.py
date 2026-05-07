@@ -11,6 +11,8 @@ from .models import InfographicItem, ThumbnailConfig
 
 logger = logging.getLogger(__name__)
 
+_RESAMPLE_LANCZOS = getattr(Image, "LANCZOS", Image.Resampling.LANCZOS)
+
 
 class ImageProcessor:
     """Handles image processing operations including thumbnail generation."""
@@ -63,7 +65,7 @@ class ImageProcessor:
 
                 # Calculate new dimensions maintaining aspect ratio
                 img.thumbnail(
-                    (self.config.max_width, self.config.max_height), Image.LANCZOS
+                    (self.config.max_width, self.config.max_height), _RESAMPLE_LANCZOS
                 )
 
                 # Save thumbnail
