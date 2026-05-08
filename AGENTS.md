@@ -8,7 +8,7 @@ ResumeMate 是一個 AI 驅動的履歷代理平台，結合靜態履歷展示�
 
 ## 專案結構
 
-```
+```text
 ResumeMate/
 ├── app.py                      # Gradio 主應用程式入口
 ├── src/
@@ -41,9 +41,8 @@ ResumeMate/
 │   ├── performance/            # 效能測試
 │   └── ux/                     # UX 測試
 ├── scripts/                    # 部署與執行腳本
-│   ├── Dockerfile             # Docker 映像定義
+│   ├── Dockerfile             # Docker 映像定義（含容器預設環境變數）
 │   ├── requirements.txt        # Docker 依賴套件
-│   ├── .env.docker            # Docker 環境變數範本
 │   ├── docker-run.sh          # Docker 容器管理腳本
 │   ├── build-backend.sh       # Docker 映像建置腳本
 │   ├── run-cms.sh             # CMS 本地啟動腳本
@@ -283,7 +282,7 @@ uv add    # 新增依賴套件
 
 - **本地開發**：使用根目錄 `.env` 檔案（自動由 `python-dotenv` 載入）
 - **Docker 部署**：同樣使用根目錄 `.env` 檔案，通過 `--env-file` 參數傳遞
-- **Docker 環境參考**：可參考 `scripts/.env.docker` 了解容器內路徑設定
+- **Docker 環境參考**：容器預設環境變數已定義於 `scripts/Dockerfile`
 
 ### 文件維護
 

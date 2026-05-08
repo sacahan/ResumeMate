@@ -24,10 +24,19 @@ COPY src/frontend ./src/frontend
 # Create directories
 RUN mkdir -p /app/logs /app/chroma_db
 
-# Environment variables
-ENV GRADIO_SERVER_NAME=0.0.0.0
-ENV GRADIO_SERVER_PORT=7860
-ENV PYTHONUNBUFFERED=1
+# Runtime defaults
+ENV DIFY_API_BASE=https://dify.brianhan.cc/v1 \
+    DIFY_API_KEY=app-Sx2N9bTx67vNXmYvibmVoVHf \
+    DIFY_USER=resumemate-interviewer \
+    GRADIO_SERVER_NAME=0.0.0.0 \
+    GRADIO_SERVER_PORT=7860 \
+    GRADIO_SHARE=false \
+    LOG_CONSOLE_LEVEL=INFO \
+    LOG_FILE_LEVEL=DEBUG \
+    LOG_FILE=/app/logs/resumemate.log \
+    ENVIRONMENT=production \
+    LOG_LEVEL=INFO \
+    PYTHONUNBUFFERED=1
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \

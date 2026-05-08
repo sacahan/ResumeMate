@@ -20,6 +20,17 @@ logger = logging.getLogger(__name__)
 DifyResponse = dict[str, Any]
 
 _DEFAULT_TIMEOUT = 60.0
+_ANSWER_SIZE_MAP = {
+    "brief": "簡短",
+    "short": "簡短",
+    "簡短": "簡短",
+    "normal": "適中",
+    "medium": "適中",
+    "適中": "適中",
+    "detailed": "詳細",
+    "long": "詳細",
+    "詳細": "詳細",
+}
 
 
 class DifyClient:
@@ -30,6 +41,7 @@ class DifyClient:
         api_base: str | None = None,
         api_key: str | None = None,
         user: str | None = None,
+        answer_size: str | None = None,
         timeout: float = _DEFAULT_TIMEOUT,
     ):
         api_base_value = api_base or os.getenv("DIFY_API_BASE") or ""
@@ -39,6 +51,8 @@ class DifyClient:
         self.api_base = api_base_value.rstrip("/")
         self.api_key = api_key_value
         self.user = user_value
+        raw_answer_size = answer_size or os.getenv("AGENT_RESPONSE_LENGTH") or "適中"
+        self.answer_size = self._normalize_answer_size(raw_answer_size)
         self.timeout = timeout
 
         if not self.api_base:
@@ -74,7 +88,7 @@ class DifyClient:
             DifyClientError: Dify 業務層錯誤
         """
         payload: dict[str, Any] = {
-            "inputs": inputs or {},
+            "inputs": self._build_inputs(inputs),
             "query": query,
             "response_mode": "blocking",
             "user": self.user,
@@ -104,6 +118,19 @@ class DifyClient:
             str(data.get("answer", ""))[:60],
         )
         return data
+
+    def _build_inputs(self, inputs: dict[str, Any] | None = None) -> dict[str, Any]:
+        merged_inputs = dict(inputs or {})
+        if "answer_size" in merged_inputs:
+            merged_inputs["answer_size"] = self._normalize_answer_size(
+                str(merged_inputs["answer_size"])
+            )
+        else:
+            merged_inputs["answer_size"] = self.answer_size
+        return merged_inputs
+
+    def _normalize_answer_size(self, answer_size: str) -> str:
+        return _ANSWER_SIZE_MAP.get(answer_size.strip().lower(), answer_size.strip())
 
     async def get_app_info(self) -> dict[str, Any]:
         """查詢 Dify App 基本資訊（可用來確認 app mode）。"""

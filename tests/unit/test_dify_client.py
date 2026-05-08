@@ -50,6 +50,7 @@ async def test_chat_new_conversation(client):
     assert payload["response_mode"] == "blocking"
     assert payload["query"] == "你好"
     assert payload["user"] == "test-user"
+    assert payload["inputs"]["answer_size"] == "適中"
 
 
 @pytest.mark.asyncio
@@ -75,6 +76,74 @@ async def test_chat_existing_conversation(client):
     call_kwargs = mock_client.post.call_args
     payload = call_kwargs.kwargs.get("json") or call_kwargs.args[1]
     assert payload["conversation_id"] == "conv-existing-456"
+    assert payload["inputs"]["answer_size"] == "適中"
+
+
+@pytest.mark.asyncio
+async def test_chat_preserves_custom_inputs(client):
+    """自訂 inputs 應保留，並自動補上 answer_size。"""
+    mock_resp = MagicMock()
+    mock_resp.is_success = True
+    mock_resp.json.return_value = {
+        "answer": "含自訂輸入的回答",
+        "conversation_id": "conv-custom-789",
+        "metadata": {},
+    }
+
+    with patch("httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.post = AsyncMock(return_value=mock_resp)
+        mock_client_cls.return_value = mock_client
+
+        await client.chat("你好", inputs={"language": "zh-TW"})
+
+    call_kwargs = mock_client.post.call_args
+    payload = call_kwargs.kwargs.get("json") or call_kwargs.args[1]
+    assert payload["inputs"] == {"language": "zh-TW", "answer_size": "適中"}
+
+
+@pytest.mark.asyncio
+async def test_chat_allows_overriding_answer_size(client):
+    """呼叫端顯式提供 answer_size 時應優先採用。"""
+    mock_resp = MagicMock()
+    mock_resp.is_success = True
+    mock_resp.json.return_value = {
+        "answer": "短回答",
+        "conversation_id": "conv-brief-999",
+        "metadata": {},
+    }
+
+    with patch("httpx.AsyncClient") as mock_client_cls:
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.post = AsyncMock(return_value=mock_resp)
+        mock_client_cls.return_value = mock_client
+
+        await client.chat("你好", inputs={"answer_size": "brief"})
+
+    call_kwargs = mock_client.post.call_args
+    payload = call_kwargs.kwargs.get("json") or call_kwargs.args[1]
+    assert payload["inputs"]["answer_size"] == "簡短"
+
+
+def test_client_maps_legacy_env_answer_size_values():
+    """舊的英文長度設定應轉為 Dify 下拉選項值。"""
+    with patch.dict(
+        "os.environ",
+        {
+            "DIFY_API_BASE": "https://dify.example.com/v1",
+            "DIFY_API_KEY": "app-test-key",
+            "AGENT_RESPONSE_LENGTH": "detailed",
+        },
+    ):
+        from src.backend.dify.client import DifyClient
+
+        client = DifyClient()
+
+    assert client.answer_size == "詳細"
 
 
 @pytest.mark.asyncio
