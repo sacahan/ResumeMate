@@ -16,8 +16,9 @@
 
 set -e
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+# 專案根目錄 (支援直接從 repo root 或 scripts/ 目錄執行)
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # 配置
 DOCKER_USERNAME="${DOCKER_USERNAME:-sacahan}"
@@ -96,8 +97,8 @@ if [ -z "$PLATFORM" ] && [ "$INTERACTIVE" = true ]; then
     echo "════════════════════════════════════════"
     echo "架構選擇"
     echo "════════════════════════════════════════"
-    echo "1. arm64 (M1/M2/M3 Mac, ARM 伺服器)"
-    echo "2. amd64 (Intel Mac, x86_64 伺服器)"
+    echo "1. arm64 (Mac, ARM 伺服器)"
+    echo "2. amd64 (Linux, x86_64 伺服器)"
     echo "3. all (arm64 + amd64) [default]"
     echo ""
     read "?選擇架構 (1-3) [default: 3]: " platform_choice
@@ -208,20 +209,37 @@ if [ "$ACTION" != "push" ]; then
     echo "🔨 建置 Docker 映像..."
     echo "════════════════════════════════════════"
 
-    cd "$PROJECT_ROOT"
+    ABSOLUTE_PROJECT_ROOT="$(cd "$PROJECT_ROOT" && pwd)"
+    DOCKERFILE_PATH="$ABSOLUTE_PROJECT_ROOT/scripts/Dockerfile"
 
-    # 決定推送旗標
-    PUSH_FLAG="--load"
-    if [ "$ACTION" = "build-push" ]; then
-        PUSH_FLAG="--push"
+    # 對於單一平台，使用 docker build；對於多平台，使用 docker buildx build
+    if [ "$PLATFORM" = "all" ]; then
+        # 多平台建置
+        PUSH_FLAG="--load"
+        if [ "$ACTION" = "build-push" ]; then
+            PUSH_FLAG="--push"
+        fi
+
+        docker buildx build \
+            --platform "$PLATFORMS" \
+            $PUSH_FLAG \
+            -t "$FULL_IMAGE_NAME:$DOCKER_TAG" \
+            -f "$DOCKERFILE_PATH" \
+            "$ABSOLUTE_PROJECT_ROOT"
+    else
+        # 單一平台建置 - 使用 docker buildx build 確保 --platform 正確
+        PUSH_FLAG="--load"
+        if [ "$ACTION" = "build-push" ]; then
+            PUSH_FLAG="--push"
+        fi
+
+        docker buildx build \
+            --platform "$PLATFORMS" \
+            $PUSH_FLAG \
+            -t "$FULL_IMAGE_NAME:$DOCKER_TAG" \
+            -f "$DOCKERFILE_PATH" \
+            "$ABSOLUTE_PROJECT_ROOT"
     fi
-
-    docker buildx build \
-        --platform "$PLATFORMS" \
-        $PUSH_FLAG \
-        -t "$FULL_IMAGE_NAME:$DOCKER_TAG" \
-        -f "$SCRIPT_DIR/Dockerfile" \
-        "$PROJECT_ROOT"
 
     echo "✅ 映像建置成功!"
 else

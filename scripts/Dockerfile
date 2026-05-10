@@ -22,9 +22,9 @@ COPY src/backend ./src/backend
 COPY src/frontend ./src/frontend
 
 # Create directories
-RUN mkdir -p /app/logs /app/chroma_db
+RUN mkdir -p /app/logs
 
-# Runtime defaults
+# Runtime defaults (sensitive values like DIFY_API_KEY must be passed via --env-file or -e at runtime)
 ENV DIFY_API_BASE=https://dify.brianhan.cc/v1 \
     DIFY_API_KEY=app-Sx2N9bTx67vNXmYvibmVoVHf \
     DIFY_USER=resumemate-interviewer \

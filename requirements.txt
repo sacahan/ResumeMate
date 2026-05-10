@@ -1,19 +1,9 @@
-langchain>=0.1.0
 openai>=1.0.0
-chromadb>=0.4.0
-sentence-transformers>=3.0.0
+openai-agents==0.4.1
+httpx>=0.27.0
 gradio>=5.44.1,<6.0.0
 pydantic>=2.10,<2.12
 python-dotenv>=1.0.0
 pytest>=8.4.1
 pytest-asyncio>=1.1.0
-litellm>=1.79.3
-openai-agents==0.4.1
-black>=23.0.0
-isort>=5.0.0
-flake8>=6.0.0
 Pillow>=10.0.0
-
-# Crypto (避免 pyjwt[crypto] 解析衝突)
-cryptography>=45.0.0,<46.0.0
-cffi>=1.15.1
