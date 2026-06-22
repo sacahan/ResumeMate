@@ -1,234 +1,121 @@
 <!DOCTYPE html>
-<html lang="zh-TW" class="scroll-smooth">
-
+<html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Infographics Gallery - brianhan.cc</title>
+  <title>資訊圖表蒐集 — Brian Han</title>
   <link rel="icon" type="image/png" href="static/favicon.png" />
-  <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Noto+Sans+TC:wght@400;500;700&display=swap"
-    rel="stylesheet" />
-  <link rel="stylesheet" href="static/css/infographics.css" />
-  <link rel="stylesheet" href="static/css/responsive.css" />
-  <style>
-    body {
-      font-family: "Inter", "Noto Sans TC", sans-serif;
-      color: #d1d5db;
-      background: linear-gradient(-45deg, #282a50, #4c408e, #282a50, #1f2937);
-      background-size: 400% 400%;
-      animation: gradient 25s ease infinite;
-      min-height: 100vh;
-    }
-
-    @keyframes gradient {
-      0% {
-        background-position: 0% 50%;
-      }
-
-      50% {
-        background-position: 100% 50%;
-      }
-
-      100% {
-        background-position: 0% 50%;
-      }
-    }
-
-    .glass-effect {
-      background: rgba(255, 255, 255, 0.03);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    }
-
-    .text-gradient {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: #1f2937;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: #4b5563;
-      border-radius: 4px;
-    }
-
-    .fade-in-section {
-      opacity: 0;
-      transform: translateY(20px);
-      transition:
-        opacity 0.8s cubic-bezier(0.23, 1, 0.32, 1),
-        transform 0.8s cubic-bezier(0.23, 1, 0.32, 1);
-    }
-
-    .fade-in-section.is-visible {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="static/css/design.css" />
   <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "CollectionPage",
-        "name": "Infographics Gallery",
-        "description": "A collection of infographics created or curated by Brian Han",
-        "author": {
-          "@type": "Person",
-          "name": "Brian Han",
-          "url": "https://www.brianhan.cc/"
-        }
-      }
-    </script>
+  {"@context":"https://schema.org","@type":"CollectionPage","name":"Infographics Gallery","description":"A collection of infographics created or curated by Brian Han","author":{"@type":"Person","name":"Brian Han","url":"https://www.brianhan.cc/"}}
+  </script>
 </head>
-
 <body>
-  <!-- Navigation -->
-  <nav class="fixed top-0 w-full z-50 glass-effect">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="relative flex items-center justify-between h-16">
-        <a href="index.html" class="text-3xl font-bold text-gradient" style="
-              background: linear-gradient(90deg, #e68c06 0%, #d29f47 100%);
-              -webkit-background-clip: text;
-              -webkit-text-fill-color: transparent;
-              background-clip: text;
-            ">
-          Brian's Portfolio
-        </a>
-        <div class="hidden md:flex space-x-8 absolute left-1/2 transform -translate-x-1/2">
-          <a href="index.html#about" class="hover:text-blue-400 transition-colors" data-zh="關於我" data-en="About Me">關於我</a>
-          <a href="index.html#experience" class="hover:text-blue-400 transition-colors" data-zh="經歷" data-en="Experience">經歷</a>
-          <a href="index.html#skills" class="hover:text-blue-400 transition-colors" data-zh="技能" data-en="Skills">技能</a>
-          <a href="index.html#portfolio" class="hover:text-blue-400 transition-colors" data-zh="作品" data-en="Portfolio">作品</a>
-          <a href="infographics.html" class="text-orange-400 transition-colors" data-zh="資訊圖表" data-en="Infographics">資訊圖表</a>
-          <a href="index.html#chat" class="hover:text-blue-400 transition-colors" data-zh="AI 問答" data-en="AI Q&A">AI
-            問答</a>
-        </div>
-<!-- Mobile Hamburger Menu Button -->
-<button id="hamburger-btn" class="md:hidden flex flex-col gap-1 relative" aria-label="Toggle menu"
-  aria-expanded="false">
-  <span class="hamburger-line"></span>
-  <span class="hamburger-line"></span>
-  <span class="hamburger-line"></span>
-</button>
 
-        <button id="lang-toggle"
-          class="hidden md:inline-flex px-3 py-1 glass-effect rounded-md text-sm hover:bg-white hover:bg-opacity-20 transition-colors">
-          EN
-        </button>
-      </div>
-<!-- Mobile Menu Drawer -->
-<div id="mobile-menu"
-  class="hidden md:hidden fixed top-16 left-0 right-0 mobile-menu-drawer">
-  <div class="max-w-6xl mx-auto px-4 py-4 space-y-3">
-    <a href="index.html#about" class="block py-2 px-4 rounded hover:bg-white/10 transition-colors" data-zh="關於我"
-      data-en="About Me">關於我</a>
-    <a href="index.html#experience" class="block py-2 px-4 rounded hover:bg-white/10 transition-colors" data-zh="經歷"
-      data-en="Experience">經歷</a>
-    <a href="index.html#skills" class="block py-2 px-4 rounded hover:bg-white/10 transition-colors" data-zh="技能"
-      data-en="Skills">技能</a>
-    <a href="index.html#portfolio" class="block py-2 px-4 rounded hover:bg-white/10 transition-colors" data-zh="作品"
-      data-en="Portfolio">作品</a>
-    <a href="infographics.html" class="block py-2 px-4 rounded bg-white/10 transition-colors text-orange-400"
-      data-zh="資訊圖表" data-en="Infographics">資訊圖表</a>
-    <a href="index.html#chat" class="block py-2 px-4 rounded hover:bg-white/10 transition-colors" data-zh="AI 問答"
-      data-en="AI Q&A">AI 問答</a>
-    <div class="border-t border-white/10 pt-3">
-      <button type="button"
-        class="mobile-lang-toggle w-full text-left px-4 py-2 rounded text-sm hover:bg-white/10 transition-colors"
-        data-ui-key="language_toggle" aria-label="切換語言">
-        EN
-      </button>
+<!-- Ambient glow orbs -->
+<div style="position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0;">
+  <div style="position:absolute;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(255,106,26,.13) 0%,transparent 70%);top:-120px;right:-100px;animation:ambientA 12s ease-in-out infinite;"></div>
+  <div style="position:absolute;width:500px;height:500px;border-radius:50%;background:radial-gradient(circle,rgba(255,160,60,.09) 0%,transparent 70%);bottom:-80px;left:-60px;animation:ambientB 16s ease-in-out infinite;"></div>
+</div>
+
+<!-- Navigation -->
+<nav style="position:fixed;top:0;left:0;right:0;z-index:100;background:var(--navbg);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);">
+  <div style="max-width:1100px;margin:0 auto;padding:0 28px;height:64px;display:flex;align-items:center;justify-content:space-between;">
+    <a href="index.html" style="font-family:'JetBrains Mono',monospace;font-weight:700;font-size:18px;color:var(--accent);text-decoration:none;">BH.</a>
+    <div style="display:flex;align-items:center;gap:28px;">
+      <a href="index.html#about" class="nav-link">關於我</a>
+      <a href="index.html#career" class="nav-link">經歷</a>
+      <a href="index.html#work" class="nav-link">作品</a>
+      <a href="index.html#hub" class="nav-link">內容</a>
+      <a href="infographics.html" style="text-decoration:none;font-size:14px;font-weight:700;color:var(--accent);">資訊圖表</a>
+      <a href="index.html#chat" class="nav-link">AI 問答</a>
+    </div>
+    <div style="display:flex;align-items:center;gap:4px;background:var(--whiteSoft);border:1px solid var(--border);border-radius:10px;padding:4px;">
+      <button id="lang-zh" class="lang-active" onclick="setLang('zh')" style="border-radius:7px;">中</button>
+      <button id="lang-en" class="lang-inactive" onclick="setLang('en')" style="border-radius:7px;">EN</button>
     </div>
   </div>
-</div>
-        </div>
-        </nav>
+</nav>
 
-  <!-- Main Content -->
-  <main class="pt-24 pb-16">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- Page Header -->
-      <section class="mb-12 fade-in-section">
-        <h1
-          class="text-3xl md:text-4xl font-bold text-white mb-4 border-l-4 border-orange-400 pl-4 flex items-center gap-3">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"
-            stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round"
-              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          <span data-zh="圖表蒐集" data-en="Infographics Gallery">圖表蒐集</span>
-          </h1>
-        <p class="text-xl text-gray-300 ml-4" data-zh="我蒐集或創造的資訊圖表，涵蓋技術、數據視覺化等主題"
-          data-en="A collection of infographics I've curated or created, covering technology, data visualization, and more">
-          我蒐集或創造的資訊圖表，涵蓋技術、數據視覺化等主題
-        </p>
-        </section>
+<!-- Main Content -->
+<main style="padding-top:96px;padding-bottom:80px;min-height:100vh;position:relative;z-index:1;">
+  <div style="max-width:1100px;margin:0 auto;padding:0 28px;">
 
-      <!-- Gallery Container -->
-      <section id="infographics-container" class="fade-in-section">
-        <!-- Filter tags and gallery will be injected by infographics.js -->
-        <div class="infographic-loading">
-          <div class="spinner"></div>
-        </div>
-      </section>
+    <!-- Page Header -->
+    <section style="margin-bottom:48px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <div style="width:4px;height:36px;background:linear-gradient(180deg,var(--accentGradA),var(--accentGradB));border-radius:2px;"></div>
+        <h1 id="page-title" style="margin:0;font-size:32px;font-weight:700;color:var(--text);">資訊圖表蒐集</h1>
       </div>
-      </main>
+      <p id="page-desc" style="margin:0 0 0 16px;font-size:16px;color:var(--muted2);padding-left:16px;">我蒐集或創造的資訊圖表，涵蓋技術、數據視覺化等主題</p>
+    </section>
 
-  <!-- Footer -->
-  <footer class="py-12 border-t border-gray-700">
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-      <a href="index.html" class="text-orange-400 hover:underline">
-        <span data-zh="返回首頁" data-en="Back to Home">返回首頁</span>
-      </a>
-      <p class="text-sm text-gray-500 mt-2">
-        © 2025 Brian Han.
-        <span data-zh="保留所有權利。" data-en="All rights reserved.">保留所有權利。</span>
-        </p>
+    <!-- Gallery Container (infographics.js injects filter tags + grid here) -->
+    <section id="infographics-container">
+      <div class="infographic-loading">
+        <div style="display:flex;gap:6px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:dotty 1.2s ease-in-out infinite;"></span>
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:dotty 1.2s ease-in-out infinite .2s;"></span>
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--accent);animation:dotty 1.2s ease-in-out infinite .4s;"></span>
         </div>
-        </footer>
+      </div>
+    </section>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      // Intersection Observer for fade-in sections
-      const sections = document.querySelectorAll(".fade-in-section");
-      const observer = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add("is-visible");
-            }
-          });
-        },
-        {
-          threshold: 0.1,
-        },
-      );
+  </div>
+</main>
 
-      sections.forEach((section) => {
-        observer.observe(section);
-      });
-    });
-      </script>
-  <!-- Multilingual Manager -->
-  <script src="static/js/multilingual.js"></script>
-  <script src="static/js/main.js"></script>
-  <!-- Hamburger Menu Handler -->
-  <script src="static/js/hamburger.js"></script>
-  <!-- Infographics Gallery -->
-  <script src="static/js/infographics.js"></script>
-  </body>
+<!-- Footer -->
+<footer style="background:var(--surface);border-top:1px solid var(--border);padding:40px 0;position:relative;z-index:1;">
+  <div style="max-width:1100px;margin:0 auto;padding:0 28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+    <a href="index.html" class="nav-link" id="back-link">← 返回首頁</a>
+    <p style="margin:0;font-size:13px;color:var(--muted2);" id="footer-copy">© 2025 Brian Han. 保留所有權利。</p>
+  </div>
+</footer>
 
+<script>
+  // Minimal lang switcher for this standalone page
+  let _lang = 'zh';
+
+  const strings = {
+    zh: {
+      pageTitle: '資訊圖表蒐集',
+      pageDesc: '我蒐集或創造的資訊圖表，涵蓋技術、數據視覺化等主題',
+      backLink: '← 返回首頁',
+      footerCopy: '© 2025 Brian Han. 保留所有權利。',
+    },
+    en: {
+      pageTitle: 'Infographics Gallery',
+      pageDesc: "A collection of infographics I've curated or created, covering technology, data visualization, and more",
+      backLink: '← Back to Home',
+      footerCopy: '© 2025 Brian Han. All rights reserved.',
+    },
+  };
+
+  function setLang(lang) {
+    _lang = lang;
+    document.getElementById('lang-zh').className = lang === 'zh' ? 'lang-active' : 'lang-inactive';
+    document.getElementById('lang-en').className = lang === 'en' ? 'lang-active' : 'lang-inactive';
+    const s = strings[lang];
+    document.getElementById('page-title').textContent = s.pageTitle;
+    document.getElementById('page-desc').textContent = s.pageDesc;
+    document.getElementById('back-link').textContent = s.backLink;
+    document.getElementById('footer-copy').textContent = s.footerCopy;
+    document.documentElement.lang = lang === 'zh' ? 'zh-TW' : 'en';
+    if (window.infographicsGallery) {
+      window.infographicsGallery.renderGallery();
+    }
+  }
+
+  window.getCurrentLang = () => _lang;
+
+
+</script>
+
+<!-- Infographics Gallery (handles filter, grid, lightbox logic) -->
+<script src="static/js/infographics.js"></script>
+
+</body>
 </html>

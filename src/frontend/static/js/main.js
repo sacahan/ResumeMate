@@ -1,817 +1,399 @@
 /**
- * ResumeMate 前端主要 JavaScript 功能
- * 此類負責初始化頁面互動、語言切換、動畫效果、聊天範例、通知提示等功能。
- * 整合響應式增強功能，提供現代化的互動體驗與效能優化。
+ * ResumeMate main.js — portfolio logic, chat, language switching.
+ * AI chat calls POST /api/chat  { text, language, conversation_id }
+ * Set window.CHAT_API_URL before this script to override the endpoint.
  */
 
-class ResumeMateFrontend {
-  /**
-   * 建構函式，初始化預設語言並執行初始化流程。
-   */
-  constructor() {
-    this.currentLang = "zh-TW";
-    this.interactionTimings = [];
-    this.scrollPosition = 0;
-    this.isReducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)",
-    ).matches;
-    this.touchStartY = 0;
-    this.touchStartTime = 0;
-    this.init();
+// ─── Content ───────────────────────────────────────────────────────────────
+const content = {
+  zh: {
+    brand:'韓世翔', role:'資深軟體工程師 · AI 應用開發',
+    navAbout:'關於', navCareer:'職涯', navWork:'作品', navContent:'文章 & 圖表', navChat:'AI 問答',
+    heroLabel:'版型', viewLabel:'查看',
+    heroEyebrow:'AI Application Engineer',
+    heroTitleA1:'打造會思考的', heroTitleA2:'AI 產品。',
+    heroSubA:'我是 Brian（韓世翔），深耕全端開發逾 18 年，專精 Java 企業級應用與雲端微服務。現專注 AI Agent 驅動的企業工作流程重構，將模型能力轉化為可擴展的產品級解決方案。',
+    heroTitleB1:'把 AI 想法', heroTitleB2:'變成產品',
+    heroSubB:'資深軟體工程師，18+ 年全端與系統架構實戰。專精 Java 企業應用、雲端微服務與 CI/CD，現聚焦 LLM + AI Agent 的落地應用。',
+    heroTitleC1:'以工程思維，設計 AI 的未來',
+    heroSubC:'我是 Brian。橫跨電信與金融保險產業的資深工程經驗，現在把前沿 AI 與真實業務場景深度融合。',
+    ctaPrimary:'與我聯絡', ctaSecondary:'看我的職涯',
+    stat1n:'18+', stat1l:'年開發經驗', stat2n:'80%', stat2l:'CI/CD 部署提速', stat3n:'10萬+', stat3l:'日均資料寫入',
+    aboutEyebrow:'About Me', aboutTitle:'在研究與產品之間，我選擇兩者兼顧。',
+    aboutP1:'深耕全端軟體開發與系統架構設計逾 18 年，專精 Java 企業級應用與雲端微服務架構，具備從需求分析、系統設計、測試到生產部署的完整開發週期實戰經驗。',
+    aboutP2:'長期服務電信與金融保險產業，歷任資深工程師與技術主任，帶領團隊交付企業入口網站、核心業務系統、CI/CD 自動化及 AI 應用整合解決方案。',
+    aboutP3:'工作之外積極參與開源社群與技術研討會。現階段聚焦新一代 LLM + AI Agent 框架的實作應用，期待將前沿 AI 與實際業務場景深度融合。',
+    skills:['Python','Java / Spring Boot','TypeScript','React / Vue','LLM Fine-tuning','OpenAI Agent SDK','CrewAI','Docker / K8s','CI/CD','AWS / GCP'],
+    careerEyebrow:'Career', careerTitle:'職涯經歷',
+    jobs:[
+      {period:'2024.01 — 2025.05',org:'台灣大哥大電信',role:'資深主任工程師',desc:'主導企業用戶網站架構設計與開發，整合後端 CMS 及前端分散式服務。承接資策會 ASR 專案部署多語言語音辨識平台，並參與加密貨幣與電商平台重構，建構企業級 CI/CD 與報表系統。亦擔任 AppWorks 大使導師。'},
+      {period:'2016.03 — 2023.12',org:'台灣之星電信',role:'主任工程師',desc:'負責企業入口網站與多項 Portal 系統架構。設計高效能 IoT 企業管理平台，日均支援 10 萬筆以上寫入並提供 RESTful API。實作雙 11 高併發認證機制，導入 Jenkins + Docker CI/CD，上線時間縮短達 80%。'},
+      {period:'2006.03 — 2016.02',org:'R&D / 外派駐點',role:'軟體工程師',desc:'參與零售、金融保險、電信等產業的企業級軟體開發，擔綱系統分析、架構設計、全端開發與資料庫建模。以 Java 為主，精通 JavaScript、SQL、PHP，協助多家企業數位轉型。'},
+      {period:'2002.09 — 2004.06',org:'中原大學',role:'資訊管理研究所 碩士',desc:'研究重點為結合行動裝置與環境智慧、提升學習成效的系統平台。論文：考量環境智慧之適性化行動學習平台。'}
+    ],
+    workEyebrow:'Portfolio', workTitle:'精選作品', workSub:'根據個人發想開發的 AI 專案與工具，持續更新中。',
+    contentEyebrow:'Content Hub', contentTitle:'文章 & 資訊圖表', contentSub:'我的思考和視覺化整理，持續更新中。',
+    artTabLabel:'文章', chartTabLabel:'資訊圖表',
+    articles:[
+      {cat:'LLM',date:'2026.05.18',title:'從 Prompt 到 Agent：我如何設計可靠的 AI 工作流',label:'封面圖 4:3',excerpt:'談談把單次 prompt 演進成多步驟 agent 的工程取捨與心得。',read:'閱讀全文'},
+      {cat:'產品',date:'2026.04.02',title:'AI 產品的「最後一哩」：上線後才是真正的開始',label:'封面圖 4:3',excerpt:'模型 demo 很驚艷，但真正的挑戰在監控、回饋與迭代。',read:'閱讀全文'},
+      {cat:'MLOps',date:'2026.02.27',title:'把模型迭代週期從兩週縮短到兩天的實作筆記',label:'封面圖 4:3',excerpt:'一套讓團隊敢於快速實驗的 MLOps 流程拆解。',read:'閱讀全文'},
+      {cat:'隨筆',date:'2026.01.11',title:'工程師為什麼要寫作？我的數位花園實驗',label:'封面圖 4:3',excerpt:'紀錄、整理、分享，如何讓我成為更好的工程師。',read:'閱讀全文'}
+    ],
+    catLabel:'分類',
+    cats:[{name:'LLM / Agent',count:'12'},{name:'產品思考',count:'08'},{name:'MLOps',count:'06'},{name:'資訊圖表',count:'05'},{name:'隨筆',count:'09'}],
+    subTitle:'訂閱我的筆記', subSub:'不定期寄出 AI 產品與工程的整理，不寄垃圾信。', subPlaceholder:'你的 Email', subBtn:'訂閱',
+    chatEmpty:'嗨！我是韓世翔的 AI 分身。你可以問我關於他的工作經歷、技術專長或任何專案細節。',
+    chatPlaceholder:'輸入你的問題…', chatSend:'送出',
+    suggestions:['他最擅長什麼技術？','介紹一個代表性專案','為什麼適合 AI 產品的角色？'],
+    contactEyebrow:"Let's talk", contactTitle:'一起打造些什麼吧',
+    contactSub:'不論是合作、職缺，或只是想聊聊 AI 與工程，都歡迎來信或私訊。',
+    contactBtn:'寄信給我',
+    socials:[
+      {label:'GitHub',href:'https://github.com/sacahan'},
+      {label:'Telegram @sacahan',href:'https://t.me/sacahan'},
+      {label:'sacahan@gmail.com',href:'mailto:sacahan@gmail.com'}
+    ],
+    footerNote:'Designed & built with care'
+  },
+  en: {
+    brand:'Brian Han', role:'Senior Software Engineer · AI',
+    navAbout:'About', navCareer:'Career', navWork:'Work', navContent:'Articles & Charts', navChat:'AI Chat',
+    heroLabel:'Hero', viewLabel:'View',
+    heroEyebrow:'AI Application Engineer',
+    heroTitleA1:'Building AI', heroTitleA2:'that thinks.',
+    heroSubA:"I'm Brian — 18+ years in full-stack development, specializing in Java enterprise apps and cloud microservices. Now focused on AI-agent-driven enterprise workflows, turning model capabilities into scalable, production-grade solutions.",
+    heroTitleB1:'Turning AI ideas', heroTitleB2:'into products',
+    heroSubB:'Senior software engineer with 18+ years across full-stack and system architecture. Deep in Java enterprise apps, cloud microservices and CI/CD — now focused on shipping LLM + AI Agent applications.',
+    heroTitleC1:'Engineering the future of AI products',
+    heroSubC:"I'm Brian. Years of senior engineering across telecom and finance/insurance — now fusing frontier AI with real business scenarios.",
+    ctaPrimary:'Get in touch', ctaSecondary:'View my career',
+    stat1n:'18+', stat1l:'Years building', stat2n:'80%', stat2l:'Faster deploys', stat3n:'100K+', stat3l:'Daily writes',
+    aboutEyebrow:'About Me', aboutTitle:'I refuse to choose between research and product.',
+    aboutP1:'18+ years in full-stack development and system architecture, specializing in Java enterprise applications and cloud microservices, with end-to-end experience from requirements to production deployment.',
+    aboutP2:'Long-time service to telecom and finance/insurance industries; held senior engineer and technical lead roles delivering enterprise portals, core business systems, CI/CD automation and AI integration solutions.',
+    aboutP3:'Outside work, active in open-source communities and tech conferences. Currently focused on next-gen LLM + AI Agent frameworks, eager to fuse frontier AI with real business scenarios.',
+    skills:['Python','Java / Spring Boot','TypeScript','React / Vue','LLM Fine-tuning','OpenAI Agent SDK','CrewAI','Docker / K8s','CI/CD','AWS / GCP'],
+    careerEyebrow:'Career', careerTitle:'Work Experience',
+    jobs:[
+      {period:'2024.01 — 2025.05',org:'Taiwan Mobile',role:'Senior Lead Engineer',desc:'Led enterprise user portal architecture and development, integrating backend CMS and front-end distributed services. Deployed a multilingual ASR platform (III project), worked on crypto and e-commerce refactors, and built enterprise CI/CD and reporting. Also an AppWorks ambassador mentor.'},
+      {period:'2016.03 — 2023.12',org:'T Star Telecom',role:'Lead Engineer',desc:'Owned enterprise portals and multiple Portal systems. Designed a high-performance IoT management platform supporting 100K+ daily writes with RESTful APIs, built Double-11 high-concurrency auth, and introduced Jenkins + Docker CI/CD that cut deploy time by 80%.'},
+      {period:'2006.03 — 2016.02',org:'R&D / On-site',role:'Software Engineer',desc:'Delivered enterprise software for retail, finance/insurance and telecom — system analysis, architecture, full-stack and DB modeling. Java-centric, fluent in JavaScript, SQL and PHP, helping many firms with digital transformation.'},
+      {period:'2002.09 — 2004.06',org:'Chung Yuan Christian Univ.',role:'M.S. Information Management',desc:'Research focused on an adaptive mobile learning platform combining mobile devices and ambient intelligence to improve learning outcomes.'}
+    ],
+    workEyebrow:'Portfolio', workTitle:'Selected Work', workSub:'AI projects and tools built from my own ideas — continuously updated.',
+    contentEyebrow:'Content Hub', contentTitle:'Articles & Infographics', contentSub:'My thoughts and visual guides, continuously updated.',
+    artTabLabel:'Articles', chartTabLabel:'Infographics',
+    articles:[
+      {cat:'LLM',date:'2026.05.18',title:'From Prompt to Agent: designing reliable AI workflows',label:'Cover 4:3',excerpt:'The engineering tradeoffs of evolving a single prompt into a multi-step agent.',read:'Read more'},
+      {cat:'Product',date:'2026.04.02',title:'The last mile of AI products: launch is where it begins',label:'Cover 4:3',excerpt:'The demo dazzles, but the real work is monitoring, feedback and iteration.',read:'Read more'},
+      {cat:'MLOps',date:'2026.02.27',title:'Notes on cutting iteration from two weeks to two days',label:'Cover 4:3',excerpt:'An MLOps setup that makes a team brave enough to experiment fast.',read:'Read more'},
+      {cat:'Essay',date:'2026.01.11',title:'Why engineers should write: my digital garden experiment',label:'Cover 4:3',excerpt:'How recording, organizing and sharing makes me a better engineer.',read:'Read more'}
+    ],
+    catLabel:'Categories',
+    cats:[{name:'LLM / Agent',count:'12'},{name:'Product',count:'08'},{name:'MLOps',count:'06'},{name:'Infographics',count:'05'},{name:'Essays',count:'09'}],
+    subTitle:'Subscribe to my notes', subSub:'Occasional digests on AI products and engineering. No spam.', subPlaceholder:'Your email', subBtn:'Join',
+    chatEmpty:"Hi! I'm Brian's AI twin. Ask me anything about his experience, skills, or projects.",
+    chatPlaceholder:'Type your question…', chatSend:'Send',
+    suggestions:['What is he best at?','Describe a signature project','Why a fit for AI product roles?'],
+    contactEyebrow:"Let's talk", contactTitle:"Let's build something",
+    contactSub:"Collaboration, a role, or just chatting about AI and product — I'd love to hear from you.",
+    contactBtn:'Email me',
+    socials:[
+      {label:'GitHub',href:'https://github.com/sacahan'},
+      {label:'Telegram @sacahan',href:'https://t.me/sacahan'},
+      {label:'sacahan@gmail.com',href:'mailto:sacahan@gmail.com'}
+    ],
+    footerNote:'Designed & built with care'
   }
+};
 
-  /**
-   * 初始化所有前端互動功能，包括語言切換、平滑滾動、聊天範例、動畫效果。
-   */
-  init() {
-    this.setupSmoothScrolling();
-    this.setupChatExamples();
-    this.setupAnimations();
-    this.setupAdvancedInteractions();
-    this.setupPerformanceMonitoring();
-    this.setupAccessibilityFeatures();
-    this.setupProgressiveEnhancement();
-    this.integrateMultilingualManager();
-    this.setupLanguageMenuToggle();
+// ─── State ────────────────────────────────────────────────────────────────
+let state = {
+  lang: 'zh',
+  heroVariant: 1,
+  contentTab: 'articles',
+  messages: [],
+  loading: false
+};
+
+let chatInputVal = '';
+let conversationId = '';
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+function el(id) { return document.getElementById(id); }
+function setText(id, text) { const e = el(id); if (e) e.textContent = text; }
+function setClass(id, cls) { const e = el(id); if (e) e.className = cls; }
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ─── Public API (used by projects.js, infographics-hub.js) ────────────────
+window.getCurrentLang = function() { return state.lang; };
+
+window.openLightboxUrl = function(url, alt) {
+  const img = el('lightbox-img');
+  if (img) { img.src = url || ''; img.alt = alt || 'infographic'; }
+  const lb = el('lightbox');
+  if (lb) lb.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+};
+
+// ─── Render ───────────────────────────────────────────────────────────────
+function render() {
+  const c = content[state.lang];
+
+  setText('nav-brand', c.brand);
+  setText('nav-about', c.navAbout);
+  setText('nav-career', c.navCareer);
+  setText('nav-work', c.navWork);
+  setText('nav-content', c.navContent);
+  setText('nav-chat', c.navChat);
+  setText('hero-label', c.heroLabel);
+
+  setClass('btn-zh', state.lang === 'zh' ? 'lang-active' : 'lang-inactive');
+  setClass('btn-en', state.lang === 'en' ? 'lang-active' : 'lang-inactive');
+
+  setClass('v1-btn', state.heroVariant === 1 ? 'pill-active' : 'pill-inactive');
+  setClass('v2-btn', state.heroVariant === 2 ? 'pill-active' : 'pill-inactive');
+  setClass('v3-btn', state.heroVariant === 3 ? 'pill-active' : 'pill-inactive');
+
+  el('hero-a').style.display = state.heroVariant === 1 ? '' : 'none';
+  el('hero-b').style.display = state.heroVariant === 2 ? '' : 'none';
+  el('hero-c').style.display = state.heroVariant === 3 ? 'block' : 'none';
+
+  // Hero A
+  setText('hero-a-eyebrow', c.heroEyebrow);
+  setText('hero-a-t1', c.heroTitleA1);
+  setText('hero-a-t2', c.heroTitleA2);
+  setText('hero-a-sub', c.heroSubA);
+  setText('cta-primary-a', c.ctaPrimary);
+  setText('cta-secondary-a', c.ctaSecondary);
+  setText('stat1n', c.stat1n); setText('stat1l', c.stat1l);
+  setText('stat2n', c.stat2n); setText('stat2l', c.stat2l);
+  setText('stat3n', c.stat3n); setText('stat3l', c.stat3l);
+
+  // Hero B
+  setText('hero-b-eyebrow', c.heroEyebrow);
+  setText('hero-b-t1', c.heroTitleB1);
+  setText('hero-b-t2', c.heroTitleB2);
+  setText('hero-b-sub', c.heroSubB);
+  setText('cta-primary-b', c.ctaPrimary);
+  setText('cta-secondary-b', c.ctaSecondary);
+  setText('b-stat1n', c.stat1n); setText('b-stat1l', c.stat1l);
+  setText('b-stat2n', c.stat2n); setText('b-stat2l', c.stat2l);
+  setText('b-stat3n', c.stat3n); setText('b-stat3l', c.stat3l);
+
+  // Hero C
+  setText('hero-c-eyebrow', c.heroEyebrow);
+  setText('hero-c-t1', c.heroTitleC1);
+  setText('hero-c-sub', c.heroSubC);
+  setText('cta-primary-c', c.ctaPrimary);
+  setText('cta-secondary-c', c.ctaSecondary);
+
+  // About
+  setText('about-brand', c.brand);
+  setText('about-role', c.role);
+  setText('about-eyebrow', c.aboutEyebrow);
+  setText('about-title', c.aboutTitle);
+  setText('about-p1', c.aboutP1);
+  setText('about-p2', c.aboutP2);
+  setText('about-p3', c.aboutP3);
+  el('skills-grid').innerHTML = c.skills.map(s =>
+    `<span class="skill-tag">${escHtml(s)}</span>`
+  ).join('');
+
+  // Career
+  setText('career-eyebrow', c.careerEyebrow);
+  setText('career-title', c.careerTitle);
+  el('career-list').innerHTML = c.jobs.map(j => `
+<div class="career-row">
+  <div>
+    <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--accentBright);margin-bottom:6px;">${escHtml(j.period)}</div>
+    <div style="font-size:14px;color:var(--muted2);">${escHtml(j.org)}</div>
+  </div>
+  <div>
+    <h3 style="margin:0 0 10px;font-size:22px;font-weight:700;color:var(--text);">${escHtml(j.role)}</h3>
+    <p style="margin:0;font-size:15.5px;line-height:1.75;color:var(--muted);font-weight:300;max-width:640px;">${escHtml(j.desc)}</p>
+  </div>
+</div>`).join('');
+
+  // Work section heading (grid is filled by projects.js)
+  setText('work-eyebrow', c.workEyebrow);
+  setText('work-title', c.workTitle);
+  setText('work-sub', c.workSub);
+  if (window.renderProjects) window.renderProjects();
+
+  // Content Hub
+  setText('content-eyebrow', c.contentEyebrow);
+  setText('content-title', c.contentTitle);
+  setText('content-sub', c.contentSub);
+
+  const artActive = state.contentTab === 'articles';
+  const tabArtBtn   = el('tab-art-btn');
+  const tabChartBtn = el('tab-chart-btn');
+  tabArtBtn.textContent   = c.artTabLabel;
+  tabArtBtn.style.color   = artActive ? 'var(--text)' : 'var(--muted2)';
+  tabArtBtn.style.borderBottom = artActive ? '2px solid var(--accentBright)' : '2px solid transparent';
+  tabChartBtn.textContent = c.chartTabLabel;
+  tabChartBtn.style.color = artActive ? 'var(--muted2)' : 'var(--text)';
+  tabChartBtn.style.borderBottom = artActive ? '2px solid transparent' : '2px solid var(--accentBright)';
+
+  el('tab-articles').style.display    = artActive ? '' : 'none';
+  el('tab-infographics').style.display = artActive ? 'none' : '';
+
+  // Articles
+  el('articles-list').innerHTML = c.articles.map(a => `
+<a href="#" class="article-card" onclick="return false;">
+  <div style="position:relative;aspect-ratio:4/3;background:repeating-linear-gradient(135deg,var(--stripe1) 0 13px,var(--stripe2) 13px 26px);display:flex;align-items:center;justify-content:center;min-width:200px;">
+    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--faint);">${escHtml(a.label)}</span>
+  </div>
+  <div style="padding:20px 22px 20px 0;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accentBright);background:rgba(var(--accentRGB),.12);border-radius:6px;padding:3px 9px;">${escHtml(a.cat)}</span>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--faint);">${escHtml(a.date)}</span>
+    </div>
+    <h3 style="margin:0 0 8px;font-size:19px;font-weight:700;line-height:1.4;color:var(--text);">${escHtml(a.title)}</h3>
+    <p  style="margin:0 0 12px;font-size:14px;line-height:1.65;color:var(--muted2);font-weight:300;">${escHtml(a.excerpt)}</p>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accentBright);font-weight:700;">${escHtml(a.read)} &rarr;</span>
+  </div>
+</a>`).join('');
+
+  // Categories sidebar
+  setText('cat-label', c.catLabel);
+  el('cats-list').innerHTML = c.cats.map(cat => `
+<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);">
+  <span style="font-size:14px;color:var(--text2);">${escHtml(cat.name)}</span>
+  <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--faint);">${escHtml(cat.count)}</span>
+</div>`).join('');
+
+  // Subscribe box
+  setText('sub-title', c.subTitle);
+  setText('sub-sub', c.subSub);
+  el('sub-input').placeholder = c.subPlaceholder;
+  setText('sub-btn', c.subBtn);
+
+  // Infographics hub (re-render on lang change)
+  if (window.renderInfographicsHub) window.renderInfographicsHub();
+
+  // Chat
+  el('chat-input').placeholder = c.chatPlaceholder;
+  setText('chat-send-btn', c.chatSend);
+  renderChatMessages(c);
+  el('chat-suggestions').innerHTML = c.suggestions.map(q => `
+<button onclick="sendMessage(${JSON.stringify(q)})" style="font-size:12px;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#c7cad2;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .2s;" onmouseover="this.style.background='rgba(255,106,26,.14)';this.style.borderColor='rgba(255,106,26,.45)';this.style.color='#ff9a5c';" onmouseout="this.style.background='rgba(255,255,255,.05)';this.style.borderColor='rgba(255,255,255,.12)';this.style.color='#c7cad2';">${escHtml(q)}</button>
+`).join('');
+
+  // Contact
+  setText('contact-eyebrow', c.contactEyebrow);
+  setText('contact-title', c.contactTitle);
+  setText('contact-sub', c.contactSub);
+  setText('contact-btn', c.contactBtn);
+  el('socials-list').innerHTML = c.socials.map(s =>
+    `<a href="${escHtml(s.href)}" class="social-link">${escHtml(s.label)}</a>`
+  ).join('');
+  setText('footer-copy', `© 2026 ${c.brand} · ${c.role}`);
+  setText('footer-note', c.footerNote);
+}
+
+function renderChatMessages(c) {
+  const container = el('chat-messages');
+  if (!container) return;
+  if (state.messages.length === 0 && !state.loading) {
+    container.innerHTML = `
+<div style="margin:auto;text-align:center;color:#6b6f7b;display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px;">
+  <div style="font-size:28px;opacity:.7;">&#x1F4AC;</div>
+  <div style="font-size:13px;max-width:260px;line-height:1.6;">${escHtml(c.chatEmpty)}</div>
+</div>`;
+    return;
   }
-
-  /**
-   * 設定導覽連結的平滑滾動效果，點擊錨點連結時會平滑移動到指定區塊。
-   */
-  setupSmoothScrolling() {
-    // 導航連結的平滑滾動
-    const navLinks = document.querySelectorAll('a[href^="#"]');
-
-    navLinks.forEach((link) => {
-      link.addEventListener("click", (e) => {
-        e.preventDefault();
-
-        const targetId = link.getAttribute("href").substring(1);
-        const targetElement = document.getElementById(targetId);
-
-        if (targetElement) {
-          const offsetTop = targetElement.offsetTop - 80; // 考慮固定導航欄高度
-
-          window.scrollTo({
-            top: offsetTop,
-            behavior: "smooth",
-          });
-        }
-      });
-    });
+  container.innerHTML = state.messages.map(m => m.role === 'user'
+    ? `<div style="align-self:flex-end;max-width:80%;padding:11px 15px;border-radius:14px 14px 4px 14px;background:linear-gradient(135deg,var(--accentGradA),var(--accentGradB));color:#0e0f13;font-size:14px;line-height:1.55;font-weight:600;white-space:pre-wrap;">${escHtml(m.text)}</div>`
+    : `<div style="align-self:flex-start;max-width:88%;padding:11px 15px;border-radius:14px 14px 14px 4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);color:#c7cad2;font-size:14px;line-height:1.65;font-weight:300;white-space:pre-wrap;">${escHtml(m.text)}</div>`
+  ).join('');
+  if (state.loading) {
+    container.innerHTML += `
+<div style="align-self:flex-start;padding:12px 16px;border-radius:14px 14px 14px 4px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);display:flex;gap:5px;">
+  <span style="width:7px;height:7px;border-radius:50%;background:var(--accentBright);animation:dotty 1.2s infinite;display:block;"></span>
+  <span style="width:7px;height:7px;border-radius:50%;background:var(--accentBright);animation:dotty 1.2s .2s infinite;display:block;"></span>
+  <span style="width:7px;height:7px;border-radius:50%;background:var(--accentBright);animation:dotty 1.2s .4s infinite;display:block;"></span>
+</div>`;
   }
-
-  /**
-   * 設定聊天範例按鈕的事件監聽器，點擊後將範例問題送到聊天介面。
-   */
-  setupChatExamples() {
-    const exampleButtons = document.querySelectorAll(".chat-example");
-
-    exampleButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        const question = button.textContent.trim();
-        this.sendQuestionToChat(question);
-      });
-    });
-  }
-
-  /**
-   * 發送問題到聊天介面，並顯示提示通知。
-   * @param {string} question - 要發送的問題
-   */
-  sendQuestionToChat(question) {
-    // 這裡可以實作與 Gradio iframe 的通訊
-    // 由於 iframe 的跨域限制，這可能需要 postMessage API 或其他方法
-
-    // 滾動到聊天區域
-    const chatSection = document.getElementById("chat");
-    if (chatSection) {
-      chatSection.scrollIntoView({ behavior: "smooth" });
-    }
-
-    // 顯示提示訊息
-    this.showNotification(`問題範例: "${question}"`, "info");
-  }
-
-  /**
-   * 設定淡入動畫效果，當元素進入視窗時觸發動畫。
-   */
-  setupAnimations() {
-    // 淡入動畫
-    const animatedElements = document.querySelectorAll(".animate-fade-in-up");
-
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: "0px 0px -50px 0px",
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          if (this.isReducedMotion) {
-            entry.target.style.opacity = "1";
-            entry.target.style.transform = "none";
-          } else {
-            entry.target.style.opacity = "1";
-            entry.target.style.transform = "translateY(0)";
-            entry.target.classList.add("animation-complete");
-          }
-        }
-      });
-    }, observerOptions);
-
-    animatedElements.forEach((element) => {
-      if (!this.isReducedMotion) {
-        element.style.opacity = "0";
-        element.style.transform = "translateY(30px)";
-        element.style.transition =
-          "opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1), transform 0.6s cubic-bezier(0.4, 0, 0.2, 1)";
-      }
-      observer.observe(element);
-    });
-
-    // 🎨 進階動畫效果
-    this.setupStaggeredAnimations();
-    this.setupParallaxEffects();
-    this.setupHoverAnimations();
-  }
-
-  /**
-   * 顯示通知訊息於畫面右上角，並自動消失。
-   * @param {string} message - 訊息內容
-   * @param {string} type - 訊息類型 (success, error, info, warning)
-   */
-  showNotification(message, type = "info") {
-    // 創建通知元素
-    const notification = document.createElement("div");
-    notification.className = `fixed top-20 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full`;
-
-    // 根據類型設定樣式
-    const typeStyles = {
-      success: "bg-green-600 text-white",
-      error: "bg-red-600 text-white",
-      warning: "bg-yellow-600 text-white",
-      info: "bg-blue-600 text-white",
-    };
-
-    notification.className += ` ${typeStyles[type] || typeStyles.info}`;
-    notification.textContent = message;
-
-    // 添加到頁面
-    document.body.appendChild(notification);
-
-    // 顯示動畫
-    setTimeout(() => {
-      notification.classList.remove("translate-x-full");
-    }, 100);
-
-    // 自動移除
-    setTimeout(() => {
-      notification.classList.add("translate-x-full");
-      setTimeout(() => {
-        if (notification.parentNode) {
-          notification.parentNode.removeChild(notification);
-        }
-      }, 300);
-    }, 3000);
-  }
-
-  /**
-   * 🎯 設定進階互動功能，包括觸控手勢、鍵盤導航、智慧滾動。
-   */
-  setupAdvancedInteractions() {
-    // 觸控手勢支援
-    this.setupTouchGestures();
-
-    // 智慧滾動增強
-    this.setupSmartScrolling();
-
-    // 鍵盤導航
-    this.setupKeyboardNavigation();
-
-    // 動態主題切換效果
-    this.setupThemeTransitions();
-
-    // 進度指示器
-    this.setupScrollProgress();
-  }
-
-  /**
-   * 🎨 設定交錯動畫效果
-   */
-  setupStaggeredAnimations() {
-    const staggerGroups = document.querySelectorAll("[data-stagger]");
-
-    staggerGroups.forEach((group) => {
-      const children = group.children;
-      const delay = parseInt(group.dataset.stagger) || 100;
-
-      Array.from(children).forEach((child, index) => {
-        if (!this.isReducedMotion) {
-          child.style.animationDelay = `${index * delay}ms`;
-          child.classList.add("animate-fade-in-up");
-        }
-      });
-    });
-  }
-
-  /**
-   * 🌊 設定視差滾動效果
-   */
-  setupParallaxEffects() {
-    if (this.isReducedMotion) return;
-
-    const parallaxElements = document.querySelectorAll("[data-parallax]");
-
-    const updateParallax = () => {
-      const scrolled = window.pageYOffset;
-
-      parallaxElements.forEach((element) => {
-        const rate = scrolled * (parseFloat(element.dataset.parallax) || 0.5);
-        element.style.transform = `translateY(${rate}px)`;
-      });
-    };
-
-    // 使用 requestAnimationFrame 優化效能
-    let ticking = false;
-    window.addEventListener(
-      "scroll",
-      () => {
-        if (!ticking) {
-          requestAnimationFrame(() => {
-            updateParallax();
-            ticking = false;
-          });
-          ticking = true;
-        }
-      },
-      { passive: true },
-    );
-  }
-
-  /**
-   * ✨ 設定懸停動畫效果
-   */
-  setupHoverAnimations() {
-    // 卡片懸停效果
-    const cards = document.querySelectorAll(
-      ".card, .project-card, .skill-card",
-    );
-
-    cards.forEach((card) => {
-      card.addEventListener("mouseenter", (e) => {
-        if (!this.isReducedMotion) {
-          e.target.style.transform = "translateY(-8px) scale(1.02)";
-          e.target.style.boxShadow = "0 20px 40px rgba(0,0,0,0.2)";
-        }
-      });
-
-      card.addEventListener("mouseleave", (e) => {
-        e.target.style.transform = "";
-        e.target.style.boxShadow = "";
-      });
-    });
-
-    // 按鈕波紋效果
-    this.setupRippleEffect();
-  }
-
-  /**
-   * 🌊 設定按鈕波紋效果
-   */
-  setupRippleEffect() {
-    const buttons = document.querySelectorAll("button, .btn, .chat-example");
-
-    buttons.forEach((button) => {
-      button.addEventListener("click", (e) => {
-        if (this.isReducedMotion) return;
-
-        // 排除語言切換按鈕，避免事件干擾
-        if (button.id === "lang-toggle") return;
-
-        const rect = button.getBoundingClientRect();
-        const size = Math.max(rect.width, rect.height);
-        const x = e.clientX - rect.left - size / 2;
-        const y = e.clientY - rect.top - size / 2;
-
-        const ripple = document.createElement("span");
-        ripple.style.cssText = `
-          position: absolute;
-          width: ${size}px;
-          height: ${size}px;
-          left: ${x}px;
-          top: ${y}px;
-          background: rgba(255,255,255,0.3);
-          border-radius: 50%;
-          transform: scale(0);
-          animation: ripple 0.6s linear;
-          pointer-events: none;
-        `;
-
-        button.style.position = "relative";
-        button.style.overflow = "hidden";
-        button.appendChild(ripple);
-
-        setTimeout(() => ripple.remove(), 600);
-      });
-    });
-  }
-
-  /**
-   * 📱 設定觸控手勢支援
-   */
-  setupTouchGestures() {
-    // 滑動手勢導航
-    document.addEventListener(
-      "touchstart",
-      (e) => {
-        this.touchStartY = e.touches[0].clientY;
-        this.touchStartTime = Date.now();
-      },
-      { passive: true },
-    );
-
-    document.addEventListener(
-      "touchend",
-      (e) => {
-        const touchEndY = e.changedTouches[0].clientY;
-        const touchTime = Date.now() - this.touchStartTime;
-        const distance = Math.abs(touchEndY - this.touchStartY);
-
-        // 快速滑動檢測
-        if (touchTime < 300 && distance > 50) {
-          const direction = touchEndY > this.touchStartY ? "down" : "up";
-          this.handleSwipeGesture(direction);
-        }
-      },
-      { passive: true },
-    );
-  }
-
-  /**
-   * 👆 處理滑動手勢
-   */
-  handleSwipeGesture(direction) {
-    const sections = document.querySelectorAll("section[id]");
-    const currentSection = this.getCurrentSection();
-    const currentIndex = Array.from(sections).findIndex(
-      (s) => s === currentSection,
-    );
-
-    if (direction === "up" && currentIndex < sections.length - 1) {
-      sections[currentIndex + 1].scrollIntoView({ behavior: "smooth" });
-    } else if (direction === "down" && currentIndex > 0) {
-      sections[currentIndex - 1].scrollIntoView({ behavior: "smooth" });
-    }
-  }
-
-  /**
-   * 📍 獲取目前可見的區塊
-   */
-  getCurrentSection() {
-    const sections = document.querySelectorAll("section[id]");
-    const scrollPosition = window.scrollY + 100;
-
-    for (const section of sections) {
-      if (
-        scrollPosition >= section.offsetTop &&
-        scrollPosition < section.offsetTop + section.offsetHeight
-      ) {
-        return section;
-      }
-    }
-    return sections[0];
-  }
-
-  /**
-   * 🧠 設定智慧滾動功能
-   */
-  setupSmartScrolling() {
-    let lastScrollY = window.scrollY;
-    let scrollDirection = "down";
-
-    window.addEventListener(
-      "scroll",
-      () => {
-        const currentScrollY = window.scrollY;
-        scrollDirection = currentScrollY > lastScrollY ? "down" : "up";
-        lastScrollY = currentScrollY;
-
-        // 更新導航欄狀態
-        const navbar = document.querySelector("nav");
-        if (navbar) {
-          if (scrollDirection === "down" && currentScrollY > 100) {
-            navbar.classList.add("navbar-hidden");
-          } else {
-            navbar.classList.remove("navbar-hidden");
-          }
-        }
-
-        // 更新滾動進度
-        this.updateScrollProgress();
-      },
-      { passive: true },
-    );
-  }
-
-  /**
-   * 📊 設定滾動進度指示器
-   */
-  setupScrollProgress() {
-    const progressBar = document.createElement("div");
-    progressBar.className =
-      "fixed top-0 left-0 h-1 bg-gradient-to-r from-blue-500 to-purple-500 z-50 transition-all duration-300";
-    progressBar.id = "scroll-progress";
-    document.body.appendChild(progressBar);
-  }
-
-  /**
-   * 📈 更新滾動進度
-   */
-  updateScrollProgress() {
-    const progressBar = document.getElementById("scroll-progress");
-    if (progressBar) {
-      const scrollHeight =
-        document.documentElement.scrollHeight - window.innerHeight;
-      const scrolled = (window.scrollY / scrollHeight) * 100;
-      progressBar.style.width = `${Math.min(scrolled, 100)}%`;
-    }
-  }
-
-  /**
-   * ⌨️ 設定鍵盤導航
-   */
-  setupKeyboardNavigation() {
-    document.addEventListener("keydown", (e) => {
-      // Alt + 數字鍵快速導航到區塊
-      if (e.altKey && e.key >= "1" && e.key <= "9") {
-        e.preventDefault();
-        const sectionIndex = parseInt(e.key) - 1;
-        const sections = document.querySelectorAll("section[id]");
-        if (sections[sectionIndex]) {
-          sections[sectionIndex].scrollIntoView({ behavior: "smooth" });
-        }
-      }
-
-      // Esc 鍵關閉模態框或通知
-      if (e.key === "Escape") {
-        this.closeActiveModals();
-      }
-    });
-  }
-
-  /**
-   * ❌ 關閉活躍的模態框
-   */
-  closeActiveModals() {
-    const notifications = document.querySelectorAll(".notification");
-    notifications.forEach((notification) => {
-      notification.classList.add("translate-x-full");
-      setTimeout(() => notification.remove(), 300);
-    });
-  }
-
-  /**
-   * 🎨 設定主題轉換效果
-   */
-  setupThemeTransitions() {
-    // 為主題切換添加平滑過渡
-    document.documentElement.style.transition =
-      "background-color 0.3s ease, color 0.3s ease";
-  }
-
-  /**
-   * 📊 設定效能監控
-   */
-  setupPerformanceMonitoring() {
-    // 監控互動延遲
-    ["click", "touchstart", "keydown"].forEach((eventType) => {
-      document.addEventListener(
-        eventType,
-        (e) => {
-          const startTime = performance.now();
-
-          requestAnimationFrame(() => {
-            const endTime = performance.now();
-            const latency = endTime - startTime;
-
-            this.interactionTimings.push({
-              type: eventType,
-              latency,
-              timestamp: Date.now(),
-            });
-
-            // 保留最近 100 次記錄
-            if (this.interactionTimings.length > 100) {
-              this.interactionTimings.shift();
-            }
-          });
-        },
-        { passive: true },
-      );
-    });
-
-    // 記錄頁面載入效能
-    window.addEventListener("load", () => {
-      const perfData = performance.getEntriesByType("navigation")[0];
-      void perfData;
-    });
-  }
-
-  /**
-   * ♿ 設定無障礙功能
-   */
-  setupAccessibilityFeatures() {
-    // 焦點陷阱管理
-    this.setupFocusTrap();
-
-    // 鍵盤導航指示器
-    this.setupKeyboardIndicators();
-
-    // 螢幕閱讀器支援
-    this.setupScreenReaderSupport();
-  }
-
-  /**
-   * 🔒 設定焦點陷阱
-   */
-  setupFocusTrap() {
-    const focusableElements =
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Tab") {
-        const focusable = Array.from(
-          document.querySelectorAll(focusableElements),
-        );
-        const firstFocusable = focusable[0];
-        const lastFocusable = focusable[focusable.length - 1];
-
-        if (e.shiftKey) {
-          if (document.activeElement === firstFocusable) {
-            lastFocusable.focus();
-            e.preventDefault();
-          }
-        } else {
-          if (document.activeElement === lastFocusable) {
-            firstFocusable.focus();
-            e.preventDefault();
-          }
-        }
-      }
-    });
-  }
-
-  /**
-   * ⌨️ 設定鍵盤指示器
-   */
-  setupKeyboardIndicators() {
-    document.addEventListener("keydown", () => {
-      document.body.classList.add("keyboard-navigation");
-    });
-
-    document.addEventListener("mousedown", () => {
-      document.body.classList.remove("keyboard-navigation");
-    });
-  }
-
-  /**
-   * 🗣️ 設定螢幕閱讀器支援
-   */
-  setupScreenReaderSupport() {
-    // 為動態內容添加 aria-live 區域
-    const liveRegion = document.createElement("div");
-    liveRegion.setAttribute("aria-live", "polite");
-    liveRegion.setAttribute("aria-atomic", "true");
-    liveRegion.className = "sr-only";
-    liveRegion.id = "live-region";
-    document.body.appendChild(liveRegion);
-  }
-
-  /**
-   * 📢 向螢幕閱讀器宣告訊息
-   */
-  announceToScreenReader(message) {
-    const liveRegion = document.getElementById("live-region");
-    if (liveRegion) {
-      liveRegion.textContent = message;
-      setTimeout(() => (liveRegion.textContent = ""), 1000);
-    }
-  }
-
-  /**
-   * 🔄 設定漸進式增強
-   */
-  setupProgressiveEnhancement() {
-    // 檢測瀏覽器功能並逐步啟用增強功能
-    const features = {
-      intersectionObserver: "IntersectionObserver" in window,
-      webAnimations: "animate" in HTMLElement.prototype,
-      customProperties: CSS.supports("--test", "value"),
-      gridLayout: CSS.supports("display", "grid"),
-    };
-
-    // 根據支援情況啟用功能
-    Object.entries(features).forEach(([feature, supported]) => {
-      if (supported) {
-        document.documentElement.classList.add(`supports-${feature}`);
-      } else {
-        console.warn(`⚠️ ${feature} 不支援，使用降級方案`);
-      }
-    });
-  }
-
-  /**
-   * 🌍 整合進階多語言管理系統
-   */
-  integrateMultilingualManager() {
-    // 等待多語言管理器載入
-    if (window.multilingualManager) {
-      // 註冊語言變更觀察者
-      window.multilingualManager.addObserver((event, data) => {
-        if (event === "languageChanged") {
-          // 同步更新當前語言狀態
-          this.currentLang = data.to;
-
-          // 通知其他組件語言已變更
-          this.notifyLanguageChange(data);
-
-          // 更新語言相關的UI狀態
-          this.updateLanguageDependentUI(data.to);
-        }
-      });
-
-      // 整合現有的語言切換功能
-      this.enhanceLanguageToggle();
-    } else {
-      // 如果多語言管理器還未載入，延遲整合
-      setTimeout(() => this.integrateMultilingualManager(), 100);
-    }
-  }
-
-  /**
-   * 🔧 增強語言切換功能
-   */
-  enhanceLanguageToggle() {
-    const langToggle = document.getElementById("lang-toggle");
-    if (langToggle && window.multilingualManager) {
-      // 語言切換事件已由 MultilingualManager 處理
-      // 這裡僅添加視覺增強（如工具提示）
-
-      // 添加視覺反饋
-      langToggle.addEventListener("mouseenter", () => {
-        const currentInfo = window.multilingualManager.getCurrentLanguageInfo();
-        const tooltip = this.createLanguageTooltip(currentInfo);
-        this.showTooltip(langToggle, tooltip);
-      });
-
-      langToggle.addEventListener("mouseleave", () => {
-        this.hideTooltip();
-      });
-    }
-  }
-
-  /**
-   * 🤝 讓手機選單可以觸發語言切換
-   */
-  setupLanguageMenuToggle() {
-    const desktopLangToggle = document.getElementById("lang-toggle");
-    const mobileLangToggle = document.querySelector(".mobile-lang-toggle");
-    if (!desktopLangToggle || !mobileLangToggle) {
-      return;
-    }
-
-    mobileLangToggle.addEventListener("click", () => {
-      desktopLangToggle.click();
-    });
-  }
-
-  /**
-   * 💬 建立語言切換提示框
-   * @param {Object} langInfo - 語言資訊
-   * @returns {string} 提示框內容
-   */
-  createLanguageTooltip(langInfo) {
-    const shortcut = "Ctrl+Shift+L";
-    return `${langInfo.flag} ${langInfo.nativeName}\n快捷鍵: ${shortcut}`;
-  }
-
-  /**
-   * 💭 顯示提示框
-   * @param {Element} element - 目標元素
-   * @param {string} content - 提示內容
-   */
-  showTooltip(element, content) {
-    // 移除現有提示框
-    this.hideTooltip();
-
-    const tooltip = document.createElement("div");
-    tooltip.className =
-      "language-tooltip fixed z-50 px-3 py-2 text-sm bg-gray-800 text-white rounded-lg shadow-lg transform -translate-x-1/2";
-    tooltip.textContent = content;
-    tooltip.id = "language-tooltip";
-
-    const rect = element.getBoundingClientRect();
-    tooltip.style.left = `${rect.left + rect.width / 2}px`;
-    tooltip.style.top = `${rect.bottom + 8}px`;
-
-    document.body.appendChild(tooltip);
-
-    // 淡入動畫
-    setTimeout(() => {
-      tooltip.style.opacity = "1";
-      tooltip.style.transform = "translateX(-50%) translateY(0)";
-    }, 10);
-  }
-
-  /**
-   * 🫥 隱藏提示框
-   */
-  hideTooltip() {
-    const existingTooltip = document.getElementById("language-tooltip");
-    if (existingTooltip) {
-      existingTooltip.remove();
-    }
-  }
-
-  /**
-   * 📢 通知語言變更
-   * @param {Object} data - 語言變更資料
-   */
-  notifyLanguageChange(data) {
-    // 使用現有的通知系統
-    const message =
-      data.to === "zh-TW" ? "語言已切換至中文" : "Language switched to English";
-    this.showNotification(message, "info");
-
-    // 向螢幕閱讀器宣告
-    this.announceToScreenReader(message);
-  }
-
-  /**
-   * 🎨 更新語言相關的UI狀態
-   * @param {string} langCode - 語言代碼
-   */
-  updateLanguageDependentUI(langCode) {
-    // 更新數字和日期格式化
-    this.updateNumberFormatting(langCode);
-
-    // 更新文字方向相關的樣式
-    this.updateDirectionalStyles(langCode);
-
-    // 更新字體偏好
-    this.updateFontPreferences(langCode);
-  }
-
-  /**
-   * 🔢 更新數字格式化
-   * @param {string} langCode - 語言代碼
-   */
-  updateNumberFormatting(langCode) {
-    const locale = langCode === "zh-TW" ? "zh-TW" : "en-US";
-
-    // 更新頁面中的數字顯示
-    document.querySelectorAll("[data-number]").forEach((element) => {
-      const number = parseFloat(element.dataset.number);
-      if (!isNaN(number)) {
-        element.textContent = new Intl.NumberFormat(locale).format(number);
-      }
-    });
-
-    // 更新日期顯示
-    document.querySelectorAll("[data-date]").forEach((element) => {
-      const dateString = element.dataset.date;
-      const date = new Date(dateString);
-      if (date.isValid && date.isValid()) {
-        element.textContent = new Intl.DateTimeFormat(locale).format(date);
-      }
-    });
-  }
-
-  /**
-   * ➡️ 更新方向性樣式
-   * @param {string} langCode - 語言代碼
-   */
-  updateDirectionalStyles(langCode) {
-    const isRTL = langCode === "ar" || langCode === "he"; // 未來擴展RTL語言
-    document.body.classList.toggle("rtl-layout", isRTL);
-  }
-
-  /**
-   * 🅰️ 更新字體偏好
-   * @param {string} langCode - 語言代碼
-   */
-  updateFontPreferences(langCode) {
-    const fontClass = langCode === "zh-TW" ? "font-chinese" : "font-english";
-    document.body.className = document.body.className.replace(/font-\w+/g, "");
-    document.body.classList.add(fontClass);
+  scrollChatToBottom();
+}
+
+function scrollChatToBottom() {
+  requestAnimationFrame(() => {
+    const c = el('chat-messages');
+    if (c) c.scrollTop = c.scrollHeight;
+  });
+}
+
+// ─── State setters ─────────────────────────────────────────────────────────
+function setLang(lang) { state.lang = lang; render(); }
+function setHeroVariant(v) { state.heroVariant = v; render(); }
+function setContentTab(tab) {
+  state.contentTab = tab;
+  render();
+  if (tab === 'infographics' && window.loadInfographicsHub) {
+    window.loadInfographicsHub();
   }
 }
 
-// 當 DOM 內容載入完成後，初始化 ResumeMateFrontend 並執行相關檢查。
-document.addEventListener("DOMContentLoaded", () => {
-  const app = new ResumeMateFrontend();
+// ─── Lightbox ─────────────────────────────────────────────────────────────
+function openLightbox() {
+  el('lightbox').style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  el('lightbox').style.display = 'none';
+  document.body.style.overflow = '';
+}
 
-  // 檢查聊天服務狀態 (可選)
-  // app.updateChatStatus();
+// ─── Chat ─────────────────────────────────────────────────────────────────
+const API_URL = window.CHAT_API_URL || '/api/chat';
+
+function handleChatKey(e) {
+  chatInputVal = e.target.value;
+  if (e.key === 'Enter') sendMessage();
+}
+
+async function sendMessage(preset) {
+  const q = (typeof preset === 'string' ? preset : chatInputVal).trim();
+  if (!q || state.loading) return;
+  const lang = state.lang;
+  state.messages = [...state.messages, { role: 'user', text: q }];
+  state.loading = true;
+  chatInputVal = '';
+  el('chat-input').value = '';
+  renderChatMessages(content[lang]);
+  try {
+    const r = await fetch(API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: q, language: lang === 'zh' ? 'zh-TW' : 'en', conversation_id: conversationId })
+    });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const d = await r.json();
+    if (d.conversation_id) conversationId = d.conversation_id;
+    const answer = d.answer || d.response || d.message || '';
+    state.messages = [...state.messages, { role: 'assistant', text: answer.trim() }];
+  } catch {
+    const demo = lang === 'zh'
+      ? '（離線模式）後端未連線，實際部署後將即時回應你的問題。'
+      : '(Offline mode) Backend not connected. Will respond in real-time after deployment.';
+    state.messages = [...state.messages, { role: 'assistant', text: demo }];
+  }
+  state.loading = false;
+  renderChatMessages(content[state.lang]);
+}
+
+// ─── Keyboard ──────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+// ─── Init ──────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', function () {
+  render();
+  // Pre-load infographics hub data in background
+  if (window.loadInfographicsHub) window.loadInfographicsHub();
 });
