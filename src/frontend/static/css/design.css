@@ -3,10 +3,10 @@
 *,*::before,*::after{box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{margin:0;background:#f6f4ef;color:#1b1916;font-family:'Noto Sans TC',sans-serif;overflow-x:hidden;}
-::selection{background:#ff6a1a;color:#0e0f13;}
+::selection{background:#10b981;color:#0e0f13;}
 ::-webkit-scrollbar{width:10px;height:10px;}
 ::-webkit-scrollbar-thumb{background:rgba(138,138,138,.33);border-radius:6px;}
-::-webkit-scrollbar-thumb:hover{background:#ff6a1a;}
+::-webkit-scrollbar-thumb:hover{background:#10b981;}
 
 :root{
   --bg:#f6f4ef;--bg2:#efece5;--surface:#ffffff;--surface2:#f4f1eb;
@@ -14,9 +14,9 @@ body{margin:0;background:#f6f4ef;color:#1b1916;font-family:'Noto Sans TC',sans-s
   --text:#1b1916;--text2:#46433d;--muted:#5e5a52;--muted2:#817c73;--faint:#a39e95;
   --border:rgba(0,0,0,.10);--border2:rgba(0,0,0,.16);--whiteSoft:rgba(0,0,0,.04);
   --navbg:rgba(246,244,239,.85);--gridline:rgba(0,0,0,.05);--shadow:rgba(70,60,50,.18);--inputbg:rgba(0,0,0,.04);
-  --accent:#ff6a1a;--accentBright:#ff7a2e;--accentLight:#ff9a5c;
-  --accentGradA:#ff8c42;--accentGradB:#ff5a0a;
-  --accentRGB:255,106,26;--accentRGB2:255,160,60;--ambient:1;
+  --accent:#10b981;--accentBright:#34d399;--accentLight:#6ee7b7;
+  --accentGradA:#34d399;--accentGradB:#059669;
+  --accentRGB:16,185,129;--accentRGB2:52,211,153;--ambient:1;
 }
 
 @keyframes floaty{0%,100%{transform:translateY(0);}50%{transform:translateY(-10px);}}
@@ -86,9 +86,9 @@ body{margin:0;background:#f6f4ef;color:#1b1916;font-family:'Noto Sans TC',sans-s
   background:var(--whiteSoft);border:1px solid var(--border2);
   color:var(--text);font-weight:600;font-size:15px;
 }
-.pill-active{border:none;background:#ff6a1a;color:#0e0f13;font-family:inherit;font-weight:700;font-size:12px;width:26px;height:26px;border-radius:50%;cursor:pointer;}
+.pill-active{border:none;background:#10b981;color:#0e0f13;font-family:inherit;font-weight:700;font-size:12px;width:26px;height:26px;border-radius:50%;cursor:pointer;}
 .pill-inactive{border:none;background:transparent;color:var(--muted2);font-family:inherit;font-weight:700;font-size:12px;width:26px;height:26px;border-radius:50%;cursor:pointer;}
-.lang-active{border:none;background:#ff6a1a;color:#0e0f13;font-family:inherit;font-weight:700;font-size:12px;padding:6px 12px;cursor:pointer;}
+.lang-active{border:none;background:#10b981;color:#0e0f13;font-family:inherit;font-weight:700;font-size:12px;padding:6px 12px;cursor:pointer;}
 .lang-inactive{border:none;background:transparent;color:var(--muted2);font-family:inherit;font-weight:700;font-size:12px;padding:6px 12px;cursor:pointer;}
 
 /* Infographics standalone page styles */

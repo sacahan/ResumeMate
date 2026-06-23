@@ -9,14 +9,9 @@ const content = {
   zh: {
     brand:'韓世翔', role:'資深軟體工程師 · AI 應用開發',
     navAbout:'關於', navCareer:'職涯', navWork:'作品', navContent:'文章 & 圖表', navChat:'AI 問答',
-    heroLabel:'版型', viewLabel:'查看',
     heroEyebrow:'AI Application Engineer',
     heroTitleA1:'打造會思考的', heroTitleA2:'AI 產品。',
     heroSubA:'我是 Brian（韓世翔），深耕全端開發逾 18 年，專精 Java 企業級應用與雲端微服務。現專注 AI Agent 驅動的企業工作流程重構，將模型能力轉化為可擴展的產品級解決方案。',
-    heroTitleB1:'把 AI 想法', heroTitleB2:'變成產品',
-    heroSubB:'資深軟體工程師，18+ 年全端與系統架構實戰。專精 Java 企業應用、雲端微服務與 CI/CD，現聚焦 LLM + AI Agent 的落地應用。',
-    heroTitleC1:'以工程思維，設計 AI 的未來',
-    heroSubC:'我是 Brian。橫跨電信與金融保險產業的資深工程經驗，現在把前沿 AI 與真實業務場景深度融合。',
     ctaPrimary:'與我聯絡', ctaSecondary:'看我的職涯',
     stat1n:'18+', stat1l:'年開發經驗', stat2n:'80%', stat2l:'CI/CD 部署提速', stat3n:'10萬+', stat3l:'日均資料寫入',
     aboutEyebrow:'About Me', aboutTitle:'在研究與產品之間，我選擇兩者兼顧。',
@@ -59,14 +54,9 @@ const content = {
   en: {
     brand:'Brian Han', role:'Senior Software Engineer · AI',
     navAbout:'About', navCareer:'Career', navWork:'Work', navContent:'Articles & Charts', navChat:'AI Chat',
-    heroLabel:'Hero', viewLabel:'View',
     heroEyebrow:'AI Application Engineer',
     heroTitleA1:'Building AI', heroTitleA2:'that thinks.',
     heroSubA:"I'm Brian — 18+ years in full-stack development, specializing in Java enterprise apps and cloud microservices. Now focused on AI-agent-driven enterprise workflows, turning model capabilities into scalable, production-grade solutions.",
-    heroTitleB1:'Turning AI ideas', heroTitleB2:'into products',
-    heroSubB:'Senior software engineer with 18+ years across full-stack and system architecture. Deep in Java enterprise apps, cloud microservices and CI/CD — now focused on shipping LLM + AI Agent applications.',
-    heroTitleC1:'Engineering the future of AI products',
-    heroSubC:"I'm Brian. Years of senior engineering across telecom and finance/insurance — now fusing frontier AI with real business scenarios.",
     ctaPrimary:'Get in touch', ctaSecondary:'View my career',
     stat1n:'18+', stat1l:'Years building', stat2n:'80%', stat2l:'Faster deploys', stat3n:'100K+', stat3l:'Daily writes',
     aboutEyebrow:'About Me', aboutTitle:'I refuse to choose between research and product.',
@@ -111,7 +101,6 @@ const content = {
 // ─── State ────────────────────────────────────────────────────────────────
 let state = {
   lang: 'zh',
-  heroVariant: 1,
   contentTab: 'articles',
   messages: [],
   loading: false
@@ -149,18 +138,9 @@ function render() {
   setText('nav-work', c.navWork);
   setText('nav-content', c.navContent);
   setText('nav-chat', c.navChat);
-  setText('hero-label', c.heroLabel);
 
   setClass('btn-zh', state.lang === 'zh' ? 'lang-active' : 'lang-inactive');
   setClass('btn-en', state.lang === 'en' ? 'lang-active' : 'lang-inactive');
-
-  setClass('v1-btn', state.heroVariant === 1 ? 'pill-active' : 'pill-inactive');
-  setClass('v2-btn', state.heroVariant === 2 ? 'pill-active' : 'pill-inactive');
-  setClass('v3-btn', state.heroVariant === 3 ? 'pill-active' : 'pill-inactive');
-
-  el('hero-a').style.display = state.heroVariant === 1 ? '' : 'none';
-  el('hero-b').style.display = state.heroVariant === 2 ? '' : 'none';
-  el('hero-c').style.display = state.heroVariant === 3 ? 'block' : 'none';
 
   // Hero A
   setText('hero-a-eyebrow', c.heroEyebrow);
@@ -172,24 +152,6 @@ function render() {
   setText('stat1n', c.stat1n); setText('stat1l', c.stat1l);
   setText('stat2n', c.stat2n); setText('stat2l', c.stat2l);
   setText('stat3n', c.stat3n); setText('stat3l', c.stat3l);
-
-  // Hero B
-  setText('hero-b-eyebrow', c.heroEyebrow);
-  setText('hero-b-t1', c.heroTitleB1);
-  setText('hero-b-t2', c.heroTitleB2);
-  setText('hero-b-sub', c.heroSubB);
-  setText('cta-primary-b', c.ctaPrimary);
-  setText('cta-secondary-b', c.ctaSecondary);
-  setText('b-stat1n', c.stat1n); setText('b-stat1l', c.stat1l);
-  setText('b-stat2n', c.stat2n); setText('b-stat2l', c.stat2l);
-  setText('b-stat3n', c.stat3n); setText('b-stat3l', c.stat3l);
-
-  // Hero C
-  setText('hero-c-eyebrow', c.heroEyebrow);
-  setText('hero-c-t1', c.heroTitleC1);
-  setText('hero-c-sub', c.heroSubC);
-  setText('cta-primary-c', c.ctaPrimary);
-  setText('cta-secondary-c', c.ctaSecondary);
 
   // About
   setText('about-brand', c.brand);
@@ -281,7 +243,7 @@ function render() {
   setText('chat-send-btn', c.chatSend);
   renderChatMessages(c);
   el('chat-suggestions').innerHTML = c.suggestions.map(q => `
-<button onclick="sendMessage(${JSON.stringify(q)})" style="font-size:12px;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#c7cad2;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .2s;" onmouseover="this.style.background='rgba(255,106,26,.14)';this.style.borderColor='rgba(255,106,26,.45)';this.style.color='#ff9a5c';" onmouseout="this.style.background='rgba(255,255,255,.05)';this.style.borderColor='rgba(255,255,255,.12)';this.style.color='#c7cad2';">${escHtml(q)}</button>
+<button onclick="sendMessage(${JSON.stringify(q)})" style="font-size:12px;padding:6px 11px;border-radius:999px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:#c7cad2;cursor:pointer;font-family:'Noto Sans TC',sans-serif;transition:all .2s;" onmouseover="this.style.background='rgba(16,185,129,.14)';this.style.borderColor='rgba(16,185,129,.45)';this.style.color='#6ee7b7';" onmouseout="this.style.background='rgba(255,255,255,.05)';this.style.borderColor='rgba(255,255,255,.12)';this.style.color='#c7cad2';">${escHtml(q)}</button>
 `).join('');
 
   // Contact
@@ -331,7 +293,6 @@ function scrollChatToBottom() {
 
 // ─── State setters ─────────────────────────────────────────────────────────
 function setLang(lang) { state.lang = lang; render(); }
-function setHeroVariant(v) { state.heroVariant = v; render(); }
 function setContentTab(tab) {
   state.contentTab = tab;
   render();

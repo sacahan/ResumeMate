@@ -45,14 +45,6 @@
   </div>
 </nav>
 
-<!-- Variant switcher (floating) -->
-<div style="position:fixed;right:18px;bottom:18px;z-index:90;display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface);border:1px solid var(--border2);border-radius:999px;backdrop-filter:blur(10px);box-shadow:0 10px 30px var(--shadow);">
-  <span id="hero-label" style="font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:1px;color:var(--muted2);text-transform:uppercase;padding-left:4px;"></span>
-  <button id="v1-btn" onclick="setHeroVariant(1)" class="pill-active">A</button>
-  <button id="v2-btn" onclick="setHeroVariant(2)" class="pill-inactive">B</button>
-  <button id="v3-btn" onclick="setHeroVariant(3)" class="pill-inactive">C</button>
-</div>
-
 <!-- ============ HERO A ============ -->
 <header id="hero-a" style="position:relative;padding:80px 40px 96px;max-width:1240px;margin:0 auto;overflow:hidden;">
   <div style="position:absolute;inset:0;background-image:linear-gradient(var(--gridline) 1px,transparent 1px),linear-gradient(90deg,var(--gridline) 1px,transparent 1px);background-size:46px 46px;pointer-events:none;mask-image:radial-gradient(circle at 30% 40%,#000,transparent 75%);-webkit-mask-image:radial-gradient(circle at 30% 40%,#000,transparent 75%);"></div>
@@ -98,55 +90,6 @@
             <button onclick="sendMessage()" id="chat-send-btn" style="padding:11px 16px;border-radius:10px;border:none;background:linear-gradient(135deg,var(--accentGradA),var(--accentGradB));color:#0e0f13;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;"></button>
           </div>
         </div>
-      </div>
-    </div>
-  </div>
-</header>
-
-<!-- ============ HERO B ============ -->
-<header id="hero-b" style="display:none;position:relative;padding:96px 40px 104px;overflow:hidden;">
-  <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(var(--accentRGB),.16),transparent 55%);pointer-events:none;"></div>
-  <div style="position:relative;max-width:920px;margin:0 auto;text-align:center;">
-    <div style="display:inline-flex;align-items:center;gap:9px;padding:7px 14px;border:1px solid rgba(var(--accentRGB),.35);border-radius:999px;background:rgba(var(--accentRGB),.08);margin-bottom:34px;">
-      <span id="hero-b-eyebrow" style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:1.5px;color:var(--accentLight);text-transform:uppercase;"></span>
-    </div>
-    <h1 id="hero-b-t1" style="margin:0 0 8px;font-size:84px;line-height:1.02;font-weight:900;letter-spacing:-2.5px;color:var(--text);"></h1>
-    <h1 style="margin:0 0 26px;font-size:84px;line-height:1.02;font-weight:900;letter-spacing:-2.5px;color:var(--accent);position:relative;display:inline-block;">
-      <span id="hero-b-t2"></span>
-      <span style="position:absolute;left:0;right:0;bottom:6px;height:14px;background:rgba(var(--accentRGB),.22);z-index:-1;border-radius:4px;"></span>
-    </h1>
-    <p id="hero-b-sub" style="margin:0 auto 38px;max-width:560px;font-size:19px;line-height:1.7;color:var(--muted);font-weight:300;"></p>
-    <div style="display:flex;gap:14px;flex-wrap:wrap;justify-content:center;">
-      <a href="#contact" class="btn-primary"><span id="cta-primary-b"></span> →</a>
-      <a href="#work"    class="btn-secondary" id="cta-secondary-b"></a>
-    </div>
-    <div style="display:flex;gap:0;margin-top:64px;justify-content:center;border:1px solid var(--border);border-radius:16px;overflow:hidden;background:var(--surface);">
-      <div style="flex:1;padding:26px 30px;border-right:1px solid var(--border);"><div id="b-stat1n" style="font-size:34px;font-weight:900;color:var(--accent);font-family:'JetBrains Mono',monospace;"></div><div id="b-stat1l" style="font-size:13px;color:var(--muted2);margin-top:4px;"></div></div>
-      <div style="flex:1;padding:26px 30px;border-right:1px solid var(--border);"><div id="b-stat2n" style="font-size:34px;font-weight:900;color:var(--accent);font-family:'JetBrains Mono',monospace;"></div><div id="b-stat2l" style="font-size:13px;color:var(--muted2);margin-top:4px;"></div></div>
-      <div style="flex:1;padding:26px 30px;">                                  <div id="b-stat3n" style="font-size:34px;font-weight:900;color:var(--accent);font-family:'JetBrains Mono',monospace;"></div><div id="b-stat3l" style="font-size:13px;color:var(--muted2);margin-top:4px;"></div></div>
-    </div>
-  </div>
-</header>
-
-<!-- ============ HERO C ============ -->
-<header id="hero-c" style="display:none;position:relative;min-height:560px;overflow:hidden;">
-  <div style="display:grid;grid-template-columns:1fr 1fr;min-height:560px;">
-    <div style="position:relative;padding:80px 40px 80px 7vw;display:flex;flex-direction:column;justify-content:center;background:var(--surface);border-right:1px solid var(--border);">
-      <div style="position:absolute;bottom:-100px;left:-60px;width:380px;height:380px;background:radial-gradient(circle,rgba(var(--accentRGB),.18),transparent 62%);pointer-events:none;"></div>
-      <div style="position:relative;">
-        <div id="hero-c-eyebrow" style="font-family:'JetBrains Mono',monospace;font-size:12px;letter-spacing:2px;color:var(--accentBright);text-transform:uppercase;margin-bottom:20px;"></div>
-        <h1 id="hero-c-t1" style="margin:0 0 16px;font-size:58px;line-height:1.05;font-weight:900;letter-spacing:-1.5px;color:var(--text);"></h1>
-        <div style="height:4px;width:64px;background:var(--accent);border-radius:4px;margin-bottom:22px;"></div>
-        <p id="hero-c-sub" style="margin:0 0 34px;max-width:420px;font-size:17px;line-height:1.75;color:var(--muted);font-weight:300;"></p>
-        <div style="display:flex;gap:14px;flex-wrap:wrap;">
-          <a href="#contact" class="btn-primary" style="padding:14px 24px;"><span id="cta-primary-c"></span> →</a>
-          <a href="#work"    class="btn-secondary" id="cta-secondary-c" style="padding:14px 24px;"></a>
-        </div>
-      </div>
-    </div>
-    <div style="position:relative;display:flex;align-items:center;justify-content:center;padding:56px;background:var(--bg);background-image:linear-gradient(var(--gridline) 1px,transparent 1px),linear-gradient(90deg,var(--gridline) 1px,transparent 1px);background-size:40px 40px;">
-      <div style="width:100%;max-width:360px;aspect-ratio:3/4;border-radius:18px;overflow:hidden;border:1px solid var(--border2);box-shadow:0 30px 70px var(--shadow);background:var(--surface2);display:flex;align-items:center;justify-content:center;">
-        <img src="static/images/portrait.jpg" alt="Brian Han" style="width:100%;height:100%;object-fit:cover;object-position:center 10%;display:block;" onerror="this.style.display='none'">
       </div>
     </div>
   </div>
